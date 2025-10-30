@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 60 30% 98%;
+    --foreground: 0 0% 18%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 18%;
+
+    --primary: 160 52% 47%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 198 100% 47%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 60 10% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 198 100% 47%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 30 5% 86%;
+    --input: 60 5% 95%;
+    --ring: 160 52% 47%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 220 10% 12%;
+    --foreground: 60 10% 90%;
+
+    --card: 220 10% 18%;
+    --card-foreground: 60 10% 90%;
+
+    --popover: 220 10% 18%;
+    --popover-foreground: 60 10% 90%;
+
+    --primary: 160 80% 60%;
+    --primary-foreground: 0 0% 12%;
+
+    --secondary: 198 80% 62%;
+    --secondary-foreground: 0 0% 12%;
+
+    --muted: 220 10% 22%;
+    --muted-foreground: 60 5% 65%;
+
+    --accent: 198 80% 62%;
+    --accent-foreground: 0 0% 12%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 10% 26%;
+    --input: 220 10% 24%;
+    --ring: 160 80% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.animated-gradient {
+  background: linear-gradient(45deg, #3ab795, #00aeef, #845ec2, #ff8bbf, #d65db1);
+  background-size: 400% 400%;
+  animation: gradientBG 12s ease infinite;
+}
+
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
