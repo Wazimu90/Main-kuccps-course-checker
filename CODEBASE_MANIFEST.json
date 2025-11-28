@@ -1,0 +1,254 @@
+{
+  "repository": {
+    "name": "kuccps-course-checker",
+    "description": "KUCCPS Course Checker - Find eligible courses based on KCSE results",
+    "primary_language": "TypeScript",
+    "framework": "Next.js 15.2.4",
+    "runtime": "Node.js",
+    "database": "Supabase (PostgreSQL)",
+    "commit_hash": "fa4d5fd",
+    "branch": "main"
+  },
+  "entry_points": {
+    "main": "app/page.tsx",
+    "admin": "app/admin/dashboard/page.tsx",
+    "api": "app/payment/actions.ts"
+  },
+  "routes": {
+    "user_routes": {
+      "/": "app/page.tsx",
+      "/input/degree": "app/input/[category]/page.tsx",
+      "/input/diploma": "app/input/[category]/page.tsx",
+      "/input/certificate": "app/input/[category]/page.tsx",
+      "/input/kmtc": "app/input/[category]/page.tsx",
+      "/input/artisan": "app/input/[category]/page.tsx",
+      "/results": "app/results/page.tsx",
+      "/payment": "app/payment/page.tsx",
+      "/news": "app/news/page.tsx",
+      "/news/:slug": "app/news/[slug]/page.tsx",
+      "/about": "app/about/page.tsx",
+      "/contact": "app/contact/page.tsx",
+      "/faq": "app/faq/page.tsx",
+      "/privacy-policy": "app/privacy-policy/page.tsx",
+      "/terms": "app/terms/page.tsx"
+    },
+    "admin_routes": {
+      "/admin/login": "app/admin/login/page.tsx",
+      "/admin/dashboard": "app/admin/dashboard/page.tsx",
+      "/admin/users": "app/admin/users/page.tsx",
+      "/admin/chatbot": "app/admin/chatbot/page.tsx",
+      "/admin/blog": "app/admin/blog/page.tsx",
+      "/admin/news": "app/admin/news/page.tsx",
+      "/admin/settings": "app/admin/settings/page.tsx"
+    }
+  },
+  "api_endpoints": {
+    "payment": {
+      "file": "app/payment/actions.ts",
+      "actions": ["processPayment", "verifyPayment"]
+    }
+  },
+  "database_tables": {
+    "chatbot_settings": {
+      "referenced_in": ["app/admin/chatbot/page.tsx", "components/results/chatbot-assistant.tsx"]
+    },
+    "chatbot_api_key": {
+      "referenced_in": ["app/admin/chatbot/page.tsx", "components/results/chatbot-assistant.tsx"]
+    },
+    "chatbot_contexts": {
+      "referenced_in": ["app/admin/chatbot/page.tsx", "components/results/chatbot-assistant.tsx"]
+    },
+    "chatbot_history": {
+      "referenced_in": ["app/admin/chatbot/page.tsx", "components/results/chatbot-assistant.tsx"]
+    },
+    "degree_programmes": {
+      "referenced_in": ["lib/course-eligibility.ts", "lib/supabase.ts"],
+      "note": "-- GUESS -- Table structure inferred, verify with Supabase"
+    },
+    "diploma_programmes": {
+      "referenced_in": ["lib/diploma-course-eligibility.ts"],
+      "note": "-- GUESS -- Table structure inferred"
+    },
+    "certificate_programmes": {
+      "referenced_in": ["lib/certificate-course-eligibility.ts"],
+      "note": "-- GUESS -- Table structure inferred"
+    },
+    "kmtc_programmes": {
+      "referenced_in": ["lib/kmtc-course-eligibility.ts"],
+      "note": "-- GUESS -- Table structure inferred"
+    },
+    "artisan_programmes": {
+      "referenced_in": ["lib/artisan-course-eligibility.ts"],
+      "note": "-- GUESS -- Table structure inferred"
+    }
+  },
+  "third_party_integrations": {
+    "supabase": {
+      "config_file": "lib/supabase.ts",
+      "env_vars": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"],
+      "tables": [
+        "chatbot_settings",
+        "chatbot_api_key",
+        "chatbot_contexts",
+        "chatbot_history",
+        "degree_programmes",
+        "diploma_programmes",
+        "certificate_programmes",
+        "kmtc_programmes",
+        "artisan_programmes"
+      ]
+    },
+    "openrouter": {
+      "service_file": "lib/chatbot-service.ts",
+      "env_vars": ["OPENROUTER_API_KEY"],
+      "used_in": ["components/results/chatbot-assistant.tsx", "app/admin/chatbot/page.tsx"],
+      "note": "API key stored in chatbot_api_key table"
+    },
+    "mpesa": {
+      "payment_file": "app/payment/actions.ts",
+      "env_vars": ["MPESA_CONSUMER_KEY", "MPESA_CONSUMER_SECRET", "MPESA_SHORTCODE"],
+      "note": "-- GUESS -- Integration details to be verified"
+    }
+  },
+  "environment_variables": {
+    "NEXT_PUBLIC_SUPABASE_URL": {
+      "description": "Supabase project URL",
+      "required": true,
+      "used_in": ["lib/supabase.ts"]
+    },
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": {
+      "description": "Supabase anonymous key",
+      "required": true,
+      "used_in": ["lib/supabase.ts"]
+    },
+    "NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL": {
+      "description": "Development redirect URL for auth",
+      "required": false,
+      "default": "http://localhost:3000",
+      "used_in": ["app/admin/login/page.tsx"]
+    },
+    "OPENROUTER_API_KEY": {
+      "description": "OpenRouter API key for chatbot",
+      "required": false,
+      "used_in": ["lib/chatbot-service.ts"],
+      "note": "Can also be configured via admin dashboard"
+    },
+    "MPESA_CONSUMER_KEY": {
+      "description": "M-Pesa consumer key",
+      "required": false,
+      "used_in": ["app/payment/actions.ts"],
+      "note": "-- GUESS -- To be verified"
+    },
+    "MPESA_CONSUMER_SECRET": {
+      "description": "M-Pesa consumer secret",
+      "required": false,
+      "used_in": ["app/payment/actions.ts"],
+      "note": "-- GUESS -- To be verified"
+    }
+  },
+  "scripts": {
+    "dev": {
+      "command": "next dev",
+      "description": "Start development server on localhost:3000"
+    },
+    "build": {
+      "command": "next build",
+      "description": "Build production application"
+    },
+    "start": {
+      "command": "next start",
+      "description": "Start production server"
+    },
+    "lint": {
+      "command": "eslint .",
+      "description": "Run ESLint code linter"
+    }
+  },
+  "key_directories": {
+    "app": "Next.js app directory (pages and routes)",
+    "components": "React components (UI, admin, forms)",
+    "lib": "Business logic, utilities, and services",
+    "public": "Static assets (images, SVGs)",
+    "scripts": "Database setup and migration scripts",
+    "hooks": "Custom React hooks",
+    "styles": "Global styles (duplicate of app/globals.css)"
+  },
+  "dependencies": {
+    "framework": {
+      "next": "15.2.4",
+      "react": "19",
+      "react-dom": "19"
+    },
+    "ui": {
+      "@radix-ui/*": "Various versions",
+      "lucide-react": "^0.454.0",
+      "framer-motion": "latest",
+      "gsap": "latest"
+    },
+    "styling": {
+      "tailwindcss": "^4.1.9",
+      "tailwind-merge": "^2.5.5",
+      "class-variance-authority": "^0.7.1"
+    },
+    "forms": {
+      "react-hook-form": "^7.60.0",
+      "zod": "3.25.76"
+    },
+    "database": {
+      "@supabase/supabase-js": "latest"
+    },
+    "charts": {
+      "recharts": "latest"
+    }
+  },
+  "localStorage_keys": {
+    "courseResults": "Stores eligible courses array",
+    "userGrades": "Stores KCSE grade inputs",
+    "paymentStatus": "Payment completion flag",
+    "newsInteractions": "News likes and comments",
+    "sessionId": "User session identifier"
+  },
+  "component_types": {
+    "pages": [
+      "app/page.tsx",
+      "app/about/page.tsx",
+      "app/contact/page.tsx",
+      "app/faq/page.tsx",
+      "app/results/page.tsx",
+      "app/payment/page.tsx",
+      "app/news/page.tsx"
+    ],
+    "forms": ["components/grade-entry-form.tsx", "components/cluster-weights-form.tsx"],
+    "admin": [
+      "components/admin/admin-sidebar.tsx",
+      "components/admin/admin-topbar.tsx",
+      "components/admin/dashboard-stats.tsx",
+      "components/admin/bar-chart.tsx",
+      "components/admin/pie-chart.tsx"
+    ],
+    "ui": [
+      "components/ui/button.tsx",
+      "components/ui/input.tsx",
+      "components/ui/card.tsx",
+      "components/ui/dialog.tsx",
+      "components/ui/table.tsx",
+      "components/ui/text-type.tsx"
+    ],
+    "animations": [
+      "components/animated-background.tsx",
+      "components/diploma-processing-animation.tsx",
+      "components/certificate-processing-animation.tsx",
+      "components/kmtc-processing-animation.tsx",
+      "components/artisan-processing-animation.tsx"
+    ]
+  },
+  "verification_checklist": [
+    "Confirm course table names in Supabase",
+    "Verify M-Pesa integration implementation",
+    "Check admin authentication strategy",
+    "Verify news engagement storage (localStorage vs database)",
+    "Confirm payment webhook endpoints",
+    "Check chatbot OpenRouter integration",
+    "Verify all environment variables are documented"
+  ]
+}
