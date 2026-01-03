@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { MessageSquare, Bot, Users, TrendingUp, Upload, Trash2, Key, Save, Eye, EyeOff } from "lucide-react"
+import { useEffect, useState } from "react"
+import { MessageSquare, Upload, Trash2, Key, Save, Eye, EyeOff } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,37 +13,73 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-const mockConversations = [
-  {
-    id: 1,
-    user: "John Doe",
-    message: "What courses can I take with a C+ in Math?",
-    response: "Based on your C+ in Math, you can consider courses like...",
-    timestamp: "2 hours ago",
-    status: "resolved",
-  },
-  {
-    id: 2,
-    user: "Jane Smith",
-    message: "How do I calculate my cluster points?",
-    response: "To calculate cluster points, you need to...",
-    timestamp: "4 hours ago",
-    status: "resolved",
-  },
-]
+interface ConversationRow {
+  id: string
+  user_email: string | null
+  user_phone: string | null
+  user_ip: string | null
+  conversation: {
+    messages: Array<{ role: "system" | "user" | "assistant"; content: string }>
+    meta?: { provider?: string; created_at?: string; result_id?: string | null }
+  }
+  created_at: string
+}
 
 export default function ChatbotPage() {
   const { toast } = useToast()
-  const [conversations, setConversations] = useState(mockConversations)
+  const [conversations, setConversations] = useState<ConversationRow[]>([])
+  const [todayCount, setTodayCount] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [apiKey, setApiKey] = useState("")
   const [showApiKey, setShowApiKey] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [settings, setSettings] = useState<{ welcome_message: string; status: "enabled" | "disabled"; provider: string; system_prompt: string } | null>(null)
+  const [chatPreview, setChatPreview] = useState<ConversationRow | null>(null)
+  const [trainingFiles, setTrainingFiles] = useState<Array<{ id: string; file_name: string; file_path: string; uploaded_at: string }>>([])
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [todRes, totRes, listRes, setRes, filesRes] = await Promise.all([
+          fetch("/api/admin/chatbot/conversations?today=true", { cache: "no-store" }),
+          fetch("/api/admin/chatbot/conversations?total=true", { cache: "no-store" }),
+          fetch("/api/admin/chatbot/conversations", { cache: "no-store" }),
+          fetch("/api/admin/chatbot/settings", { cache: "no-store" }),
+          fetch("/api/admin/chatbot/training-files", { cache: "no-store" }),
+        ])
+        if (todRes.ok) {
+          const j = await todRes.json()
+          setTodayCount(j.today || 0)
+        }
+        if (totRes.ok) {
+          const j = await totRes.json()
+          setTotalCount(j.total || 0)
+        }
+        if (listRes.ok) {
+          const j = await listRes.json()
+          setConversations(j.conversations || [])
+        }
+        if (setRes.ok) {
+          const j = await setRes.json()
+          setSettings(
+            j.settings || { welcome_message: "", status: "disabled", provider: "openrouter", system_prompt: "" },
+          )
+        }
+        if (filesRes.ok) {
+          const j = await filesRes.json()
+          setTrainingFiles(j.files || [])
+        }
+      } catch (e) {}
+    }
+    load()
+  }, [])
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file && file.type === "text/plain") {
+    if (file && file.name.toLowerCase().endsWith(".md")) {
       setUploadedFile(file)
       toast({
         title: "File Uploaded",
@@ -52,7 +88,7 @@ export default function ChatbotPage() {
     } else {
       toast({
         title: "Invalid File",
-        description: "Please upload a .txt file only.",
+        description: "Please upload a .md file only.",
         variant: "destructive",
       })
     }
@@ -67,6 +103,22 @@ export default function ChatbotPage() {
   }
 
   const handleSaveApiKey = async () => {
+    if (!apiKey.trim() && settings) {
+      // save other settings without key change
+      setIsLoading(true)
+      const res = await fetch("/api/admin/chatbot/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      })
+      setIsLoading(false)
+      toast({
+        title: res.ok ? "Settings Saved" : "Save Failed",
+        description: res.ok ? "Chatbot settings updated." : "Could not update settings.",
+        variant: res.ok ? undefined : "destructive",
+      })
+      return
+    }
     if (!apiKey.trim()) {
       toast({
         title: "Error",
@@ -77,13 +129,17 @@ export default function ChatbotPage() {
     }
 
     setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    const res = await fetch("/api/admin/chatbot/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...(settings || {}), api_key: apiKey }),
+    })
     setIsLoading(false)
 
     toast({
-      title: "API Key Saved",
-      description: "OpenRouter API key has been saved successfully.",
+      title: res.ok ? "Settings Saved" : "Save Failed",
+      description: res.ok ? "API key stored securely." : "Could not save settings.",
+      variant: res.ok ? undefined : "destructive",
     })
   }
 
@@ -101,53 +157,31 @@ export default function ChatbotPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Chatbot Management</h1>
-          <p className="text-muted-foreground">Monitor and manage AI assistant interactions</p>
+          <p className="text-white">Monitor and manage AI assistant interactions</p>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Today’s Conversations</CardTitle>
+            <MessageSquare className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{todayCount}</div>
+            <p className="text-xs text-white">Chats started today</p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Conversations</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <MessageSquare className="h-4 w-4 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2,847</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            <Users className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">Currently chatting</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resolution Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">87.3%</div>
-            <p className="text-xs text-muted-foreground">+2.1% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
-            <Bot className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1.2s</div>
-            <p className="text-xs text-muted-foreground">Average bot response</p>
+            <div className="text-2xl font-bold">{totalCount}</div>
+            <p className="text-xs text-white">All-time</p>
           </CardContent>
         </Card>
       </div>
@@ -157,7 +191,6 @@ export default function ChatbotPage() {
         <TabsList>
           <TabsTrigger value="conversations">Conversations</TabsTrigger>
           <TabsTrigger value="settings">Bot Settings</TabsTrigger>
-          <TabsTrigger value="training">Training Data</TabsTrigger>
         </TabsList>
 
         <TabsContent value="conversations" className="space-y-6">
@@ -168,34 +201,46 @@ export default function ChatbotPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {conversations.map((conversation) => (
-                  <div key={conversation.id} className="border rounded-lg p-4 space-y-3">
+                {conversations.map((row) => (
+                  <div key={row.id} className="border rounded-lg p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{conversation.user}</span>
-                        <Badge variant={conversation.status === "resolved" ? "default" : "secondary"}>
-                          {conversation.status}
-                        </Badge>
+                        <span className="font-medium">{row.user_email || row.user_phone || "Anonymous"}</span>
+                        <Badge variant="secondary">{row.conversation?.meta?.provider || "provider"}</Badge>
                       </div>
-                      <span className="text-sm text-muted-foreground">{conversation.timestamp}</span>
+                      <span className="text-sm text-white">{new Date(row.created_at).toLocaleString()}</span>
                     </div>
                     <div className="space-y-2">
                       <div className="bg-muted p-3 rounded-lg">
                         <p className="text-sm">
-                          <strong>User:</strong> {conversation.message}
+                          <strong>User:</strong>{" "}
+                          {row.conversation?.messages?.find((m) => m.role === "user")?.content || ""}
                         </p>
                       </div>
                       <div className="bg-primary/10 p-3 rounded-lg">
                         <p className="text-sm">
-                          <strong>Bot:</strong> {conversation.response}
+                          <strong>Bot:</strong>{" "}
+                          {row.conversation?.messages?.find((m) => m.role === "assistant")?.content || ""}
                         </p>
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        View Full Chat
+                      <Button size="sm" variant="outline" onClick={() => setChatPreview(row)}>
+                        View Chat
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          const res = await fetch(`/api/admin/chatbot/conversations/${row.id}`, { method: "DELETE" })
+                          if (res.ok) {
+                            setConversations((prev) => prev.filter((c) => c.id !== row.id))
+                            toast({ title: "Deleted", description: "Conversation removed." })
+                          } else {
+                            toast({ title: "Delete failed", description: "Could not remove conversation.", variant: "destructive" })
+                          }
+                        }}
+                      >
                         <Trash2 className="h-3 w-3 mr-1" />
                         Delete
                       </Button>
@@ -205,6 +250,21 @@ export default function ChatbotPage() {
               </div>
             </CardContent>
           </Card>
+          <Dialog open={!!chatPreview} onOpenChange={(o) => !o && setChatPreview(null)}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Full Chat</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                {chatPreview?.conversation?.messages?.map((m, idx) => (
+                  <div key={idx} className={m.role === "user" ? "bg-muted p-3 rounded" : "bg-primary/10 p-3 rounded"}>
+                    <p className="text-xs opacity-70">{m.role.toUpperCase()}</p>
+                    <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
@@ -217,28 +277,78 @@ export default function ChatbotPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Enable Chatbot</Label>
-                  <p className="text-sm text-muted-foreground">Turn the chatbot on or off</p>
+                  <p className="text-sm text-white">Turn the chatbot on or off</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch
+                  checked={settings?.status === "enabled"}
+                  onCheckedChange={(checked) =>
+                    setSettings((s) => ({ ...(s || { welcome_message: "", system_prompt: "", provider: "openrouter" }), status: checked ? "enabled" : "disabled" }))
+                  }
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Welcome Message</Label>
                 <Textarea
                   placeholder="Enter the welcome message for new users..."
-                  defaultValue="Hello! I'm here to help you find the right courses based on your KCSE results. How can I assist you today?"
+                  value={settings?.welcome_message || ""}
+                  onChange={(e) =>
+                    setSettings((s) => ({ ...(s || { status: "disabled", system_prompt: "", provider: "openrouter" }), welcome_message: e.target.value }))
+                  }
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label>System Prompt</Label>
+                <Textarea
+                  placeholder="Strict KUCCPS-only instructions and refusal rules..."
+                  value={settings?.system_prompt || ""}
+                  onChange={(e) =>
+                    setSettings((s) => ({ ...(s || { status: "disabled", welcome_message: "", provider: "openrouter" }), system_prompt: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>AI Provider</Label>
+                {/* Use styled Select component */}
+                <>
+                  {/* eslint-disable-next-line @typescript-eslint/no-unused-vars */}
+                </>
+                {/* @ts-expect-error Server Components classnames */}
+                {(() => {
+                  const ProviderSelect = require("@/components/ui/select")
+                  const S = ProviderSelect
+                  return (
+                    <S.Select
+                      value={settings?.provider || "openrouter"}
+                      onValueChange={(val: string) =>
+                        setSettings((s) => ({ ...(s || { status: "disabled", welcome_message: "", system_prompt: "" }), provider: val }))
+                      }
+                    >
+                      <S.SelectTrigger className="w-full">
+                        <S.SelectValue placeholder="Select provider" />
+                      </S.SelectTrigger>
+                      <S.SelectContent>
+                        <S.SelectItem value="openrouter">OpenRouter</S.SelectItem>
+                        <S.SelectItem value="openai">OpenAI</S.SelectItem>
+                        <S.SelectItem value="gemini">Gemini</S.SelectItem>
+                        <S.SelectItem value="qwen">Qwen</S.SelectItem>
+                      </S.SelectContent>
+                    </S.Select>
+                  )
+                })()}
               </div>
 
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Key className="h-4 w-4" />
-                  <Label>OpenRouter API Key</Label>
+                  <Label>Provider API Key</Label>
                 </div>
                 <div className="flex gap-2">
                   <Input
                     type={showApiKey ? "text" : "password"}
-                    placeholder="Enter your OpenRouter API key"
+                    placeholder="Enter your provider API key"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     className="flex-1"
@@ -251,78 +361,12 @@ export default function ChatbotPage() {
                   <Save className="h-4 w-4 mr-2" />
                   {isLoading ? "Saving..." : "Save API Key"}
                 </Button>
-                <p className="text-sm text-muted-foreground">
-                  Get your API key from{" "}
-                  <a
-                    href="https://openrouter.ai/keys"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    OpenRouter Dashboard
-                  </a>
-                </p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="training" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Training Data</CardTitle>
-              <CardDescription>Upload training data to improve chatbot responses</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {!uploadedFile ? (
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
-                  <div className="text-center">
-                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-medium">Upload Training Data</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Upload a .txt file containing training data for the chatbot
-                      </p>
-                    </div>
-                    <div className="mt-4">
-                      <input
-                        type="file"
-                        accept=".txt"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                        id="file-upload"
-                      />
-                      <Button asChild>
-                        <label htmlFor="file-upload" className="cursor-pointer">
-                          <Upload className="h-4 w-4 mr-2" />
-                          Choose File
-                        </label>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Upload className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{uploadedFile.name}</p>
-                        <p className="text-sm text-muted-foreground">{formatFileSize(uploadedFile.size)}</p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={handleRemoveFile}>
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Training Data tab removed */}
       </Tabs>
     </div>
   )
