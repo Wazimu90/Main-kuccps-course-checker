@@ -91,6 +91,12 @@ export default function CertificateResultsPreview({ courses, onProceed }: Certif
           setActualCourses(courses || [])
           processResults(courses || [])
           setIsLoading(false)
+          setTimeout(() => {
+            qualifyingCoursesCount.startAnimation()
+          }, 500)
+          setTimeout(() => {
+            countiesCount.startAnimation()
+          }, 800)
           return
         }
 
@@ -100,13 +106,19 @@ export default function CertificateResultsPreview({ courses, onProceed }: Certif
           .select("*")
           .eq("result_id", resultId)
           .eq("category", "certificate")
-          .single()
+          .maybeSingle()
 
         if (error || !resultData) {
           console.error("Error fetching certificate results from cache:", error)
           setActualCourses(courses || [])
           processResults(courses || [])
           setIsLoading(false)
+          setTimeout(() => {
+            qualifyingCoursesCount.startAnimation()
+          }, 500)
+          setTimeout(() => {
+            countiesCount.startAnimation()
+          }, 800)
           return
         }
 
@@ -128,6 +140,12 @@ export default function CertificateResultsPreview({ courses, onProceed }: Certif
         setActualCourses(courses || [])
         processResults(courses || [])
         setIsLoading(false)
+        setTimeout(() => {
+          qualifyingCoursesCount.startAnimation()
+        }, 500)
+        setTimeout(() => {
+          countiesCount.startAnimation()
+        }, 800)
       }
     }
 
@@ -213,15 +231,15 @@ export default function CertificateResultsPreview({ courses, onProceed }: Certif
                 <AlertCircle className="w-10 h-10 text-yellow-600 dark:text-yellow-400" />
               </div>
               <h2 className="text-2xl font-bold mb-2">No Qualifying Courses Found</h2>
-              <p className="text-muted-foreground mb-6">
+              <p className="text-white mb-6">
                 Unfortunately, we couldn't find any certificate courses that match your current grades and selected
                 categories.
               </p>
             </div>
 
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">This could be because:</p>
-              <ul className="text-sm text-muted-foreground space-y-2 text-left max-w-md mx-auto">
+              <p className="text-sm text-white">This could be because:</p>
+              <ul className="text-sm text-white space-y-2 text-left max-w-md mx-auto">
                 <li>• Your grades don't meet the minimum requirements</li>
                 <li>• The selected course categories have limited options</li>
                 <li>• Subject requirements don't match your KCSE subjects</li>
@@ -364,10 +382,10 @@ export default function CertificateResultsPreview({ courses, onProceed }: Certif
           <Button
             onClick={onProceed}
             size="lg"
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-12 py-6 text-xl font-bold rounded-full shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/60 transition-all duration-300 hover:-translate-y-1 mb-8"
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white w-full sm:w-auto max-w-full px-4 sm:px-8 md:px-12 py-3 sm:py-5 md:py-6 text-base sm:text-lg md:text-xl font-bold rounded-full shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/60 transition-all duration-300 hover:-translate-y-1 mb-8"
           >
-            View All {actualCourses.length} Qualified Courses
-            <ArrowRight className="ml-3 h-6 w-6" />
+            View All Qualified Courses
+            <ArrowRight className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left max-w-4xl mx-auto">

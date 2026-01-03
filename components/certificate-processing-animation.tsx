@@ -6,6 +6,9 @@ import { CheckCircle, Clock, Database, Search, FileCheck, Trophy } from "lucide-
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { fetchCertificateCourses, type CertificateCourse } from "@/lib/certificate-course-eligibility"
+import { supabase } from "@/lib/supabase"
+import { v4 as uuidv4 } from "uuid"
+import { log } from "@/lib/logger"
 
 interface CertificateProcessingAnimationProps {
   userData: {
@@ -66,41 +69,71 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
   }, [])
 
   const processQualification = async () => {
-    console.log("🚀 Starting certificate qualification processing...")
-    console.log("📊 User Data:", userData)
+    log("certificate:processing", "Starting parallel animation + backend", "info", { userData })
 
     try {
-      // Process each step with timing
+      // Start backend processing immediately and run step animations concurrently
+      const fetchPromise = fetchCertificateCourses(userData.meanGrade, userData.subjects, userData.courseCategories)
+
+      // Process each step with timing (sequential animations)
       for (let i = 0; i < processingSteps.length; i++) {
         setCurrentStep(i)
         setProgress(((i + 1) / processingSteps.length) * 100)
-
-        // If this is the actual processing step, run the qualification logic in parallel
-        if (i === 3) {
-          // "Checking Subject Requirements" step
-          console.log("🔍 Running certificate qualification logic...")
-
-          // Run processing and timing in parallel
-          const [courses] = await Promise.all([
-            fetchCertificateCourses(userData.meanGrade, userData.subjects, userData.courseCategories),
-            new Promise((resolve) => setTimeout(resolve, processingSteps[i].duration)),
-          ])
-
-          setQualifiedCourses(courses)
-          continue
-        }
-
-        // Regular step timing
         await new Promise((resolve) => setTimeout(resolve, processingSteps[i].duration))
       }
 
-      // Get the final courses from the processing step
-      const finalCourses = qualifiedCourses || []
-
+      // Await backend processing and finalize results
+      const finalCourses = (await fetchPromise) || []
       setIsProcessing(false)
+      log("certificate:processing", "Animation and backend complete", "success", { count: finalCourses.length })
+      try {
+        await fetch("/api/activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_type: "user.course.generate",
+            actor_role: "user",
+            description: `Generated ${finalCourses.length} certificate courses`,
+            metadata: { category: "certificate", count: finalCourses.length },
+          }),
+        })
+      } catch {}
+      try {
+        const resultId = uuidv4()
+        const paymentInfo = JSON.parse(localStorage.getItem("paymentInfo") || "{}")
+        const { error: insertError } = await supabase.from("results_cache").insert({
+          result_id: resultId,
+          phone_number: paymentInfo.phone || "",
+          email: paymentInfo.email || "",
+          name: paymentInfo.name || "",
+          category: "certificate",
+          eligible_courses: finalCourses,
+        })
+        if (!insertError) {
+          localStorage.setItem("resultId", resultId)
+          try {
+            await fetch("/api/activity", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                event_type: "user.course.generate",
+                actor_role: "user",
+                email: paymentInfo.email || null,
+                phone_number: paymentInfo.phone || null,
+                description: `Cached ${finalCourses.length} certificate courses`,
+                metadata: { category: "certificate", resultId, count: finalCourses.length },
+              }),
+            })
+          } catch {}
+        } else {
+          log("certificate:cache", "Error storing results in cache", "error", insertError)
+        }
+      } catch (e) {
+        log("certificate:cache", "Unhandled error during caching", "error", e)
+      }
       onComplete(finalCourses)
     } catch (error) {
-      console.error("❌ Error in certificate processing:", error)
+      log("certificate:processing", "Unhandled error during processing", "error", error)
       setIsProcessing(false)
       onComplete([])
     }
@@ -114,14 +147,14 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
             <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Processing Certificate Eligibility
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-white">
               Analyzing your KCSE results against certificate programme requirements...
             </p>
           </div>
 
           <div className="mb-8">
             <Progress value={progress} className="h-3 rounded-full" />
-            <p className="text-sm text-muted-foreground mt-2 text-center">{Math.round(progress)}% Complete</p>
+            <p className="text-sm text-white mt-2 text-center">{Math.round(progress)}% Complete</p>
           </div>
 
           <div className="space-y-4">
@@ -137,7 +170,7 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 ${
+                  className={`flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 p-4 rounded-xl border transition-all duration-300 ${
                     isActive
                       ? "bg-primary/10 border-primary shadow-md"
                       : isCompleted
@@ -151,7 +184,7 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
                         ? "bg-primary text-primary-foreground animate-pulse"
                         : isCompleted
                           ? "bg-green-500 text-white"
-                          : "bg-muted text-muted-foreground"
+                          : "bg-muted text-white"
                     }`}
                   >
                     <AnimatePresence mode="wait">
@@ -176,14 +209,8 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
                   </div>
 
                   <div className="flex-1">
-                    <h3
-                      className={`font-semibold transition-colors duration-300 ${
-                        isActive ? "text-primary" : isCompleted ? "text-green-600 dark:text-green-400" : ""
-                      }`}
-                    >
-                      {step.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                    <p className="text-sm text-light hidden sm:block">{step.title}</p>
+                    <p className="text-sm text-white">{step.description}</p>
                   </div>
 
                   {isActive && (
@@ -197,7 +224,7 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
           </div>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white">
               Please wait while we process your certificate programme eligibility...
             </p>
           </div>
