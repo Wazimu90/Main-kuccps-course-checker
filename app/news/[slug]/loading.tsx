@@ -2,12 +2,11 @@
 
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import AnimatedBackground from "@/components/animated-background"
+ 
 
 export default function ArticleLoading() {
   return (
     <div className="min-h-screen relative">
-      <AnimatedBackground />
 
       <div className="relative z-10">
         {/* Back Button Skeleton */}

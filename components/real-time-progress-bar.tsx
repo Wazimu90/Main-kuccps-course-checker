@@ -15,7 +15,7 @@ export default function RealTimeProgressBar({ progress, currentStep, totalSteps 
     <div className="mb-10">
       {/* Progress percentage display */}
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-medium text-muted-foreground">
+        <span className="text-sm font-medium text-white">
           Step {currentStep} of {totalSteps}
         </span>
         <span className="text-sm font-medium">
@@ -30,6 +30,7 @@ export default function RealTimeProgressBar({ progress, currentStep, totalSteps 
           initial={{ width: "0%" }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.5 }}
+          style={{ transition: "width 300ms ease-in-out" }}
         />
 
         {/* Animated pulse effect */}
@@ -60,13 +61,13 @@ export default function RealTimeProgressBar({ progress, currentStep, totalSteps 
                     ? "bg-primary text-primary-foreground"
                     : isActive
                       ? "border-2 border-primary bg-primary/10 text-primary"
-                      : "border border-muted-foreground/30 bg-background text-muted-foreground"
+                      : "border border-white/30 bg-background text-white"
                 }`}
               >
                 <span className="text-xs font-medium">{step}</span>
               </motion.div>
 
-              <span className={`mt-1 text-xs ${isCompleted || isActive ? "text-foreground" : "text-muted-foreground"}`}>
+              <span className={`mt-1 text-xs ${isCompleted || isActive ? "text-foreground" : "text-white"}`}>
                 {step === 1 ? "Grades" : "Clusters"}
               </span>
             </div>

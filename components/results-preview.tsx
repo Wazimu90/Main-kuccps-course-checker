@@ -26,6 +26,7 @@ import { fetchEligibleCourses, type EligibleCourse } from "@/lib/course-eligibil
 import { motion } from "framer-motion"
 import { supabase } from "@/lib/supabase"
 import { v4 as uuidv4 } from "uuid"
+import { log } from "@/lib/logger"
 
 interface ResultsPreviewProps {
   category: string
@@ -173,20 +174,15 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
         setIsLoading(true)
         setError(null)
 
-        console.log("Processing results with data:", userData)
+        log(`degree:processing`, "Starting parallel animation + backend", "info", { category, userData })
 
-        // Start the step-by-step animation
-        await runProgressAnimation()
+        // Run UI animation and backend processing in parallel
+        const [courses] = await Promise.all([
+          fetchEligibleCourses(category, userData.meanGrade, userData.subjects, userData.clusterWeights),
+          runProgressAnimation(),
+        ])
 
-        // Actual backend processing
-        const courses = await fetchEligibleCourses(
-          category,
-          userData.meanGrade,
-          userData.subjects,
-          userData.clusterWeights,
-        )
-
-        console.log("Eligible courses found:", courses)
+        log(`degree:processing`, "Animation and backend complete", "success", { count: courses.length })
         setEligibleCourses(courses)
 
         // Calculate unique locations count
@@ -245,10 +241,24 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
         })
 
         if (insertError) {
-          console.error("Error storing results in cache:", insertError)
+          log("degree:cache", "Error storing results in cache", "error", insertError)
         } else {
           localStorage.setItem("resultId", resultId)
-          console.log("Results cached successfully with ID:", resultId)
+          log("degree:cache", "Results cached successfully", "success", { resultId })
+          try {
+            await fetch("/api/activity", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                event_type: "user.course.generate",
+                actor_role: "user",
+                email: paymentInfo.email || null,
+                phone_number: paymentInfo.phone || null,
+                description: `Generated ${courses.length} courses for ${category}`,
+                metadata: { category, resultId, count: courses.length },
+              }),
+            })
+          } catch {}
         }
 
         // Start count-up animations
@@ -260,7 +270,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
           locationsCount.startAnimation()
         }, 800)
       } catch (err) {
-        console.error("Error processing results:", err)
+        log("degree:processing", "Unhandled error during processing", "error", err)
         setError("Failed to process your results. Please try again.")
       } finally {
         setIsLoading(false)
@@ -305,7 +315,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
           <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl md:text-4xl font-bold text-center text-slate-100 mb-12 flex items-center justify-center gap-3"
+            className="text-3xl md:text-4xl font-bold text-center text-light mb-12 flex items-center justify-center gap-3"
           >
             <GraduationCap className="h-10 w-10 text-teal-400" />
             Finding Your Future Pathways...
@@ -318,10 +328,11 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
                 initial={{ width: "0%" }}
                 animate={{ width: `${progressPercentage}%` }}
                 transition={{ duration: 0.7, ease: "easeOut" }}
+                style={{ transition: "width 300ms ease-in-out" }}
               />
             </div>
 
-            <div className="flex justify-between items-center relative z-20">
+            <div className="flex flex-wrap sm:flex-nowrap justify-center sm:justify-between items-center gap-3 relative z-20 max-w-full overflow-hidden">
               {steps.map((step, index) => {
                 const StepIcon = step.icon
                 const isCompleted = index < currentStepIndex
@@ -331,18 +342,18 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
                 return (
                   <motion.div
                     key={step.label}
-                    className="flex flex-col items-center text-center"
+                    className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left mx-1"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.1 }}
                   >
                     <div
                       className={`
-                      w-12 h-12 md:w-16 md:h-16 rounded-full border-2 flex items-center justify-center text-lg md:text-xl
+                      w-12 h-12 md:w-16 md:h-16 shrink-0 rounded-full border-2 flex items-center justify-center text-lg md:text-xl
                       transition-all duration-500 relative
                       ${isCompleted ? "bg-teal-500 border-teal-500 text-white" : ""}
                       ${isActive ? "bg-teal-500 border-teal-500 text-white shadow-lg shadow-teal-500/40" : ""}
-                      ${isPending ? "bg-slate-700 border-slate-600 text-slate-400" : ""}
+                      ${isPending ? "bg-slate-700 border-slate-600 text-light" : ""}
                     `}
                     >
                       {isCompleted ? (
@@ -354,14 +365,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
                       )}
                     </div>
 
-                    <div
-                      className={`
-                      mt-3 text-xs md:text-sm font-medium transition-colors duration-500
-                      ${isActive ? "text-teal-400 font-bold" : "text-slate-400"}
-                    `}
-                    >
-                      {step.label}
-                    </div>
+                    <p className="text-sm text-light hidden sm:block">{step.label}</p>
                   </motion.div>
                 )
               })}
@@ -373,7 +377,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
               key={currentStep.mainStatus}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-xl md:text-2xl font-semibold text-slate-100 mb-6"
+              className="text-xl md:text-2xl font-semibold text-light mb-6"
             >
               {currentStep.mainStatus}
             </motion.h2>
@@ -390,7 +394,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: isPending ? 0.5 : 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex items-center space-x-3 text-slate-300"
+                    className="flex items-center space-x-3 text-light"
                   >
                     {isCompleted ? (
                       <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-teal-400">
@@ -405,7 +409,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
                     ) : (
                       <div className="w-4 h-4 rounded-full bg-slate-600" />
                     )}
-                    <span className={`text-sm md:text-base ${isActive ? "font-medium text-slate-100" : ""}`}>
+                    <span className={`text-sm md:text-base ${isActive ? "font-medium text-light" : ""}`}>
                       {process}
                     </span>
                   </motion.div>
@@ -423,8 +427,8 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
             className="text-center"
           >
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">KUCCPS Course Matching Insights</h3>
-              <p className="text-slate-300 text-sm md:text-base">{humorCautionTexts[humorTextIndex]}</p>
+              <h3 className="text-lg font-semibold text-light mb-2">KUCCPS Course Matching Insights</h3>
+              <p className="text-light text-sm md:text-base">{humorCautionTexts[humorTextIndex]}</p>
             </div>
 
             <div className="mt-6">
@@ -447,11 +451,11 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <div className="text-red-400 text-lg font-medium">Error</div>
-              <p className="text-slate-300">{error}</p>
+              <p className="text-light">{error}</p>
               <Button
                 onClick={() => window.location.reload()}
                 variant="outline"
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                className="border-white/20 text-light hover:bg-surface"
               >
                 Try Again
               </Button>
@@ -479,7 +483,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-2xl font-bold text-slate-100"
+              className="text-2xl font-bold text-light"
             >
               No Qualifying Courses Found
             </motion.h3>
@@ -487,7 +491,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-slate-300 max-w-md mx-auto text-lg"
+              className="text-light max-w-md mx-auto text-lg"
             >
               Based on your current grades, you don't meet the requirements for {category.toLowerCase()} courses.
               Consider checking other course categories or improving your grades.
@@ -501,7 +505,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
               <Button
                 variant="outline"
                 onClick={() => window.history.back()}
-                className="border-slate-600 text-slate-300 hover:bg-slate-700 px-8 py-3"
+                className="border-white/20 text-light hover:bg-surface px-8 py-3"
               >
                 Try Different Category
               </Button>
@@ -526,7 +530,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-4xl md:text-5xl font-bold text-slate-100 mb-4 flex items-center justify-center gap-4"
+            className="text-4xl md:text-5xl font-bold text-light mb-4 flex items-center justify-center gap-4"
           >
             <Star className="h-12 w-12 text-yellow-400" />
             Your Results Preview
@@ -535,7 +539,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-slate-300 text-lg"
+            className="text-light text-lg"
           >
             Based on your KCSE grades and {category.toLowerCase()} course requirements
           </motion.p>
@@ -575,7 +579,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
             <div className="text-4xl text-teal-400 mb-4">
               <GraduationCap className="h-16 w-16 mx-auto" />
             </div>
-            <div className="text-slate-100 text-lg font-medium">{category} Course Level</div>
+            <div className="text-light text-lg font-medium">{category} Course Level</div>
           </motion.div>
         </div>
 
@@ -586,7 +590,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.7 }}
-              className="text-2xl md:text-3xl font-bold text-slate-100 mb-8 flex items-center gap-3"
+              className="text-2xl md:text-3xl font-bold text-light mb-8 flex items-center gap-3"
             >
               <Building2 className="h-8 w-8 text-teal-400" />
               Top Institutions by Location
@@ -607,10 +611,10 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
                         {index + 1}
                       </div>
                       <div>
-                        <div className="text-xl font-bold text-slate-100 group-hover:text-teal-400 transition-colors">
+                        <div className="text-xl font-bold text-light group-hover:text-teal-400 transition-colors">
                           {location.name}
                         </div>
-                        <div className="text-slate-400 flex items-center gap-1">
+                        <div className="text-light flex items-center gap-1">
                           <MapPin className="h-4 w-4" />
                           {location.qualifyingCoursesCount} qualifying course
                           {location.qualifyingCoursesCount !== 1 ? "s" : ""}
@@ -636,10 +640,10 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
           <Button
             onClick={onProceed}
             size="lg"
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-12 py-6 text-xl font-bold rounded-full shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 transition-all duration-300 hover:-translate-y-1 mb-8"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-full sm:w-auto max-w-full px-4 sm:px-8 md:px-12 py-3 sm:py-5 md:py-6 text-base sm:text-lg md:text-xl font-extrabold rounded-full shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:shadow-[0_0_50px_rgba(168,85,247,0.8)] transition-all duration-300 hover:scale-105 hover:-translate-y-1 mb-8 border-2 border-white/20"
           >
             View All {eligibleCourses.length} Qualified Courses
-            <ArrowRight className="ml-3 h-6 w-6" />
+            <ArrowRight className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6 animate-pulse" />
           </Button>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left max-w-4xl mx-auto">
@@ -656,7 +660,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1.1 + index * 0.1 }}
-                className="flex items-center gap-3 text-slate-300 hover:text-teal-400 transition-colors"
+                className="flex items-center gap-3 text-light hover:text-teal-400 transition-colors"
               >
                 <div className="text-teal-400">
                   <item.icon className="h-5 w-5" />

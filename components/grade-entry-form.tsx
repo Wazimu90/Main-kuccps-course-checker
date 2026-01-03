@@ -252,6 +252,7 @@ const countyOptions = [
 ]
 
 const institutionTypeOptions = [
+  { value: "All", label: "All (both ministries)" },
   { value: "Ministry of Education", label: "Ministry of Education" },
   { value: "In other ministries", label: "In other ministries" },
 ]
@@ -273,24 +274,25 @@ export default function GradeEntryForm({ category, onSubmit, onProgressUpdate }:
   const [expandedGroups, setExpandedGroups] = useState<string[]>(["core"])
 
   useEffect(() => {
-    // Calculate progress based on form completion
-    let progress = 0
-    if (meanGrade) progress += 30
+    let subjectsSelected = 0
+    for (const subjectCode in grades) {
+      if (grades[subjectCode] !== "none") subjectsSelected++
+    }
 
-    if (category === "artisan") {
-      // For artisan: mean grade + categories + counties + institution type
-      if (selectedCategories.length > 0) progress += 25
-      if (selectedCounties.length > 0) progress += 25
-      if (selectedInstitutionType) progress += 20
-    } else {
-      // For other categories: subjects required
-      if (Object.keys(grades).length >= 7) progress += 40
-      if ((category === "diploma" || category === "certificate") && selectedCategories.length > 0) progress += 30
-      else if (category !== "diploma" && category !== "certificate") progress += 30
+    let progress = 0
+
+    if (category === "degree") {
+      if (subjectsSelected >= 7) progress = 100
+    } else if (category === "kmtc") {
+      if (subjectsSelected >= 7) progress = 100
+    } else if (category === "diploma" || category === "certificate") {
+      if (subjectsSelected >= 7) progress = 100
+    } else if (category === "artisan") {
+      if (meanGrade) progress = 100
     }
 
     onProgressUpdate?.(progress)
-  }, [meanGrade, grades, selectedCategories, selectedCounties, selectedInstitutionType, category, onProgressUpdate])
+  }, [meanGrade, grades, category, onProgressUpdate])
 
   const handleCategoryToggle = (categoryValue: string) => {
     setSelectedCategories((prev) =>
@@ -406,7 +408,7 @@ export default function GradeEntryForm({ category, onSubmit, onProgressUpdate }:
               <SelectTrigger className={errors.meanGrade ? "border-red-500" : ""}>
                 <SelectValue placeholder="Select your mean grade" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black/80 backdrop-blur-md border border-white/10">
                 {gradeOptions.map((grade) => (
                   <SelectItem key={grade} value={grade}>
                     {grade}
@@ -451,9 +453,9 @@ export default function GradeEntryForm({ category, onSubmit, onProgressUpdate }:
                       )}
                     </div>
                     {expandedGroups.includes(group.id) ? (
-                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                      <ChevronUp className="h-5 w-5 text-white" />
                     ) : (
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      <ChevronDown className="h-5 w-5 text-white" />
                     )}
                   </div>
 
@@ -471,7 +473,7 @@ export default function GradeEntryForm({ category, onSubmit, onProgressUpdate }:
                           }`}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-muted-foreground">{subject.code}</span>
+                            <span className="text-sm font-medium text-white">{subject.code}</span>
                             <span className="font-medium">{subject.name}</span>
                           </div>
 
@@ -487,7 +489,7 @@ export default function GradeEntryForm({ category, onSubmit, onProgressUpdate }:
                               <SelectTrigger className={`w-24 ${errors[subject.code] ? "border-destructive" : ""}`}>
                                 <SelectValue placeholder="Grade" />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="bg-black/80 backdrop-blur-md border border-white/10">
                                 {gradeOptionsWithPoints.map((option) => (
                                   <SelectItem key={option.value} value={option.value}>
                                     {option.label} {option.value !== "none" && `(${option.points})`}
@@ -678,7 +680,7 @@ export default function GradeEntryForm({ category, onSubmit, onProgressUpdate }:
                 <SelectTrigger className={errors.institutionType ? "border-red-500" : ""}>
                   <SelectValue placeholder="Select institution type" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-black/80 backdrop-blur-md border border-white/10">
                   {institutionTypeOptions.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
@@ -686,6 +688,11 @@ export default function GradeEntryForm({ category, onSubmit, onProgressUpdate }:
                   ))}
                 </SelectContent>
               </Select>
+              {selectedInstitutionType === "All" && (
+                <p className="text-xs text-white/80">
+                  All institution types selected: Ministry of Education + In other ministries
+                </p>
+              )}
               {errors.institutionType && (
                 <p className="text-sm text-red-500 flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />

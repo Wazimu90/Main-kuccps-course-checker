@@ -6,6 +6,7 @@ import { Clock, Server, Search, CheckSquare, GraduationCap, CheckCircle } from "
 import { fetchDiplomaCourses, type DiplomaCourse } from "@/lib/diploma-course-eligibility"
 import { supabase } from "@/lib/supabase"
 import { v4 as uuidv4 } from "uuid"
+import { log } from "@/lib/logger"
 
 interface DiplomaProcessingAnimationProps {
   userData: {
@@ -106,7 +107,7 @@ export default function DiplomaProcessingAnimation({ userData, onComplete }: Dip
   useEffect(() => {
     async function runProcessing() {
       try {
-        console.log("Starting diploma processing...")
+        log("diploma:processing", "Starting parallel animation + backend", "info", { userData })
 
         // Run animation and actual processing in parallel
         const [, courses] = await Promise.all([
@@ -114,7 +115,7 @@ export default function DiplomaProcessingAnimation({ userData, onComplete }: Dip
           fetchDiplomaCourses(userData.meanGrade, userData.subjects, userData.courseCategories || []),
         ])
 
-        console.log("Animation and processing complete simultaneously...")
+        log("diploma:processing", "Animation and backend complete", "success", { count: courses.length })
 
         // Store results in Supabase results_cache table
         const resultId = uuidv4()
@@ -130,16 +131,30 @@ export default function DiplomaProcessingAnimation({ userData, onComplete }: Dip
         })
 
         if (insertError) {
-          console.error("Error storing results in cache:", insertError)
+          log("diploma:cache", "Error storing results in cache", "error", insertError)
         } else {
           localStorage.setItem("resultId", resultId)
-          console.log("Results cached successfully with ID:", resultId)
+          log("diploma:cache", "Results cached successfully", "success", { resultId })
+          try {
+            await fetch("/api/activity", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                event_type: "user.course.generate",
+                actor_role: "user",
+                email: paymentInfo.email || null,
+                phone_number: paymentInfo.phone || null,
+                description: `Generated ${courses.length} diploma courses`,
+                metadata: { category: "diploma", resultId, count: courses.length },
+              }),
+            })
+          } catch {}
         }
 
         setIsProcessing(false)
         onComplete(courses)
       } catch (error) {
-        console.error("Error in diploma processing:", error)
+        log("diploma:processing", "Unhandled error during processing", "error", error)
         setIsProcessing(false)
         onComplete([])
       }
@@ -192,10 +207,11 @@ export default function DiplomaProcessingAnimation({ userData, onComplete }: Dip
               initial={{ width: "0%" }}
               animate={{ width: `${progressPercentage}%` }}
               transition={{ duration: 0.7, ease: "easeOut" }}
+              style={{ transition: "width 300ms ease-in-out" }}
             />
           </div>
 
-          <div className="flex justify-between items-center relative z-20">
+          <div className="flex flex-wrap sm:flex-nowrap justify-center sm:justify-between items-center gap-3 relative z-20 max-w-full overflow-hidden">
             {steps.map((step, index) => {
               const StepIcon = step.icon
               const isCompleted = index < currentStepIndex
@@ -205,14 +221,14 @@ export default function DiplomaProcessingAnimation({ userData, onComplete }: Dip
               return (
                 <motion.div
                   key={step.id}
-                  className="flex flex-col items-center text-center"
+                  className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left mx-1"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.1 }}
                 >
                   <div
                     className={`
-                      w-12 h-12 md:w-16 md:h-16 rounded-full border-2 flex items-center justify-center text-lg md:text-xl
+                      w-12 h-12 md:w-16 md:h-16 shrink-0 rounded-full border-2 flex items-center justify-center text-lg md:text-xl
                       transition-all duration-500 relative
                       ${isCompleted ? "bg-emerald-500 border-emerald-500 text-white" : ""}
                       ${isActive ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/40" : ""}
@@ -228,14 +244,7 @@ export default function DiplomaProcessingAnimation({ userData, onComplete }: Dip
                     )}
                   </div>
 
-                  <div
-                    className={`
-                      mt-3 text-xs md:text-sm font-medium transition-colors duration-500
-                      ${isActive ? "text-emerald-400 font-bold" : "text-emerald-400"}
-                    `}
-                  >
-                    {step.label}
-                  </div>
+                  <p className="text-sm text-light hidden sm:block">{step.label}</p>
                 </motion.div>
               )
             })}

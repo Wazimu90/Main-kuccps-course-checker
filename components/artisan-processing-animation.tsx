@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle2, Loader2, Database, Search, Filter, Award, Users } from "lucide-react"
 import { fetchArtisanCourses, type ArtisanCourse } from "@/lib/artisan-course-eligibility"
 import { supabase } from "@/lib/supabase"
-import AnimatedBackground from "./animated-background"
+ 
 
 interface ArtisanProcessingAnimationProps {
   userData: {
@@ -116,6 +116,18 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
               console.log("✅ Results stored successfully in cache with ID:", resultId)
               // Store result ID in localStorage for results page
               localStorage.setItem("resultId", resultId)
+              try {
+                await fetch("/api/activity", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    event_type: "user.course.generate",
+                    actor_role: "user",
+                    description: `Generated ${qualifiedCourses.length} artisan programmes`,
+                    metadata: { category: "artisan", resultId, count: qualifiedCourses.length },
+                  }),
+                })
+              } catch {}
             }
 
             setIsProcessing(false)
@@ -134,7 +146,6 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
 
   return (
     <div className="min-h-screen relative">
-      <AnimatedBackground />
 
       <div className="relative z-10 container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -170,7 +181,7 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
                     }`}
                   >
                     <CardContent className="p-6">
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 max-w-full overflow-hidden">
                         <div
                           className={`p-3 rounded-full transition-all duration-500 ${
                             isCompleted ? "bg-green-500/30" : isActive ? "bg-orange-500/30" : "bg-muted/30"
@@ -179,27 +190,21 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
                           {isCompleted ? (
                             <CheckCircle2 className="h-6 w-6 text-green-400" />
                           ) : isActive ? (
-                            <Loader2 className="h-6 w-6 text-orange-400 animate-spin" />
+                            <Loader2 className="h-6 w-6 text-orange-400" />
                           ) : (
-                            <Icon className="h-6 w-6 text-muted-foreground" />
+                            <Icon className="h-6 w-6 text-white" />
                           )}
                         </div>
 
                         <div className="flex-1">
-                          <h3
-                            className={`text-lg font-semibold transition-colors duration-500 ${
-                              isCompleted ? "text-green-400" : isActive ? "text-orange-400" : "text-muted-foreground"
-                            }`}
-                          >
-                            {step.title}
-                          </h3>
+                          <p className="text-sm text-light hidden sm:block">{step.title}</p>
                           <p
                             className={`text-sm transition-colors duration-500 ${
                               isCompleted
                                 ? "text-green-300/80"
                                 : isActive
                                   ? "text-orange-300/80"
-                                  : "text-muted-foreground/60"
+                                  : "text-light"
                             }`}
                           >
                             {step.description}
@@ -208,7 +213,7 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
 
                         <div
                           className={`text-sm font-medium transition-colors duration-500 ${
-                            isCompleted ? "text-green-400" : isActive ? "text-orange-400" : "text-muted-foreground"
+                            isCompleted ? "text-green-400" : isActive ? "text-orange-400" : "text-white"
                           }`}
                         >
                           {isCompleted ? "Complete" : isActive ? "Processing..." : "Pending"}
@@ -230,7 +235,7 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
           >
             <Card className="backdrop-blur-sm bg-card/40 border-border/50">
               <CardContent className="p-6">
-                <div className="flex items-center justify-center gap-4 text-white/80">
+                <div className="flex items-center justify-center gap-4 text-light">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">Progress:</span>
                     <span className="font-semibold">

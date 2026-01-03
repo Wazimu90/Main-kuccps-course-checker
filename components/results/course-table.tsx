@@ -72,7 +72,7 @@ export default function CourseTable({ courses, category, isLoading }: CourseTabl
     return (
       <Card className="text-center py-12">
         <CardContent>
-          <div className="text-muted-foreground">
+          <div className="text-white">
             <Building2 className="mx-auto h-12 w-12 mb-4 opacity-50" />
             <h3 className="text-lg font-semibold mb-2">No Courses Found</h3>
             <p>No {category} courses match your current filters and qualifications.</p>
@@ -107,7 +107,7 @@ export default function CourseTable({ courses, category, isLoading }: CourseTabl
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="flex-1">
                       {/* Programme Name */}
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-tight">
+                      <h3 className="text-xl font-bold text-light mb-2 leading-tight">
                         {course.programme_name || course.course_name}
                       </h3>
 
@@ -119,10 +119,10 @@ export default function CourseTable({ courses, category, isLoading }: CourseTabl
                       )}
 
                       {/* Programme Code, Institution Type, and County */}
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-light mb-3">
                         {/* Programme Code */}
                         <div className="flex items-center gap-1">
-                          <span className="text-muted-foreground">Code:</span>
+                          <span className="text-white">Code:</span>
                           <span className="font-mono text-primary font-semibold bg-primary/10 px-2 py-1 rounded">
                             {course.programme_code}
                           </span>
@@ -149,7 +149,7 @@ export default function CourseTable({ courses, category, isLoading }: CourseTabl
 
                         {/* Campus if available */}
                         {course.campus && (
-                          <div className="flex items-center gap-1 text-muted-foreground">
+                          <div className="flex items-center gap-1 text-white">
                             <span>Campus: {course.campus}</span>
                           </div>
                         )}
@@ -175,7 +175,7 @@ export default function CourseTable({ courses, category, isLoading }: CourseTabl
                           )}
 
                           {course.duration && (
-                            <div className="flex items-center gap-1 text-muted-foreground">
+                            <div className="flex items-center gap-1 text-white">
                               <Clock className="h-3 w-3" />
                               <span className="text-xs">{course.duration}</span>
                             </div>

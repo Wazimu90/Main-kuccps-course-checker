@@ -104,7 +104,7 @@ export default function LoadingAnimation({ userData, onComplete }: LoadingAnimat
         </motion.div>
 
         <h2 className="mb-2 text-2xl font-bold">Matching Your Best-Fit Courses...</h2>
-        <p className="text-muted-foreground">We're analyzing your grades to find the perfect courses for you</p>
+        <p className="text-white">We're analyzing your grades to find the perfect courses for you</p>
 
         <motion.div className="mx-auto mt-8 h-2 w-64 overflow-hidden rounded-full bg-muted">
           <motion.div

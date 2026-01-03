@@ -1,5 +1,6 @@
 import { supabase } from "./supabase"
 import { compareMeanGrades } from "./grade-utils"
+import { resolveInstitutionTypes } from "./institution-utils"
 
 export interface ArtisanCourse {
   programme_name: string
@@ -24,13 +25,20 @@ export async function fetchArtisanCourses(
   console.log("🏢 Selected Institution Type:", institutionType)
 
   try {
-    // Query artisan_programmes table with all filters
-    const { data: programmes, error } = await supabase
-      .from("artisan_programmes")
-      .select("*")
-      .in("cluster_group", courseCategories)
-      .in("county", counties)
-      .eq("institution_type", institutionType)
+    // Resolve institution types (handles 'All')
+    const institutionTypes = resolveInstitutionTypes(institutionType as any)
+
+    // Build base query
+    let query = supabase.from("artisan_programmes").select("*").in("cluster_group", courseCategories).in("county", counties)
+
+    // Apply institution type filter: eq for single, in for multiple
+    if (institutionTypes.length === 1) {
+      query = query.eq("institution_type", institutionTypes[0])
+    } else {
+      query = query.in("institution_type", institutionTypes)
+    }
+
+    const { data: programmes, error } = await query
 
     if (error) {
       console.error("❌ Error fetching artisan programmes:", error)

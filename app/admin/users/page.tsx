@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Users, Search, Filter, MoreHorizontal, UserPlus, Mail, Phone, Calendar } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { Users, Search, Filter, MoreHorizontal, Mail, Phone, Calendar } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,59 +9,50 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-
-const mockUsers = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "+254 700 123 456",
-    joinedAt: "2024-01-15",
-    status: "active",
-    searches: 12,
-    downloads: 5,
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane@example.com",
-    phone: "+254 700 234 567",
-    joinedAt: "2024-01-14",
-    status: "active",
-    searches: 8,
-    downloads: 3,
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    email: "mike@example.com",
-    phone: "+254 700 345 678",
-    joinedAt: "2024-01-13",
-    status: "inactive",
-    searches: 15,
-    downloads: 7,
-  },
-  {
-    id: 4,
-    name: "Sarah Wilson",
-    email: "sarah@example.com",
-    phone: "+254 700 456 789",
-    joinedAt: "2024-01-12",
-    status: "active",
-    searches: 6,
-    downloads: 2,
-  },
-]
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 
 export default function UsersPage() {
-  const [users, setUsers] = useState(mockUsers)
+  const { toast } = useToast()
+  const [users, setUsers] = useState<any[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [status, setStatus] = useState<string>("all")
+  const [from, setFrom] = useState<string>("")
+  const [to, setTo] = useState<string>("")
+  const [todayCount, setTodayCount] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(10)
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const params = useMemo(() => {
+    const p = new URLSearchParams()
+    p.set("page", String(page))
+    p.set("pageSize", String(pageSize))
+    if (searchTerm) p.set("q", searchTerm)
+    if (status && status !== "all") p.set("status", status)
+    if (from) p.set("from", from)
+    if (to) p.set("to", to)
+    return p.toString()
+  }, [page, pageSize, searchTerm, status, from, to])
+
+  const loadUsers = async () => {
+    try {
+      const res = await fetch(`/api/admin/users?${params}`, { cache: "no-store" })
+      if (!res.ok) throw new Error("Failed to load users")
+      const json = await res.json()
+      setUsers(json.items || [])
+      setTodayCount(json.today || 0)
+      setTotalCount(json.total || 0)
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to load users", variant: "destructive" })
+    }
+  }
+
+  useEffect(() => {
+    loadUsers()
+  }, [params])
+
+  const filteredUsers = users
 
   return (
     <div className="space-y-6">
@@ -69,57 +60,31 @@ export default function UsersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-          <p className="text-muted-foreground">Manage and monitor platform users</p>
+          <p className="text-white">Manage and monitor platform users</p>
         </div>
-        <Button>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add User
-        </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Today’s Users</CardTitle>
+            <Users className="h-4 w-4 text-white" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{todayCount}</div>
+            <p className="text-xs text-white">New users created today</p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,247</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            <Users className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,089</div>
-            <p className="text-xs text-muted-foreground">87% of total users</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New This Month</CardTitle>
-            <UserPlus className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">158</div>
-            <p className="text-xs text-muted-foreground">+23% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Searches</CardTitle>
-            <Search className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8.5</div>
-            <p className="text-xs text-muted-foreground">Per user this month</p>
+            <div className="text-2xl font-bold">{totalCount}</div>
+            <p className="text-xs text-white">All users in the system</p>
           </CardContent>
         </Card>
       </div>
@@ -132,9 +97,9 @@ export default function UsersPage() {
         </CardHeader>
         <CardContent>
           {/* Search and Filter */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="grid gap-2 md:grid-cols-5 mb-6">
+            <div className="relative md:col-span-2">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white" />
               <Input
                 placeholder="Search users..."
                 value={searchTerm}
@@ -142,10 +107,18 @@ export default function UsersPage() {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="banned">Banned</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="From date" />
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="To date" />
           </div>
 
           {/* Users Table */}
@@ -157,19 +130,18 @@ export default function UsersPage() {
                   <TableHead>Contact</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Activity</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
+                {filteredUsers.map((user: any) => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} />
+                          <AvatarImage src={`https://avatar.vercel.sh/${user.email || user.name}`} />
                           <AvatarFallback>
-                            {user.name
+                            {(user.name || "")
                               .split(" ")
                               .map((n) => n[0])
                               .join("")}
@@ -177,7 +149,7 @@ export default function UsersPage() {
                         </Avatar>
                         <div>
                           <p className="font-medium">{user.name}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                          <p className="text-sm text-white">{user.email}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -187,26 +159,20 @@ export default function UsersPage() {
                           <Mail className="h-3 w-3" />
                           {user.email}
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2 text-sm text-white">
                           <Phone className="h-3 w-3" />
-                          {user.phone}
+                          {user.phone_number}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="h-3 w-3" />
-                        {user.joinedAt}
+                        {new Date(user.created_at).toLocaleDateString()}
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={user.status === "active" ? "default" : "secondary"}>{user.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <p>{user.searches} searches</p>
-                        <p className="text-muted-foreground">{user.downloads} downloads</p>
-                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>

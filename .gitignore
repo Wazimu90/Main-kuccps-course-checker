@@ -18,7 +18,10 @@ yarn-error.log*
 
 # env files
 .env*
-
+architecture.md
+kuccpscoursechecker.md
+changelog.md
+*.sql
 # vercel
 .vercel
 

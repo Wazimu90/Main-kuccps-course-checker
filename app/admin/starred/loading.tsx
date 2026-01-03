@@ -3,7 +3,7 @@ export default function Loading() {
     <div className="flex h-full items-center justify-center">
       <div className="text-center">
         <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        <p className="text-muted-foreground">Loading starred users...</p>
+        <p className="text-white">Loading starred users...</p>
       </div>
     </div>
   )

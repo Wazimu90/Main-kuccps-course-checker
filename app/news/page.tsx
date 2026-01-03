@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Calendar, MessageCircle, ArrowRight, Search } from "lucide-react"
@@ -8,21 +8,41 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { newsArticles } from "@/lib/news-data"
-import AnimatedBackground from "@/components/animated-background"
+import { fetchNewsList, summarizeContent, formatDate, type NewsRow } from "@/lib/news-service"
+ 
 import Footer from "@/components/footer"
 
 export default function NewsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL")
   const [searchQuery, setSearchQuery] = useState<string>("")
+  const [articles, setArticles] = useState<NewsRow[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string>("")
+
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        const data = await fetchNewsList()
+        if (active) setArticles(data)
+      } catch (e: any) {
+        if (active) setError(e?.message || "Failed to load news")
+      } finally {
+        if (active) setLoading(false)
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [])
 
   const categories = ["ALL", "EDUCATION", "TECHNOLOGY", "BUSINESS", "LIFESTYLE"]
 
-  const filteredArticles = newsArticles.filter((article) => {
+  const filteredArticles = articles.filter((article) => {
     const matchesCategory = selectedCategory === "ALL" || article.category === selectedCategory
     const matchesSearch =
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.description.toLowerCase().includes(searchQuery.toLowerCase())
+      summarizeContent(article.content).toLowerCase().includes(searchQuery.toLowerCase())
     return matchesCategory && matchesSearch
   })
 
@@ -43,7 +63,6 @@ export default function NewsPage() {
 
   return (
     <div className="min-h-screen relative">
-      <AnimatedBackground />
 
       <div className="relative z-10">
         {/* Hero Section */}
@@ -61,7 +80,7 @@ export default function NewsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-xl text-white/80 mb-8 max-w-2xl mx-auto"
+              className="text-xl text-light mb-8 max-w-2xl mx-auto"
             >
               Stay updated with the latest news and insights in education, technology, and career development
             </motion.p>
@@ -72,13 +91,13 @@ export default function NewsPage() {
         <section className="py-4 px-4">
           <div className="container mx-auto">
             <div className="max-w-md mx-auto relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-light h-4 w-4" />
               <Input
                 type="text"
                 placeholder="Search news articles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40"
+                className="pl-10 bg-white/10 border-white/20 text-light placeholder:text-light focus:border-white/40"
               />
             </div>
           </div>
@@ -109,9 +128,17 @@ export default function NewsPage() {
         {/* News Grid */}
         <section className="py-8 px-4">
           <div className="container mx-auto">
-            {filteredArticles.length === 0 ? (
+            {loading ? (
               <div className="text-center py-12">
-                <p className="text-white/70 text-lg">No articles found matching your search criteria.</p>
+                <p className="text-light text-lg">Loading news…</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-red-300 text-lg">{error}</p>
+              </div>
+            ) : filteredArticles.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-light text-lg">No articles found matching your search criteria.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -128,7 +155,7 @@ export default function NewsPage() {
                           {/* Image */}
                           <div className="relative overflow-hidden rounded-t-lg">
                             <img
-                              src={article.image || "/placeholder.svg"}
+                              src={article.thumbnail_url || "/placeholder.svg"}
                               alt={article.title}
                               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                             />
@@ -144,18 +171,18 @@ export default function NewsPage() {
                             <h3 className="text-xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors">
                               {article.title}
                             </h3>
-                            <p className="text-white/70 mb-4 line-clamp-3">{article.description}</p>
+                            <p className="text-light mb-4 line-clamp-3">{summarizeContent(article.content)}</p>
 
                             {/* Meta */}
-                            <div className="flex items-center justify-between text-sm text-white/60">
+                            <div className="flex items-center justify-between text-sm text-light">
                               <div className="flex items-center space-x-4">
                                 <div className="flex items-center space-x-1">
                                   <Calendar className="h-4 w-4" />
-                                  <span>{article.date}</span>
+                                  <span>{formatDate(article.created_at)}</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
                                   <MessageCircle className="h-4 w-4" />
-                                  <span>{article.comments}</span>
+                                  <span>{article.comments_count ?? 0}</span>
                                 </div>
                               </div>
                               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />

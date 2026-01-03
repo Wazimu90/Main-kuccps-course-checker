@@ -55,7 +55,7 @@ export default function AdminTopBar() {
     <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
       <div className="flex items-center gap-4">
         <h2 className="text-lg font-semibold">Hi, Welcome back</h2>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-white">
           {isOnline ? (
             <>
               <Wifi className="h-4 w-4 text-green-500" />
@@ -113,7 +113,7 @@ export default function AdminTopBar() {
         </DropdownMenu>
 
         {/* Version Info */}
-        <div className="hidden text-xs text-muted-foreground md:block">v1.0.0</div>
+        <div className="hidden text-xs text-white md:block">v1.0.0</div>
       </div>
     </header>
   )

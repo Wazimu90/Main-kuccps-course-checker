@@ -140,6 +140,13 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
+  let duration = props.duration
+  if (!duration) {
+      if (props.variant === 'destructive') duration = 5000
+      else if (props.variant === 'success') duration = 3000
+      else duration = 5000 // default
+  }
+
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
@@ -153,6 +160,7 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
+      duration,
       onOpenChange: (open) => {
         if (!open) dismiss()
       },

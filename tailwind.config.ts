@@ -20,6 +20,15 @@ const config = {
     },
     extend: {
       colors: {
+        base: "var(--base)",
+        surface: "var(--surface)",
+        accent: "var(--accent)",
+        accentSoft: "var(--accent-soft)",
+        success: "var(--success)",
+        successDeep: "var(--success-deep)",
+        light: "var(--text-light)",
+        dim: "var(--dim)",
+        dark: "var(--dark)",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -39,7 +48,7 @@ const config = {
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          foreground: "var(--muted-foreground)",
         },
         accent: {
           DEFAULT: "hsl(var(--accent))",
@@ -58,7 +67,12 @@ const config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-        "2xl": "1rem",
+        xl: "1rem",
+        "2xl": "1.25rem",
+      },
+      boxShadow: {
+        premium: "0 0 20px rgba(0,0,0,0.25)",
+        glow: "0 0 12px rgba(34,211,238,0.4)",
       },
       keyframes: {
         "accordion-down": {

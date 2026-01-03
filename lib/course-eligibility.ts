@@ -1,5 +1,6 @@
 import { supabase, testSupabaseConnection } from "./supabase"
 import { compareMeanGrades, checkSubjectRequirements } from "./grade-utils"
+import { deduplicateCourses } from "./utils"
 
 export interface EligibleCourse {
   programme_name?: string
@@ -29,19 +30,31 @@ export async function fetchEligibleCourses(
   }
 
   try {
+    let courses: EligibleCourse[] = []
     switch (selectedCategory.toLowerCase()) {
       case "degree":
-        return await fetchDegreeCourses(meanGrade, subjectGrades, clusterWeights || {})
+        courses = await fetchDegreeCourses(meanGrade, subjectGrades, clusterWeights || {})
+        break
       case "diploma":
-        return await fetchDiplomaCourses(meanGrade, subjectGrades)
+        courses = await fetchDiplomaCourses(meanGrade, subjectGrades)
+        break
       case "certificate":
-        return await fetchCertificateCourses(meanGrade, subjectGrades)
+        courses = await fetchCertificateCourses(meanGrade, subjectGrades)
+        break
       case "kmtc":
-        return await fetchKMTCCourses(meanGrade, subjectGrades)
+        courses = await fetchKMTCCourses(meanGrade, subjectGrades)
+        break
       default:
         console.error(`❌ Unknown category: ${selectedCategory}`)
         return []
     }
+
+    // Deduplicate courses based on programme_code
+    const deduplicatedCourses = deduplicateCourses(courses)
+
+    console.log(`✅ Deduplicated from ${courses.length} to ${deduplicatedCourses.length} courses`)
+    return deduplicatedCourses
+
   } catch (error) {
     console.error("❌ Error fetching eligible courses:", error)
     return []

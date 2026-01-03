@@ -34,7 +34,7 @@ export default function SystemAlerts({ alerts }: SystemAlertsProps) {
             <AlertTriangle className="h-4 w-4 text-yellow-500 mt-1" />
             <div>
               <p className="text-sm font-medium">{alert.message}</p>
-              <p className="text-xs text-muted-foreground">{alert.timestamp}</p>
+              <p className="text-xs text-white">{alert.timestamp}</p>
             </div>
           </div>
         ))}

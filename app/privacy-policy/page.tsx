@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { Shield, Lock, Database, Eye, UserCheck, Mail } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import AnimatedBackground from "@/components/animated-background"
+ 
 
 export default function PrivacyPolicyPage() {
   const sections = [
@@ -50,7 +50,7 @@ export default function PrivacyPolicyPage() {
 
   return (
     <>
-      <AnimatedBackground />
+      
 
       <div className="min-h-screen py-20">
         <div className="container mx-auto px-4 max-w-4xl">
@@ -68,7 +68,7 @@ export default function PrivacyPolicyPage() {
                 Privacy Policy
               </span>
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-white">
               At KUCCPS Course Checker, we are committed to protecting your personal information and your right to
               privacy.
             </p>
@@ -82,7 +82,7 @@ export default function PrivacyPolicyPage() {
           >
             <Card className="border-l-4 border-l-blue-500">
               <CardContent className="p-6">
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-white leading-relaxed">
                   At KUCCPS Course Checker, accessible from <strong>https://kuccpscoursechecker.co.ke</strong>, we are
                   committed to protecting your personal information and your right to privacy. This Privacy Policy
                   explains how we collect, use, store, and protect your information when you use our platform.
@@ -113,7 +113,7 @@ export default function PrivacyPolicyPage() {
                       {section.content.map((item, itemIndex) => (
                         <li key={itemIndex} className="flex items-start">
                           <div className="h-2 w-2 rounded-full bg-purple-500 mt-2 mr-3 flex-shrink-0"></div>
-                          <span className="text-muted-foreground">{item}</span>
+                          <span className="text-white">{item}</span>
                         </li>
                       ))}
                     </ul>
@@ -137,22 +137,22 @@ export default function PrivacyPolicyPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground mb-4">You have the right to:</p>
+                <p className="text-white mb-4">You have the right to:</p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-start">
                     <div className="h-2 w-2 rounded-full bg-purple-500 mt-2 mr-3 flex-shrink-0"></div>
-                    <span className="text-muted-foreground">Request deletion of your personal data</span>
+                    <span className="text-white">Request deletion of your personal data</span>
                   </li>
                   <li className="flex items-start">
                     <div className="h-2 w-2 rounded-full bg-purple-500 mt-2 mr-3 flex-shrink-0"></div>
-                    <span className="text-muted-foreground">Correct inaccuracies in your data</span>
+                    <span className="text-white">Correct inaccuracies in your data</span>
                   </li>
                   <li className="flex items-start">
                     <div className="h-2 w-2 rounded-full bg-purple-500 mt-2 mr-3 flex-shrink-0"></div>
-                    <span className="text-muted-foreground">Withdraw consent to use your data</span>
+                    <span className="text-white">Withdraw consent to use your data</span>
                   </li>
                 </ul>
-                <p className="text-muted-foreground">
+                <p className="text-white">
                   To exercise your rights, contact us at <strong>kuccpscoursechecker1@gmail.com</strong>
                 </p>
               </CardContent>

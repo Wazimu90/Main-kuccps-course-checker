@@ -6,55 +6,8 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  LayoutDashboard,
-  Users,
-  MessageSquare,
-  Settings,
-  FileText,
-  BarChart3,
-  ChevronLeft,
-  ChevronRight,
-  Newspaper,
-} from "lucide-react"
-
-const sidebarItems = [
-  {
-    title: "Dashboard",
-    href: "/admin/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Users",
-    href: "/admin/users",
-    icon: Users,
-  },
-  {
-    title: "News",
-    href: "/admin/news",
-    icon: Newspaper,
-  },
-  {
-    title: "Chatbot",
-    href: "/admin/chatbot",
-    icon: MessageSquare,
-  },
-  {
-    title: "Blog",
-    href: "/admin/blog",
-    icon: FileText,
-  },
-  {
-    title: "Analytics",
-    href: "/admin/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
-  },
-]
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { adminNavItems } from "@/components/admin/admin-nav-items"
 
 export default function AdminSidebar() {
   const pathname = usePathname()
@@ -85,7 +38,7 @@ export default function AdminSidebar() {
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="space-y-2">
-          {sidebarItems.map((item) => {
+          {adminNavItems.map((item) => {
             const isActive = pathname === item.href
             return (
               <Link key={item.href} href={item.href}>

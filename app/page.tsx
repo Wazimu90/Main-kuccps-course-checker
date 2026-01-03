@@ -14,17 +14,16 @@ import {
   ClipboardCheck,
   FileText,
   CheckCircle,
-  ArrowRight,
   Users,
   Star,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import MagicMenu from "@/components/MagicMenu"
 import { useToast } from "@/hooks/use-toast"
 import CourseCategoryCard from "@/components/course-category-card"
-import TestimonialCarousel from "@/components/testimonial-carousel"
-import AnimatedBackground from "@/components/animated-background"
+import TestimonialCarousel from "@/components/testimonial-carousel" 
 import Footer from "@/components/footer"
 import TextType from "@/components/ui/text-type"
+import HowItWorks from "@/components/how-it-works"
 
 export default function Home() {
   const { toast } = useToast()
@@ -47,35 +46,35 @@ export default function Home() {
       title: "Degree",
       description: "Bachelor's degree programs from universities",
       icon: GraduationCap,
-      href: "/input/degree",
+      href: "/degree",
       colorScheme: "purple",
     },
     {
       title: "Diploma",
       description: "Diploma courses from colleges and polytechnics",
       icon: Award,
-      href: "/input/diploma",
+      href: "/diploma",
       colorScheme: "blue",
     },
     {
       title: "Certificate",
       description: "Certificate programs for specialized skills",
       icon: BookOpen,
-      href: "/input/certificate",
+      href: "/certificate",
       colorScheme: "green",
     },
     {
       title: "KMTC",
       description: "Kenya Medical Training College courses",
       icon: Stethoscope,
-      href: "/input/kmtc",
+      href: "/kmtc",
       colorScheme: "orange",
     },
     {
       title: "Artisan",
       description: "Hands-on technical and vocational courses",
       icon: Hammer,
-      href: "/input/artisan",
+      href: "/artisan",
       colorScheme: "pink",
     },
     {
@@ -86,40 +85,14 @@ export default function Home() {
       onClick: showComingSoon,
       colorScheme: "indigo",
     },
-    {
-      title: "Buy Data",
-      description: "Purchase Safaricom Bundles even with Okoa Jahazi",
-      icon: Database,
-      href: "#",
-      onClick: showComingSoon,
-      colorScheme: "teal",
-    },
+
   ]
 
-  const howItWorksSteps = [
-    {
-      step: 1,
-      title: "Select Course Category",
-      description: "Choose the type of course you're interested in from our comprehensive categories",
-      icon: Search,
-    },
-    {
-      step: 2,
-      title: "Enter Your Grades",
-      description: "Input your KCSE grades and subject cluster points accurately for precise results",
-      icon: ClipboardCheck,
-    },
-    {
-      step: 3,
-      title: "View & Download Results",
-      description: "Get a complete list of courses you qualify for with downloadable PDF report",
-      icon: FileText,
-    },
-  ]
+  
 
   return (
-    <>
-      <AnimatedBackground />
+    <div className="min-h-screen flex flex-col">
+      
 
       {/* Hero Section */}
       <section className="relative py-20 md:py-32">
@@ -135,51 +108,43 @@ export default function Home() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="mb-6 inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20"
+                className="mb-6 mt-16 md:mt-0 inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20"
               >
                 <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
-                <span className="text-sm font-medium text-white/90">Official KUCCPS Data • Accurate Results</span>
+                <span className="text-sm font-medium text-light">Official KUCCPS Data • Verified Results</span>
               </motion.div>
 
               <h1 className="mb-6 text-4xl md:text-6xl lg:text-7xl font-bold leading-tight min-h-[200px] md:min-h-[300px]">
                 <TextType
                   text={["I have my KCSE results. Now what exactly do I qualify for?", "Check Which KUCCPS Courses You Qualify For Based on Your KCSE Grades", "Your future is yours. We just make it clearer."]}
-                  typingSpeed={75}
-                  pauseDuration={1500}
+                  typingSpeed={50}
+                  pauseDuration={1800}
+                  deletingSpeed={15}
                   showCursor={true}
                   cursorCharacter="|"
-                  className="bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent"
-                  textColors={["#ffffff", "#e879f9", "#f0abfc"]}
+                  className="text-light"
                   startOnVisible={true}
                   loop={true}
                 />
               </h1>
 
-              <p className="mb-8 text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
-                We use official KUCCPS data and cluster formulas to show you exactly which courses match your KCSE
-                grades. Get instant, accurate results in seconds.
+              <p className="mb-8 text-lg md:text-xl text-light max-w-3xl mx-auto leading-relaxed">
+                Powered by official KUCCPS Data | With Intelligent Assistant to help you understand and choose the best Courses. 
               </p>
 
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  size="lg"
-                  className="rounded-full px-8 py-4 text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300 group"
-                  onClick={scrollToCategories}
-                >
-                  Check Now
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
+                <MagicMenu />
               </motion.div>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.8 }}
-                className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-white/70"
+              className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-light"
               >
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-2 text-green-400" />
-                  <span>10,000+ Students Helped</span>
+                  <span>10k+ Students Helped</span>
                 </div>
                 <div className="flex items-center">
                   <Star className="h-4 w-4 mr-2 text-yellow-400" />
@@ -196,9 +161,9 @@ export default function Home() {
       </section>
 
       {/* Extended Gradient Background Section */}
-      <div className="relative bg-gradient-to-br from-purple-900 via-pink-900 to-blue-900">
+      <div className="relative bg-base">
         {/* Course Categories Section */}
-        <section className="py-20" ref={courseCategoriesRef}>
+        <section id="courses" className="py-20" ref={courseCategoriesRef} tabIndex={-1}>
           <div className="container mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -207,12 +172,8 @@ export default function Home() {
               transition={{ duration: 0.6 }}
               className="mb-16 text-center"
             >
-              <h2 className="mb-4 text-3xl md:text-5xl font-bold">
-                <span className="bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
-                  Explore Course Categories
-                </span>
-              </h2>
-              <p className="mx-auto max-w-2xl text-lg text-white/80">
+              <h2 className="mb-4 text-3xl md:text-5xl font-bold text-light">Explore Course Categories</h2>
+              <p className="mx-auto max-w-2xl text-lg text-light">
                 Select a category to check which courses you qualify for based on your KCSE results
               </p>
             </motion.div>
@@ -234,57 +195,11 @@ export default function Home() {
           </div>
         </section>
 
-        {/* How It Works Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="mb-16 text-center"
-            >
-              <h2 className="mb-4 text-3xl md:text-5xl font-bold">
-                <span className="bg-gradient-to-r from-white via-blue-200 to-green-200 bg-clip-text text-transparent">
-                  How It Works
-                </span>
-              </h2>
-              <p className="mx-auto max-w-2xl text-lg text-white/80">
-                Find your perfect course match in just three simple steps
-              </p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-              {howItWorksSteps.map((step, index) => (
-                <motion.div
-                  key={step.step}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: index * 0.2 }}
-                  whileHover={{ y: -10, scale: 1.02 }}
-                  className="group"
-                >
-                  <div className="relative h-full rounded-2xl bg-white/10 backdrop-blur-sm p-8 shadow-lg border border-white/20 hover:shadow-2xl transition-all duration-300">
-                    <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg group-hover:shadow-xl transition-all duration-300">
-                      <step.icon className="h-8 w-8" />
-                    </div>
-                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-lg shadow-md">
-                      {step.step}
-                    </div>
-                    <h3 className="mb-4 text-xl font-bold text-white">{step.title}</h3>
-                    <p className="text-white/80 leading-relaxed">{step.description}</p>
-                    <div className="mt-6 h-1 w-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 group-hover:w-20 transition-all duration-300"></div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <HowItWorks />
       </div>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
+      <section className="py-20 bg-base overflow-hidden">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -293,13 +208,9 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="mb-16 text-center"
           >
-            <h2 className="mb-4 text-3xl md:text-5xl font-bold">
-              <span className="bg-gradient-to-r from-white via-green-200 to-blue-200 bg-clip-text text-transparent">
-                What Students Say
-              </span>
-            </h2>
-            <p className="mx-auto max-w-2xl text-lg text-white/80">
-              Hear from thousands of students who have successfully used our course checker
+            <h2 className="mb-4 text-3xl md:text-5xl font-bold text-light">What Students Say</h2>
+            <p className="mx-auto max-w-2xl text-lg text-light">
+             Hear from thousands of students who have successfully used our course checker
             </p>
           </motion.div>
 
@@ -307,8 +218,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer - Only shown on homepage */}
       <Footer showOnHomepage={true} />
-    </>
+    </div>
   )
 }

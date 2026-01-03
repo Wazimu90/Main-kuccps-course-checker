@@ -58,7 +58,7 @@ export default function BlogPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Blog & News Management</h1>
-          <p className="text-muted-foreground">Create and manage blog posts and news articles</p>
+          <p className="text-white">Create and manage blog posts and news articles</p>
         </div>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
@@ -71,11 +71,11 @@ export default function BlogPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <BookOpen className="h-4 w-4 text-white" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">47</div>
-            <p className="text-xs text-muted-foreground">+3 this month</p>
+            <p className="text-xs text-white">+3 this month</p>
           </CardContent>
         </Card>
 
@@ -86,7 +86,7 @@ export default function BlogPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">42</div>
-            <p className="text-xs text-muted-foreground">89% of total posts</p>
+            <p className="text-xs text-white">89% of total posts</p>
           </CardContent>
         </Card>
 
@@ -97,7 +97,7 @@ export default function BlogPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground">Pending review</p>
+            <p className="text-xs text-white">Pending review</p>
           </CardContent>
         </Card>
 
@@ -108,7 +108,7 @@ export default function BlogPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">15.2k</div>
-            <p className="text-xs text-muted-foreground">+12% this month</p>
+            <p className="text-xs text-white">+12% this month</p>
           </CardContent>
         </Card>
       </div>
@@ -123,7 +123,7 @@ export default function BlogPage() {
           {/* Search */}
           <div className="flex items-center gap-4 mb-6">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white" />
               <Input
                 placeholder="Search posts..."
                 value={searchTerm}
@@ -153,7 +153,7 @@ export default function BlogPage() {
                     <TableCell>
                       <div>
                         <p className="font-medium">{post.title}</p>
-                        <p className="text-sm text-muted-foreground truncate max-w-xs">{post.excerpt}</p>
+                        <p className="text-sm text-white truncate max-w-xs">{post.excerpt}</p>
                       </div>
                     </TableCell>
                     <TableCell>

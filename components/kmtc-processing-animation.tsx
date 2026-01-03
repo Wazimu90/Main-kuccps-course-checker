@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import { fetchKmtcCourses, type KmtcCourse } from "@/lib/kmtc-course-eligibility"
 import { supabase } from "@/lib/supabase"
 import { v4 as uuidv4 } from "uuid"
+import { log } from "@/lib/logger"
 
 interface KmtcProcessingAnimationProps {
   userData: {
@@ -79,6 +80,7 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
 
   const processSteps = async () => {
     try {
+      log("kmtc:processing", "Starting step processing", "info", { userData })
       // Step 1: Preparation
       setCurrentStep(0)
       updateStepStatus(0, "processing", 0)
@@ -131,6 +133,7 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
       ])
 
       updateStepStatus(3, "completed", 100)
+      log("kmtc:processing", "Parallel step complete", "success", { count: qualifiedCourses.length })
 
       // Step 5: Results Compilation
       setCurrentStep(4)
@@ -161,12 +164,25 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
       })
 
       if (cacheError) {
-        console.error("❌ Error storing results in cache:", cacheError)
+        log("kmtc:cache", "Error storing results in cache", "error", cacheError)
         throw cacheError
       }
 
       // Store result ID for later retrieval
       localStorage.setItem("resultId", resultId)
+      log("kmtc:cache", "Results cached successfully", "success", { resultId })
+      try {
+        await fetch("/api/activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_type: "user.course.generate",
+            actor_role: "user",
+            description: `Generated ${qualifiedCourses.length} KMTC programmes`,
+            metadata: { category: "kmtc", resultId, count: qualifiedCourses.length },
+          }),
+        })
+      } catch {}
 
       for (let i = 0; i <= 100; i += 20) {
         updateStepStatus(4, "processing", i)
@@ -178,7 +194,7 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
       await new Promise((resolve) => setTimeout(resolve, 500))
       onComplete(qualifiedCourses)
     } catch (error) {
-      console.error("❌ Error in KMTC processing:", error)
+      log("kmtc:processing", "Unhandled error during processing", "error", error)
       updateStepStatus(currentStep, "error", 0)
     }
   }
@@ -193,7 +209,7 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
         <CardContent className="p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold mb-2">Processing Your KMTC Eligibility</h2>
-            <p className="text-muted-foreground">
+            <p className="text-white">
               {"We're analyzing your grades against KMTC programme requirements..."}
             </p>
           </div>
@@ -211,7 +227,7 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`flex items-center space-x-4 p-4 rounded-lg transition-all duration-300 ${
+                  className={`flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left space-x-4 p-4 rounded-lg transition-all duration-300 ${
                     isActive
                       ? "bg-primary/10 border border-primary/20"
                       : isCompleted
@@ -261,15 +277,15 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
                           exit={{ scale: 0 }}
                           className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
                         >
-                          <Icon className="w-6 h-6 text-muted-foreground" />
+                          <Icon className="w-6 h-6 text-white" />
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm">{step.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">{step.description}</p>
+                  <div className="flex-1 min-w-0 max-w-full overflow-hidden">
+                    <p className="text-sm text-light hidden sm:block">{step.title}</p>
+                    <p className="text-xs text-white mt-1">{step.description}</p>
 
                     {step.status === "processing" && (
                       <div className="mt-2">
@@ -283,7 +299,7 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
           </div>
 
           <div className="mt-8 text-center">
-            <div className="inline-flex items-center space-x-2 text-sm text-muted-foreground">
+            <div className="inline-flex items-center space-x-2 text-sm text-white">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span>Processing your KMTC programme eligibility...</span>
             </div>

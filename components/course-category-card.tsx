@@ -87,8 +87,8 @@ export default function CourseCategoryCard({
         >
           <Icon className="h-6 w-6" />
         </div>
-        <h3 className="mb-2 text-xl font-bold text-white group-hover:text-white/90 transition-colors">{title}</h3>
-        <p className="text-white/80 group-hover:text-white/70 transition-colors leading-relaxed">{description}</p>
+        <h3 className="mb-2 text-xl font-bold text-light group-hover:text-light transition-colors">{title}</h3>
+        <p className="text-light group-hover:text-light transition-colors leading-relaxed">{description}</p>
       </div>
     </motion.div>
   )

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { FileText, Users, CreditCard, Shield, AlertTriangle, Gavel } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import AnimatedBackground from "@/components/animated-background"
+ 
 
 export default function TermsPage() {
   const sections = [
@@ -48,7 +48,7 @@ export default function TermsPage() {
 
   return (
     <>
-      <AnimatedBackground />
+      
 
       <div className="min-h-screen py-20">
         <div className="container mx-auto px-4 max-w-4xl">
@@ -66,7 +66,7 @@ export default function TermsPage() {
                 Terms of Service
               </span>
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-white">
               By using KUCCPS Course Checker, you agree to the following terms and conditions.
             </p>
           </motion.div>
@@ -81,7 +81,7 @@ export default function TermsPage() {
               >
                 <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <CardHeader>
-                    <CardTitle className="flex items-center text-xl">
+                    <CardTitle className="flex items-center text-xl text-white">
                       <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center mr-3">
                         <section.icon className="h-5 w-5 text-white" />
                       </div>
@@ -94,12 +94,12 @@ export default function TermsPage() {
                         {section.content.map((item, itemIndex) => (
                           <li key={itemIndex} className="flex items-start">
                             <div className="h-2 w-2 rounded-full bg-blue-500 mt-2 mr-3 flex-shrink-0"></div>
-                            <span className="text-muted-foreground">{item}</span>
+                            <span className="text-white">{item}</span>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-muted-foreground leading-relaxed">{section.content}</p>
+                      <p className="text-white leading-relaxed">{section.content}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -115,15 +115,15 @@ export default function TermsPage() {
           >
             <Card className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-red-200 dark:border-red-800">
               <CardHeader>
-                <CardTitle className="flex items-center text-xl text-red-700 dark:text-red-400">
+                <CardTitle className="flex items-center text-xl text-white">
                   <AlertTriangle className="h-6 w-6 mr-3" />
                   Refund Policy
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
+                <p className="text-white">
                   Due to the digital and personalized nature of the service, we do not offer refunds. If you experience
-                  issues, contact us for support at <strong>kuccpscoursechecker1@gmail.com</strong>.
+                  issues, contact us for support at <strong className="text-white">kuccpscoursechecker1@gmail.com</strong>.
                 </p>
               </CardContent>
             </Card>
@@ -137,7 +137,7 @@ export default function TermsPage() {
           >
             <Card className="bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-green-200 dark:border-green-800">
               <CardContent className="p-6">
-                <p className="text-muted-foreground text-center">
+                <p className="text-white text-center">
                   We may update these Terms at any time. Continued use of the platform after changes means you agree to
                   the new terms.
                 </p>

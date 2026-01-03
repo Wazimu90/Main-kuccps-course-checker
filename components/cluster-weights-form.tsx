@@ -275,7 +275,7 @@ export default function ClusterWeightsForm({ onSubmit, onProgressUpdate }: Clust
       {/* Existing Cluster Weights Form */}
       <div className="text-center">
         <h2 className="text-2xl font-bold">Enter Your Cluster Weights</h2>
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-2 text-white">
           Enter your cluster weights for the degree programs
         </p>
       </div>
@@ -306,7 +306,7 @@ export default function ClusterWeightsForm({ onSubmit, onProgressUpdate }: Clust
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
-                        <Info className="h-4 w-4 text-muted-foreground" />
+                        <Info className="h-4 w-4 text-white" />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="max-w-xs text-xs">

@@ -3,13 +3,13 @@ import { motion } from "framer-motion"
 import { Users, Lightbulb, Mail, ExternalLink, CheckCircle, Heart, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import AnimatedBackground from "@/components/animated-background"
+ 
 import Link from "next/link"
 
 export default function AboutPage() {
   return (
     <>
-      <AnimatedBackground />
+      
 
       <div className="min-h-screen py-20">
         <div className="container mx-auto px-4">
@@ -36,9 +36,9 @@ export default function AboutPage() {
             >
               <Card className="bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl rounded-2xl">
                 <CardContent className="p-8">
-                  <p className="text-lg text-muted-foreground mb-6">
+                  <p className="text-lg text-yellow-400 mb-6">
                     We are not KUCCPS. But we exist because KUCCPS exists — and because too many students are left
-                    guessing their futures.
+                    guessing their futures. We help those who ask themselves:
                   </p>
 
                   <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-6 mb-6">
@@ -47,10 +47,10 @@ export default function AboutPage() {
                     </blockquote>
                   </div>
 
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-yellow-400 mb-4">
                     Built by Kenyan educators, developers (
                     <Link
-                      href="https://www.dynadot.com"
+                      href="https://wa.me/+254790295408"
                       target="_blank"
                       className="text-purple-600 hover:text-purple-700 underline inline-flex items-center gap-1"
                     >
@@ -73,7 +73,7 @@ export default function AboutPage() {
               <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-200/20 shadow-2xl rounded-2xl">
                 <CardContent className="p-8 text-center">
                   <Heart className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-                  <p className="text-lg text-muted-foreground">
+                  <p className="text-lg text-white">
                     We believe that the choice of a course should never be based on guesswork, peer pressure, or panic.
                     It should be informed. And now, it can be.
                   </p>
@@ -99,7 +99,7 @@ export default function AboutPage() {
                       <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
                       <div>
                         <h3 className="font-semibold mb-2">Real-time Course Eligibility</h3>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="text-green text-sm">
                           Instant checks based on your KCSE grades with verified accuracy.
                         </p>
                       </div>
@@ -113,7 +113,7 @@ export default function AboutPage() {
                       <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
                       <div>
                         <h3 className="font-semibold mb-2">Verified Data</h3>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="text-green text-sm">
                           Information extracted from KUCCPS and MOE records for reliability.
                         </p>
                       </div>
@@ -127,7 +127,7 @@ export default function AboutPage() {
                       <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
                       <div>
                         <h3 className="font-semibold mb-2">Smart Calculator</h3>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="text-green text-sm">
                           Cluster point calculator and comprehensive result summaries.
                         </p>
                       </div>
@@ -141,7 +141,7 @@ export default function AboutPage() {
                       <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
                       <div>
                         <h3 className="font-semibold mb-2">Instant Support</h3>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="text-green text-sm">
                           PDF downloads, chatbot assistance, and immediate feedback.
                         </p>
                       </div>
@@ -160,7 +160,7 @@ export default function AboutPage() {
               <Card className="bg-gradient-to-br from-blue-500/10 to-teal-500/10 border-blue-200/20 shadow-2xl rounded-2xl">
                 <CardContent className="p-8 text-center">
                   <Zap className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                  <p className="text-lg text-muted-foreground mb-4">
+                  <p className="text-lg text-yellow-400 mb-4">
                     We are proudly independent — no fake promises, no upselling, no bias.
                   </p>
                   <p className="text-xl font-semibold">Your future is yours. We just make it clearer.</p>
@@ -204,7 +204,7 @@ export default function AboutPage() {
                     <Mail className="mr-2 h-5 w-5" />
                     Email us directly
                   </Button>
-                  <p className="text-sm text-muted-foreground mt-4">kuccpscoursechecker1@gmail.com</p>
+                  <p className="text-sm text-purple-400 mt-4">kuccpscoursechecker1@gmail.com</p>
                 </CardContent>
               </Card>
             </motion.div>

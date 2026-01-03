@@ -37,7 +37,7 @@ export default function RecentActivity({ activities }: RecentActivityProps) {
             </Avatar>
             <div>
               <p className="text-sm font-medium">{activity.action}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-white">
                 {activity.user} - {activity.timestamp}
               </p>
             </div>

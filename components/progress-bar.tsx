@@ -34,7 +34,7 @@ export default function ProgressBar({ currentStep, totalSteps }: ProgressBarProp
                     ? "border-primary bg-primary text-primary-foreground"
                     : isActive
                       ? "border-primary bg-primary/20 text-primary"
-                      : "border-muted-foreground/30 bg-background text-muted-foreground"
+                      : "border-white/30 bg-background text-white"
                 }`}
               >
                 {isCompleted ? (
@@ -46,7 +46,7 @@ export default function ProgressBar({ currentStep, totalSteps }: ProgressBarProp
 
               <span
                 className={`mt-2 text-xs font-medium ${
-                  isCompleted || isActive ? "text-foreground" : "text-muted-foreground"
+                  isCompleted || isActive ? "text-foreground" : "text-white"
                 }`}
               >
                 {step === 1 ? "Subject Grades" : "Cluster Weights"}

@@ -19,7 +19,7 @@ export default function TestimonialCard({ name, text, delay = 0 }: TestimonialCa
       className="rounded-2xl bg-card p-6 shadow-sm border border-border"
     >
       <Quote className="mb-4 h-6 w-6 text-primary" />
-      <p className="mb-4 text-muted-foreground">{text}</p>
+      <p className="mb-4 text-white">{text}</p>
       <p className="font-semibold">{name}</p>
     </motion.div>
   )

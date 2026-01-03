@@ -364,10 +364,10 @@ export default function DiplomaResultsPreview({ courses, onProceed }: DiplomaRes
           <Button
             onClick={onProceed}
             size="lg"
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-12 py-6 text-xl font-bold rounded-full shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/60 transition-all duration-300 hover:-translate-y-1 mb-8"
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white w-full sm:w-auto max-w-full px-4 sm:px-8 md:px-12 py-3 sm:py-5 md:py-6 text-base sm:text-lg md:text-xl font-bold rounded-full shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/60 transition-all duration-300 hover:-translate-y-1 mb-8"
           >
             View All {actualCourses.length} Qualified Courses
-            <ArrowRight className="ml-3 h-6 w-6" />
+            <ArrowRight className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left max-w-4xl mx-auto">

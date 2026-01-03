@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Settings, Save, CreditCard } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,17 +13,67 @@ import { useToast } from "@/hooks/use-toast"
 export default function SettingsPage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
-  const [paymentEnabled, setPaymentEnabled] = useState(true)
+  const [formData, setFormData] = useState({
+    site_name: "",
+    site_description: "",
+    contact_email: "",
+    contact_phone: "",
+    whatsapp_number: "",
+    payment_amount: 200,
+    maintenance_mode: false,
+    payment_status: true,
+  })
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("/api/admin/settings")
+        if (res.ok) {
+          const { settings } = await res.json()
+          setFormData(settings)
+        }
+      } catch (error) {
+        console.error("Failed to load settings:", error)
+      }
+    }
+    fetchSettings()
+  }, [])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target
+    setFormData((prev) => ({ ...prev, [id.replace("-", "_")]: value }))
+  }
+
+  const handleSwitchChange = (key: string, checked: boolean) => {
+    setFormData((prev) => ({ ...prev, [key]: checked }))
+  }
 
   const handleSave = async () => {
     setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsLoading(false)
-    toast({
-      title: "Settings Saved",
-      description: "Your settings have been updated successfully.",
-    })
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+
+      if (res.ok) {
+        toast({
+          title: "Settings Saved",
+          description: "Your settings have been updated successfully.",
+        })
+      } else {
+        throw new Error("Failed to save settings")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -32,7 +82,7 @@ export default function SettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Manage platform settings and configurations</p>
+          <p className="text-white">Manage platform settings and configurations</p>
         </div>
         <Button onClick={handleSave} disabled={isLoading}>
           <Save className="h-4 w-4 mr-2" />
@@ -51,31 +101,40 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="site-name">Site Name</Label>
-            <Input id="site-name" defaultValue="KUCCPS Course Checker" />
+            <Label htmlFor="site_name">Site Name</Label>
+            <Input id="site_name" value={formData.site_name} onChange={handleChange} />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="site-description">Site Description</Label>
-            <Textarea id="site-description" defaultValue="Find the perfect courses based on your KCSE results" />
+            <Label htmlFor="site_description">Site Description</Label>
+            <Textarea id="site_description" value={formData.site_description} onChange={handleChange} />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="contact-email">Contact Email</Label>
-            <Input id="contact-email" type="email" defaultValue="info@kuccpschecker.com" />
+            <Label htmlFor="contact_email">Contact Email</Label>
+            <Input id="contact_email" type="email" value={formData.contact_email} onChange={handleChange} />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="contact-phone">Contact Phone</Label>
-            <Input id="contact-phone" defaultValue="+254 700 000 000" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="contact_phone">Contact Phone</Label>
+              <Input id="contact_phone" value={formData.contact_phone || ""} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="whatsapp_number">WhatsApp Number</Label>
+              <Input id="whatsapp_number" value={formData.whatsapp_number || ""} onChange={handleChange} />
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Maintenance Mode</Label>
-              <p className="text-sm text-muted-foreground">Put the site in maintenance mode</p>
+              <p className="text-sm text-white">Put the site in maintenance mode</p>
             </div>
-            <Switch />
+            <Switch
+              checked={formData.maintenance_mode}
+              onCheckedChange={(checked) => handleSwitchChange("maintenance_mode", checked)}
+            />
           </div>
 
           <div className="flex items-center justify-between">
@@ -84,21 +143,25 @@ export default function SettingsPage() {
                 <CreditCard className="h-4 w-4" />
                 Payment System
               </Label>
-              <p className="text-sm text-muted-foreground">Enable or disable payment functionality</p>
+              <p className="text-sm text-white">Enable or disable payment functionality</p>
             </div>
-            <Switch checked={paymentEnabled} onCheckedChange={setPaymentEnabled} />
+            <Switch
+              checked={formData.payment_status}
+              onCheckedChange={(checked) => handleSwitchChange("payment_status", checked)}
+            />
           </div>
 
-          {paymentEnabled && (
+          {formData.payment_status && (
             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
               <h4 className="font-medium">Payment Configuration</h4>
               <div className="space-y-2">
-                <Label htmlFor="payment-amount">Payment Amount (KES)</Label>
-                <Input id="payment-amount" type="number" defaultValue="200" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mpesa-shortcode">M-Pesa Shortcode</Label>
-                <Input id="mpesa-shortcode" defaultValue="123456" />
+                <Label htmlFor="payment_amount">Payment Amount (KES)</Label>
+                <Input
+                  id="payment_amount"
+                  type="number"
+                  value={formData.payment_amount}
+                  onChange={handleChange}
+                />
               </div>
             </div>
           )}

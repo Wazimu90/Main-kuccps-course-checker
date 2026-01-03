@@ -11,94 +11,101 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { newsArticles } from "@/lib/news-data"
-import AnimatedBackground from "@/components/animated-background"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { getInitials, isValidCommentPayload } from "@/lib/comment-utils"
+import { sanitizeHtml } from "@/lib/news-service"
+import { fetchNewsBySlug, type NewsRow } from "@/lib/news-service"
+ 
 import Footer from "@/components/footer"
+import ChatbotPlaceholder from "@/components/chatbot/ChatbotPlaceholder"
 
-interface Comment {
+interface UiComment {
   id: string
-  author: string
-  content: string
-  timestamp: string
+  name: string
+  comment: string
+  created_at: string
 }
 
 export default function NewsArticlePage() {
   const params = useParams()
   const slug = params.slug as string
 
-  const [article, setArticle] = useState(newsArticles.find((a) => a.slug === slug))
-  const [likes, setLikes] = useState(Math.floor(Math.random() * 100) + 20)
+  const [article, setArticle] = useState<NewsRow | null>(null)
+  const [likes, setLikes] = useState<number>(0)
   const [isLiked, setIsLiked] = useState(false)
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: "1",
-      author: "John Doe",
-      content: "Great article! Very informative and well-written.",
-      timestamp: "2 hours ago",
-    },
-    {
-      id: "2",
-      author: "Jane Smith",
-      content: "This is exactly what I was looking for. Thank you for sharing!",
-      timestamp: "4 hours ago",
-    },
-  ])
+  const [comments, setComments] = useState<UiComment[]>([])
   const [newComment, setNewComment] = useState("")
   const [authorName, setAuthorName] = useState("")
 
   useEffect(() => {
-    // Save interaction data to localStorage for admin to access
-    const saveInteraction = (type: "like" | "comment", data: any) => {
-      const interactions = JSON.parse(localStorage.getItem("newsInteractions") || "[]")
-      interactions.push({
-        articleSlug: slug,
-        articleTitle: article?.title,
-        type,
-        data,
-        timestamp: new Date().toISOString(),
-      })
-      localStorage.setItem("newsInteractions", JSON.stringify(interactions))
+    let active = true
+    ;(async () => {
+      try {
+        const a = await fetchNewsBySlug(slug)
+        if (!active) return
+        if (a) {
+          setArticle(a)
+          setLikes(a.likes_count ?? 0)
+          const res = await fetch(`/api/news/${a.id}/comments`, { cache: "no-store" })
+          const list = await res.json()
+          if (active) setComments(list)
+        } else {
+          setArticle(null)
+        }
+      } catch {
+        setArticle(null)
+      }
+    })()
+    return () => {
+      active = false
     }
+  }, [slug])
 
-    if (isLiked) {
-      saveInteraction("like", { likes })
-    }
-  }, [isLiked, likes, slug, article?.title])
+  const handleLike = async () => {
+    if (!article || isLiked) return
+    
+    // Optimistic update
+    setIsLiked(true)
+    setLikes((prev) => prev + 1)
 
-  const handleLike = () => {
-    if (!isLiked) {
-      setLikes((prev) => prev + 1)
-      setIsLiked(true)
-    } else {
-      setLikes((prev) => prev - 1)
+    try {
+      const res = await fetch(`/api/news/${article.id}/like`, { method: "POST" })
+      if (res.status === 409) {
+        // Already liked, keep optimistic state
+        return
+      }
+      
+      if (!res.ok) {
+        // Revert on error
+        setIsLiked(false)
+        setLikes((prev) => prev - 1)
+        return
+      }
+      
+      const json = await res.json()
+      setLikes(Number(json?.likes_count ?? likes))
+    } catch {
+      // Revert on network error
       setIsLiked(false)
+      setLikes((prev) => prev - 1)
     }
   }
 
-  const handleComment = () => {
-    if (newComment.trim() && authorName.trim()) {
-      const comment: Comment = {
-        id: Date.now().toString(),
-        author: authorName,
-        content: newComment,
-        timestamp: "Just now",
-      }
-
-      setComments((prev) => [comment, ...prev])
-
-      // Save to localStorage for admin
-      const interactions = JSON.parse(localStorage.getItem("newsInteractions") || "[]")
-      interactions.push({
-        articleSlug: slug,
-        articleTitle: article?.title,
-        type: "comment",
-        data: comment,
-        timestamp: new Date().toISOString(),
-      })
-      localStorage.setItem("newsInteractions", JSON.stringify(interactions))
-
-      setNewComment("")
-      setAuthorName("")
+  const handleComment = async () => {
+    if (!article) return
+    if (isValidCommentPayload(authorName, newComment)) {
+      try {
+        const res = await fetch(`/api/news/${article.id}/comments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: authorName, comment: newComment }),
+        })
+        const json = await res.json()
+        const inserted = json?.inserted as UiComment | undefined
+        if (inserted) setComments((prev) => [inserted, ...prev])
+        setNewComment("")
+        setAuthorName("")
+      } catch {}
     }
   }
 
@@ -120,7 +127,6 @@ export default function NewsArticlePage() {
   if (!article) {
     return (
       <div className="min-h-screen relative flex items-center justify-center">
-        <AnimatedBackground />
         <div className="relative z-10 text-center">
           <h1 className="text-4xl font-bold text-white mb-4">Article Not Found</h1>
           <Link href="/news">
@@ -134,15 +140,14 @@ export default function NewsArticlePage() {
     )
   }
 
-  const relatedArticles = newsArticles.filter((a) => a.category === article.category && a.id !== article.id).slice(0, 3)
+  const relatedArticles: never[] = []
 
   return (
     <div className="min-h-screen relative">
-      <AnimatedBackground />
 
       <div className="relative z-10">
         {/* Back Button */}
-        <section className="py-8 px-4">
+        <section className="py-8 px-4 lg:hidden">
           <div className="container mx-auto">
             <Link href="/news">
               <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 bg-transparent">
@@ -153,18 +158,19 @@ export default function NewsArticlePage() {
           </div>
         </section>
 
+
         {/* Article Header */}
         <section className="py-8 px-4">
           <div className="container mx-auto max-w-4xl">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-              <Badge className={`${getCategoryColor(article.category)} text-white border-0 mb-4`}>
+              <Badge className={`${getCategoryColor(article.category || "")} text-white border-0 mb-4`}>
                 {article.category}
               </Badge>
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">{article.title}</h1>
-              <div className="flex items-center space-x-6 text-white/60 mb-8">
+              <div className="flex items-center space-x-6 text-light mb-8">
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-4 w-4" />
-                  <span>{article.date}</span>
+                  <span>{new Date(article.created_at).toLocaleDateString("en-KE", { dateStyle: "medium" })}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <MessageCircle className="h-4 w-4" />
@@ -189,7 +195,7 @@ export default function NewsArticlePage() {
               className="rounded-2xl overflow-hidden"
             >
               <img
-                src={article.image || "/placeholder.svg"}
+                src={article.thumbnail_url || "/placeholder.svg"}
                 alt={article.title}
                 className="w-full h-64 md:h-96 object-cover"
               />
@@ -204,9 +210,12 @@ export default function NewsArticlePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="prose prose-lg prose-invert max-w-none"
+              className="news-content max-w-none"
             >
-              <div className="text-white/80 leading-relaxed whitespace-pre-line">{article.content}</div>
+              <div
+                className="text-white/80 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content) }}
+              />
             </motion.div>
           </div>
         </section>
@@ -223,14 +232,14 @@ export default function NewsArticlePage() {
                       variant={isLiked ? "default" : "outline"}
                       className={`${
                         isLiked
-                          ? "bg-red-500 hover:bg-red-600 text-white"
-                          : "border-white/20 text-white hover:bg-white/10"
-                      }`}
+                          ? "bg-red-500 hover:bg-red-600 text-white border-red-500 scale-105"
+                          : "border-white/20 text-light hover:bg-white/10"
+                      } transition-all duration-300 active:scale-95`}
                     >
-                      <Heart className={`h-4 w-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
+                      <Heart className={`h-4 w-4 mr-2 ${isLiked ? "fill-current animate-bounce" : ""}`} />
                       {likes} Likes
                     </Button>
-                    <div className="text-white/60">
+                    <div className="text-light">
                       <MessageCircle className="h-4 w-4 inline mr-1" />
                       {comments.length} Comments
                     </div>
@@ -255,18 +264,18 @@ export default function NewsArticlePage() {
                     placeholder="Your name"
                     value={authorName}
                     onChange={(e) => setAuthorName(e.target.value)}
-                    className="bg-white/5 border-white/20 text-white placeholder:text-white/60"
+                    className="bg-white/5 border-white/20 text-light placeholder:text-light"
                   />
                   <Textarea
                     placeholder="Write a comment..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    className="bg-white/5 border-white/20 text-white placeholder:text-white/60 min-h-[100px]"
+                    className="bg-white/5 border-white/20 text-light placeholder:text-light min-h-[100px]"
                   />
                   <Button
                     onClick={handleComment}
                     disabled={!newComment.trim() || !authorName.trim()}
-                    className="bg-white text-black hover:bg-white/90"
+                    className="premium-btn"
                   >
                     <Send className="h-4 w-4 mr-2" />
                     Post Comment
@@ -279,15 +288,15 @@ export default function NewsArticlePage() {
                     <div key={comment.id} className="flex space-x-3">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="bg-white/20 text-white">
-                          {comment.author.substring(0, 2).toUpperCase()}
+                          {getInitials(comment.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-medium text-white">{comment.author}</span>
-                          <span className="text-sm text-white/60">{comment.timestamp}</span>
+                          <span className="font-medium text-white">{comment.name}</span>
+                          <span className="text-sm text-light">{new Date(comment.created_at).toLocaleString()}</span>
                         </div>
-                        <p className="text-white/80">{comment.content}</p>
+                        <p className="text-light">{comment.comment}</p>
                       </div>
                     </div>
                   ))}
@@ -326,7 +335,7 @@ export default function NewsArticlePage() {
                           <h3 className="font-bold text-white mb-2 group-hover:text-purple-300 transition-colors line-clamp-2">
                             {relatedArticle.title}
                           </h3>
-                          <p className="text-white/70 text-sm line-clamp-2">{relatedArticle.description}</p>
+                          <p className="text-light text-sm line-clamp-2">{relatedArticle.description}</p>
                         </div>
                       </CardContent>
                     </Link>
@@ -336,6 +345,34 @@ export default function NewsArticlePage() {
             </div>
           </section>
         )}
+
+        {/* KUCCPS Questions Support Section (bottom) */}
+        <section className="py-16 px-4">
+          <div className="container mx-auto max-w-4xl">
+            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+              <CardContent className="p-6">
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-bold text-white">Still have questions about KUCCPS Courses?</h2>
+                  <p className="text-white/80">
+                    Get personalised guidance on KUCCPS courses, cluster points, cut-off trends, and how the placement
+                    system works.
+                  </p>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="bg-white text-black hover:bg-white/90">Ask the KUCCPS Course Expert</Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>KUCCPS Course Expert</DialogTitle>
+                      </DialogHeader>
+                      <ChatbotPlaceholder />
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
 
         <Footer />
       </div>

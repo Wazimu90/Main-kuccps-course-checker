@@ -61,13 +61,13 @@ export default function CourseDetailsModal({ course, isOpen, onClose }: CourseDe
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Institution Name</label>
+                  <label className="text-sm font-medium text-white">Institution Name</label>
                   <p className="text-sm font-semibold">{institutionName}</p>
                 </div>
 
                 {course.institution_type && (
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Institution Type</label>
+                    <label className="text-sm font-medium text-white">Institution Type</label>
                     <Badge variant="outline" className="ml-2">
                       {course.institution_type}
                     </Badge>
@@ -76,16 +76,16 @@ export default function CourseDetailsModal({ course, isOpen, onClose }: CourseDe
 
                 {course.location && (
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Location</label>
+                    <label className="text-sm font-medium text-white">Location</label>
                     <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <MapPin className="h-4 w-4 text-white" />
                       <p className="text-sm">{course.location}</p>
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Official Website</label>
+                  <label className="text-sm font-medium text-white">Official Website</label>
                   <Button variant="outline" size="sm" className="ml-2 h-8 bg-transparent" asChild>
                     <a
                       href={googleSearchUrl}
@@ -114,16 +114,16 @@ export default function CourseDetailsModal({ course, isOpen, onClose }: CourseDe
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Programme Code</label>
+                  <label className="text-sm font-medium text-white">Programme Code</label>
                   <div className="flex items-center gap-1">
-                    <Hash className="h-4 w-4 text-muted-foreground" />
+                    <Hash className="h-4 w-4 text-white" />
                     <p className="text-sm font-semibold">{course.programme_code}</p>
                   </div>
                 </div>
 
                 {course.cutoff && (
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Cutoff Points</label>
+                    <label className="text-sm font-medium text-white">Cutoff Points</label>
                     <Badge variant="outline" className="ml-2 bg-purple-50 text-purple-700 border-purple-200">
                       {course.cutoff.toFixed(3)} points
                     </Badge>
@@ -132,7 +132,7 @@ export default function CourseDetailsModal({ course, isOpen, onClose }: CourseDe
 
                 {course.cluster && (
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Cluster</label>
+                    <label className="text-sm font-medium text-white">Cluster</label>
                     <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 border-blue-200">
                       <Users className="h-3 w-3 mr-1" />
                       Cluster {course.cluster}
@@ -142,9 +142,9 @@ export default function CourseDetailsModal({ course, isOpen, onClose }: CourseDe
 
                 {course.duration && (
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Duration</label>
+                    <label className="text-sm font-medium text-white">Duration</label>
                     <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <Clock className="h-4 w-4 text-white" />
                       <p className="text-sm font-semibold">{course.duration}</p>
                     </div>
                   </div>
@@ -152,7 +152,7 @@ export default function CourseDetailsModal({ course, isOpen, onClose }: CourseDe
 
                 {course.type && (
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Course Type</label>
+                    <label className="text-sm font-medium text-white">Course Type</label>
                     <Badge variant="outline" className="ml-2">
                       {course.type}
                     </Badge>

@@ -27,7 +27,7 @@ export default function HowItWorksStep({ step, title, description, icon: Icon, d
         <span className="text-lg font-bold">{step}</span>
       </div>
       <h3 className="mb-2 mt-4 text-xl font-semibold">{title}</h3>
-      <p className="text-muted-foreground">{description}</p>
+      <p className="text-white">{description}</p>
     </motion.div>
   )
 }

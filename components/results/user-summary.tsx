@@ -49,9 +49,9 @@ export default function UserSummary({ paymentInfo }: UserSummaryProps) {
       transition={{ duration: 0.5, delay: 0.1 }}
     >
       <Card className="bg-white shadow-md rounded-xl">
-        <CardContent className="p-6 bg-[#F8FAFC] text-gray-900 dark:bg-gray-800 dark:text-gray-100">
+        <CardContent className="p-6 bg-[#F8FAFC] text-light dark:bg-gray-800 dark:text-light">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Student Information</h2>
+            <h2 className="text-xl font-semibold text-light">Student Information</h2>
             <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
               ✓ Payment Verified
             </Badge>
@@ -63,8 +63,8 @@ export default function UserSummary({ paymentInfo }: UserSummaryProps) {
                 <User className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Full Name</p>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">{paymentInfo.name}</p>
+                <p className="text-sm text-light">Full Name</p>
+                <p className="font-semibold text-light">{paymentInfo.name}</p>
               </div>
             </div>
 
@@ -73,8 +73,8 @@ export default function UserSummary({ paymentInfo }: UserSummaryProps) {
                 <Mail className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Email Address</p>
-                <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">{paymentInfo.email}</p>
+                <p className="text-sm text-light">Email Address</p>
+                <p className="font-semibold text-sm text-light">{paymentInfo.email}</p>
               </div>
             </div>
 
@@ -83,17 +83,17 @@ export default function UserSummary({ paymentInfo }: UserSummaryProps) {
                 <Phone className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Phone Number</p>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">{paymentInfo.phone}</p>
+                <p className="text-sm text-light">Phone Number</p>
+                <p className="font-semibold text-light">{paymentInfo.phone}</p>
               </div>
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-6 pt-4 border-t border-white/20">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <span className="text-gray-600 dark:text-gray-400">
+                <Calendar className="h-4 w-4 text-light" />
+                <span className="text-light">
                   Results generated on {new Date(paymentInfo.timestamp).toLocaleDateString()}
                 </span>
               </div>
