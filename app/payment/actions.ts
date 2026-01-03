@@ -1,6 +1,7 @@
 "use server"
 
 import { v4 as uuidv4 } from "uuid"
+import { log } from "@/lib/logger"
 
 // This is a mock implementation. In a real application, you would integrate with Pesaflux API
 export async function initiatePayment(data: {
@@ -15,7 +16,7 @@ export async function initiatePayment(data: {
 
     // In a real implementation, you would call the Pesaflux API here
     // For demo purposes, we'll simulate a successful API call
-    console.log("Initiating payment:", { ...data, paymentId })
+    log("payment:init", "Initiating payment", "info", { ...data, paymentId })
 
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 1500))
@@ -27,7 +28,7 @@ export async function initiatePayment(data: {
       message: "Payment initiated successfully",
     }
   } catch (error) {
-    console.error("Payment initiation error:", error)
+    log("payment:init", "Payment initiation error", "error", error)
     return {
       success: false,
       message: "Failed to initiate payment",
@@ -39,7 +40,7 @@ export async function initiatePayment(data: {
 export async function checkPaymentStatus(paymentId: string) {
   try {
     // In a real implementation, you would call the Pesaflux API to check status
-    console.log("Checking payment status for:", paymentId)
+    log("payment:status", "Checking payment status", "debug", { paymentId })
 
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -66,7 +67,7 @@ export async function checkPaymentStatus(paymentId: string) {
       }
     }
   } catch (error) {
-    console.error("Payment status check error:", error)
+    log("payment:status", "Payment status check error", "error", error)
     return {
       status: "ERROR",
       message: "Failed to check payment status",

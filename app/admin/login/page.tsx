@@ -2,18 +2,18 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Eye, EyeOff, Shield, ArrowLeft, Loader2, Mail, Lock, Smartphone } from "lucide-react"
+import { Eye, EyeOff, Shield, ArrowLeft, Loader2, Mail, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -24,9 +24,6 @@ export default function AdminLoginPage() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [show2FA, setShow2FA] = useState(false)
-  const [twoFACode, setTwoFACode] = useState("")
-  const [is2FALoading, setIs2FALoading] = useState(false)
   const [error, setError] = useState("")
   const [failedAttempts, setFailedAttempts] = useState(0)
 
@@ -60,22 +57,41 @@ export default function AdminLoginPage() {
     setError("")
 
     try {
-      // Simulate API call for login
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Check credentials (mock validation)
-      if (formData.email === "admin@kuccps.com" && formData.password === "admin123") {
-        // Success - show 2FA
-        setShow2FA(true)
-        toast({
-          title: "Login Successful",
-          description: "Please enter the 2FA code sent to your email",
-        })
-      } else {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      })
+      if (authError || !data?.user) {
         setFailedAttempts((prev) => prev + 1)
         setError("Invalid email or password")
+      } else {
+        toast({ title: "Login Successful", description: "Redirecting to admin dashboard" })
+        try {
+          const at = data.session?.access_token || ""
+          const rt = data.session?.refresh_token || ""
+          if (at && rt) {
+            await fetch("/api/auth/session", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ access_token: at, refresh_token: rt }),
+            })
+          }
+        } catch {}
+        try {
+          await fetch("/api/admin/activity", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event_type: "admin_login",
+              description: "Admin login",
+              email: formData.email,
+              actor_role: "admin",
+            }),
+          })
+        } catch {}
+        router.push("/admin/dashboard")
       }
-    } catch (error) {
+    } catch {
       setError("Login failed. Please try again.")
     } finally {
       setIsLoading(false)
@@ -93,21 +109,30 @@ export default function AdminLoginPage() {
     setError("")
 
     try {
-      // Simulate 2FA verification
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      if (twoFACode === "123456") {
-        // Success - redirect to dashboard
-        localStorage.setItem("adminToken", "mock-admin-token")
-        toast({
-          title: "Authentication Successful",
-          description: "Welcome to the admin dashboard",
-        })
+      const resp = await fetch("/api/admin/access-code/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-csrf-token": csrfToken },
+        body: JSON.stringify({ email: formData.email, access_code: twoFACode }),
+      })
+      if (resp.ok) {
+        toast({ title: "Authentication Successful", description: "Welcome to the admin dashboard" })
+        try {
+          await fetch("/api/admin/activity", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event_type: "admin_login",
+              description: "Admin login",
+              email: formData.email,
+              actor_role: "admin",
+            }),
+          })
+        } catch {}
         router.push("/admin/dashboard")
       } else {
-        setError("Invalid 2FA code. Please try again.")
+        setError("Invalid access code. Please try again.")
       }
-    } catch (error) {
+    } catch {
       setError("2FA verification failed. Please try again.")
     } finally {
       setIs2FALoading(false)
@@ -150,7 +175,7 @@ export default function AdminLoginPage() {
               <Shield className="h-8 w-8 text-primary" />
             </motion.div>
             <h1 className="text-2xl font-bold">KUCCPS Admin</h1>
-            <p className="text-muted-foreground">Authorized access only</p>
+            <p className="text-white">Authorized access only</p>
           </div>
 
           {/* Login Form */}
@@ -178,7 +203,7 @@ export default function AdminLoginPage() {
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white" />
                     <Input
                       id="email"
                       name="email"
@@ -195,7 +220,7 @@ export default function AdminLoginPage() {
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white" />
                     <Input
                       id="password"
                       name="password"
@@ -234,7 +259,7 @@ export default function AdminLoginPage() {
               <div className="mt-6 text-center">
                 <Link
                   href="/"
-                  className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+                  className="inline-flex items-center gap-2 text-sm text-white hover:text-primary"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Return to User Side
@@ -244,65 +269,11 @@ export default function AdminLoginPage() {
           </Card>
 
           {/* Footer */}
-          <div className="mt-8 text-center text-sm text-muted-foreground">
+          <div className="mt-8 text-center text-sm text-white">
             <p>KUCCPS Course Checker Admin v1.0</p>
           </div>
         </motion.div>
       </div>
-
-      {/* 2FA Modal */}
-      <Dialog open={show2FA} onOpenChange={setShow2FA}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Smartphone className="h-5 w-5" />
-              Two-Factor Authentication
-            </DialogTitle>
-            <DialogDescription>Enter the 6-digit verification code sent to your email address</DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handle2FA} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="twoFACode">Verification Code</Label>
-              <Input
-                id="twoFACode"
-                value={twoFACode}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, "").slice(0, 6)
-                  setTwoFACode(value)
-                  if (error) setError("")
-                }}
-                className="text-center text-lg tracking-widest"
-                placeholder="000000"
-                maxLength={6}
-                disabled={is2FALoading}
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button type="submit" className="flex-1" disabled={is2FALoading || twoFACode.length !== 6}>
-                {is2FALoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  "Verify"
-                )}
-              </Button>
-              <Button type="button" variant="outline" onClick={resend2FA} disabled={is2FALoading}>
-                Resend
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <style jsx>{`
         @keyframes blob {
