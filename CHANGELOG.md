@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added – 2026-01-11
+- **Student Tools Page** - A dedicated page for essential government services and student resources
+  - Mobile-first responsive design optimized for 99% mobile traffic
+  - Fast loading with disabled animated background for better performance
+  - 6 government service cards with official logos, descriptions, and links:
+    - **KUCCPS** - Kenya Universities and Colleges Central Placement Service
+    - **HELB** - Higher Education Loans Board
+    - **KRA** - Kenya Revenue Authority
+    - **KNEC** - Kenya National Examinations Council
+    - **Ministry of Education** - Republic of Kenya
+    - **Skylink Bundlesfasta** - Mobile data bundle services
+  - Dynamic status badges:
+    - "Applications Not Open Yet" for KUCCPS and HELB
+    - "Applications Open" for KRA, KNEC, and Ministry of Education
+    - "Online Now" with animated pulse indicator for Skylink Bundlesfasta
+  - Beautiful card-based layout with hover effects and premium styling
+  - External link indicators and category badges
+  - Educational info section about official government services
+  - Added "Student Tools" link to main navigation header
+  - **Video Tutorial Section** - Interactive YouTube tutorial videos with modal overlay
+    - 6 comprehensive video tutorials covering:
+      - How to check qualified courses using our website
+      - How to apply for KUCCPS university placement
+      - How to apply for KRA PIN online
+      - How to apply for HELB loan & scholarship
+      - Understanding KUCCPS cluster points & cut-off marks
+      - How to download KNEC results certificate
+    - Beautiful video cards with YouTube thumbnails and play buttons
+    - Duration badges on each video thumbnail
+    - Modal overlay system that opens videos without leaving the page
+    - Animated modal with smooth transitions and backdrop blur
+    - Close button with rotation animation
+    - Prevents body scroll when modal is open
+    - Click outside to close functionality
+    - Auto-play videos when modal opens
+    - Video information display below embedded player
+    - Fully mobile-responsive with touch-friendly controls
+    - Hover effects with scale animations on thumbnails
+  - References:
+    - [student-tools/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/student-tools/page.tsx)
+    - [header.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/header.tsx)
+    - [background/BackgroundProvider.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/background/BackgroundProvider.tsx)
+
+### Performance – 2026-01-11
+- Disabled animated floating lines background on Student Tools page for faster loading
+- Optimized page rendering for mobile devices with reduced visual effects
+- YouTube thumbnail images lazy-loaded for better initial page performance
+
+
 ### Changed – 2026-01-03
 - Certificate results preview
   - Switched cache fetch to tolerant `.maybeSingle()` and ensured count-up animations trigger when falling back to in-memory results

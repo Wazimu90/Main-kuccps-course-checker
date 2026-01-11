@@ -8,9 +8,10 @@ export default function BackgroundProvider() {
   const pathname = usePathname()
   const isAdmin = pathname?.startsWith("/admin")
   const isMaintenance = pathname === "/maintenance"
+  const isStudentTools = pathname === "/student-tools"
 
   useEffect(() => {
-    if (isAdmin || isMaintenance) {
+    if (isAdmin || isMaintenance || isStudentTools) {
       document.body.classList.add("admin-no-bg")
     } else {
       document.body.classList.remove("admin-no-bg")
@@ -18,9 +19,9 @@ export default function BackgroundProvider() {
     return () => {
       document.body.classList.remove("admin-no-bg")
     }
-  }, [isAdmin, isMaintenance])
+  }, [isAdmin, isMaintenance, isStudentTools])
 
-  if (isAdmin || isMaintenance) {
+  if (isAdmin || isMaintenance || isStudentTools) {
     return <div className="floating-lines-overlay hidden" />
   }
 

@@ -20,7 +20,7 @@ import {
 import MagicMenu from "@/components/MagicMenu"
 import { useToast } from "@/hooks/use-toast"
 import CourseCategoryCard from "@/components/course-category-card"
-import TestimonialCarousel from "@/components/testimonial-carousel" 
+import TestimonialCarousel from "@/components/testimonial-carousel"
 import Footer from "@/components/footer"
 import TextType from "@/components/ui/text-type"
 import HowItWorks from "@/components/how-it-works"
@@ -79,7 +79,7 @@ export default function Home() {
     },
     {
       title: "Short Courses",
-      description: "Learn a skill & improve your personal development.",
+      description: "For Free Learn a skill & improve your personal development.",
       icon: Briefcase,
       href: "#",
       onClick: showComingSoon,
@@ -88,11 +88,11 @@ export default function Home() {
 
   ]
 
-  
+
 
   return (
     <div className="min-h-screen flex flex-col">
-      
+
 
       {/* Hero Section */}
       <section className="relative py-20 md:py-32">
@@ -129,7 +129,7 @@ export default function Home() {
               </h1>
 
               <p className="mb-8 text-lg md:text-xl text-light max-w-3xl mx-auto leading-relaxed">
-                Powered by official KUCCPS Data | With Intelligent Assistant to help you understand and choose the best Courses. 
+                Powered by official KUCCPS Data | With Intelligent Assistant to help you understand and choose the best Courses.
               </p>
 
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -140,11 +140,15 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.8 }}
-              className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-light"
+                className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-light"
               >
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-2 text-green-400" />
-                  <span>10k+ Students Helped</span>
+                  <span>102k+ Students Helped</span>
+                </div>
+                <div className="flex items-center">
+                  <Users className="h-4 w-4 mr-2 text-green-400" />
+                  <span>10k+ Courses</span>
                 </div>
                 <div className="flex items-center">
                   <Star className="h-4 w-4 mr-2 text-yellow-400" />
@@ -153,6 +157,14 @@ export default function Home() {
                 <div className="flex items-center">
                   <CheckCircle className="h-4 w-4 mr-2 text-blue-400" />
                   <span>99% Accuracy</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2 text-blue-400" />
+                  <span>Free AI Assistant</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2 text-blue-400" />
+                  <span>Free PDF Download</span>
                 </div>
               </motion.div>
             </motion.div>
@@ -210,7 +222,7 @@ export default function Home() {
           >
             <h2 className="mb-4 text-3xl md:text-5xl font-bold text-light">What Students Say</h2>
             <p className="mx-auto max-w-2xl text-lg text-light">
-             Hear from thousands of students who have successfully used our course checker
+              Hear from thousands of students who have successfully used our course checker
             </p>
           </motion.div>
 

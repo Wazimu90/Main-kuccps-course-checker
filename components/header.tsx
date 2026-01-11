@@ -13,6 +13,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Courses", href: "/#courses", ariaLabel: "Go to course categories" },
+  { label: "Student Tools", href: "/student-tools", ariaLabel: "Access essential student resources" },
   { label: "News", href: "/news", ariaLabel: "Read latest news" },
   { label: "Buy Data", href: "https://bingwazone.co.ke/app/bonke", external: true, ariaLabel: "Open Buy Data in new tab" },
   { label: "About", href: "/about", ariaLabel: "Learn about this site" },
@@ -37,9 +38,8 @@ export const Header: React.FC = () => {
   return (
     <>
       <div
-        className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 transition-all duration-300 ${
-          isScrolled ? "py-3" : "py-5"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 transition-all duration-300 ${isScrolled ? "py-3" : "py-5"
+          }`}
       >
         <header
           className={`
@@ -47,10 +47,9 @@ export const Header: React.FC = () => {
             w-full max-w-5xl
             transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
             backdrop-blur-xl border border-dim/20
-            ${
-              isScrolled || isMobileMenuOpen
-                ? "bg-base/80 py-3 px-5 rounded-2xl shadow-premium"
-                : "bg-surface/80 py-4 px-8 rounded-full shadow-[0_4px_20px_rgba(34,211,238,0.08)]"
+            ${isScrolled || isMobileMenuOpen
+              ? "bg-base/80 py-3 px-5 rounded-2xl shadow-premium"
+              : "bg-surface/80 py-4 px-8 rounded-full shadow-[0_4px_20px_rgba(34,211,238,0.08)]"
             }
           `}
         >
@@ -112,10 +111,9 @@ export const Header: React.FC = () => {
               flex flex-col gap-1 overflow-hidden
               origin-top transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
               shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-0
-              ${
-                isMobileMenuOpen
-                  ? "opacity-100 scale-100 translate-y-0 max-h-80"
-                  : "opacity-0 scale-95 -translate-y-4 max-h-0 pointer-events-none"
+              ${isMobileMenuOpen
+                ? "opacity-100 scale-100 translate-y-0 max-h-80"
+                : "opacity-0 scale-95 -translate-y-4 max-h-0 pointer-events-none"
               }
               md:hidden
             `}
