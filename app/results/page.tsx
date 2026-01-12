@@ -892,7 +892,7 @@ export default function ResultsPage() {
                     asChild
                     className="bg-white text-blue-700 hover:bg-blue-100 font-semibold px-8 py-6 rounded-lg shadow-lg"
                   >
-                    <a href="https://www.bingwazone/app/bonke" target="_blank" rel="noopener noreferrer" aria-label="Open Safaricom buying page">
+                    <a href="https://bingwazone.co.ke/app/Bfasta" target="_blank" rel="noopener noreferrer" aria-label="Open Safaricom buying page">
                       Buy Data, SMS & Minutes
                     </a>
                   </Button>

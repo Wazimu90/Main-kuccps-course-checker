@@ -17,7 +17,7 @@ const menuItems: MenuItem[] = [
   { name: "Certificate", icon: BookOpen, path: "/certificate" },
   { name: "KMTC", icon: Stethoscope, path: "/kmtc" },
   { name: "Artisan", icon: Hammer, path: "/artisan" },
-  { name: "Short Courses", icon: Briefcase, path: "/short-courses" },
+  { name: "Short Courses", icon: Briefcase, path: "/learn-skills" },
 ]
 
 const MagicMenu: React.FC = () => {
