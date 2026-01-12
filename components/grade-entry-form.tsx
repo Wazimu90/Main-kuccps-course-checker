@@ -455,7 +455,7 @@ export default function GradeEntryForm({ category, onSubmit, onProgressUpdate }:
                     {expandedGroups.includes(group.id) ? (
                       <ChevronUp className="h-5 w-5 text-white" />
                     ) : (
-                      <ChevronDown className="h-5 w-5 text-white" />
+                      <ChevronDown className="h-5 w-5 text-white animate-bounce-subtle" />
                     )}
                   </div>
 
@@ -468,9 +468,8 @@ export default function GradeEntryForm({ category, onSubmit, onProgressUpdate }:
                       {group.subjects.map((subject) => (
                         <div
                           key={subject.code}
-                          className={`flex items-center justify-between p-4 ${
-                            errors[subject.code] ? "bg-destructive/5" : ""
-                          }`}
+                          className={`flex items-center justify-between p-4 ${errors[subject.code] ? "bg-destructive/5" : ""
+                            }`}
                         >
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-white">{subject.code}</span>
