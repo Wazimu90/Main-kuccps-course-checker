@@ -14,8 +14,9 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Courses", href: "/#courses", ariaLabel: "Go to course categories" },
   { label: "Student Tools", href: "/student-tools", ariaLabel: "Access essential student resources" },
+  { label: "Cluster Calculator", href: "/cluster-calculator", ariaLabel: "Calculate KUCCPS cluster points" },
   { label: "News", href: "/news", ariaLabel: "Read latest news" },
-  { label: "Buy Data", href: "https://bingwazone.co.ke/app/bonke", external: true, ariaLabel: "Open Buy Data in new tab" },
+  { label: "Buy Data", href: "https://bingwazone.co.ke/app/Bfasta", external: true, ariaLabel: "Open Buy Data in new tab" },
   { label: "About", href: "/about", ariaLabel: "Learn about this site" },
 ]
 
@@ -24,6 +25,9 @@ export const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isOpeningBuyData, setIsOpeningBuyData] = useState(false)
+
+  // Static badge count - set to 3 for demonstration (change to 0 to hide)
+  const newsBadgeCount = 3
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20)
@@ -55,7 +59,7 @@ export const Header: React.FC = () => {
         >
           <div className="absolute inset-0 rounded-[inherit] pointer-events-none border border-accent/10 shadow-[inset_0_0_15px_rgba(34,211,238,0.03)]" />
 
-          <a href="#" className="flex items-center gap-3 z-10 group select-none">
+          <a href="/" className="flex items-center gap-3 z-10 group select-none">
             <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 group-hover:bg-accent/20 transition-all duration-300 shadow-[0_0_10px_rgba(34,211,238,0.15)]">
               <GraduationCap className="w-5 h-5 text-accent group-hover:scale-110 transition-transform duration-300" />
             </div>
@@ -72,6 +76,7 @@ export const Header: React.FC = () => {
           <nav className="hidden md:flex items-center gap-1 z-10">
             {NAV_ITEMS.map((item) => {
               const isBuyData = item.label === "Buy Data"
+              const isNews = item.label === "News"
               return (
                 <a
                   key={item.label}
@@ -79,7 +84,7 @@ export const Header: React.FC = () => {
                   target={item.external ? "_blank" : undefined}
                   rel={item.external ? "noopener noreferrer" : undefined}
                   aria-label={item.ariaLabel}
-                  className="relative px-5 py-2 group overflow-hidden rounded-full transition-all duration-300"
+                  className="relative px-5 py-2 group overflow-visible rounded-full transition-all duration-300"
                   onClick={(e) => {
                     if (item.external) {
                       setIsOpeningBuyData(true)
@@ -87,9 +92,17 @@ export const Header: React.FC = () => {
                     }
                   }}
                 >
-                  <span className="relative z-10 text-dim text-sm font-medium tracking-wide group-hover:text-light transition-colors duration-300" aria-hidden="true">
+                  <span className={`relative z-10 text-sm font-medium tracking-wide transition-colors duration-300 ${isBuyData
+                    ? "text-green-500 group-hover:text-green-400"
+                    : "text-dim group-hover:text-light"
+                    }`} aria-hidden="true">
                     {isBuyData && isOpeningBuyData ? "Opening…" : item.label}
                   </span>
+                  {isNews && newsBadgeCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 z-50 flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-red-500 text-white text-[11px] font-bold rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">
+                      {newsBadgeCount > 9 ? "9+" : newsBadgeCount}
+                    </span>
+                  )}
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[2px] bg-accent group-hover:w-1/2 transition-all duration-300 ease-out opacity-0 group-hover:opacity-100 shadow-glow"></div>
                 </a>
               )
@@ -118,23 +131,35 @@ export const Header: React.FC = () => {
               md:hidden
             `}
           >
-            {NAV_ITEMS.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                target={item.external ? "_blank" : undefined}
-                rel={item.external ? "noopener noreferrer" : undefined}
-                aria-label={item.ariaLabel}
-                onClick={() => {
-                  if (item.external) setIsOpeningBuyData(true)
-                  setTimeout(() => setIsOpeningBuyData(false), 1200)
-                  setIsMobileMenuOpen(false)
-                }}
-                className="p-3 text-center rounded-xl text-light text-sm font-medium hover:bg-accent/10 hover:text-accent transition-all duration-200"
-              >
-                {item.label === "Buy Data" && isOpeningBuyData ? "Opening…" : item.label}
-              </a>
-            ))}
+            {NAV_ITEMS.map((item) => {
+              const isNews = item.label === "News"
+              const isBuyData = item.label === "Buy Data"
+              return (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target={item.external ? "_blank" : undefined}
+                  rel={item.external ? "noopener noreferrer" : undefined}
+                  aria-label={item.ariaLabel}
+                  onClick={() => {
+                    if (item.external) setIsOpeningBuyData(true)
+                    setTimeout(() => setIsOpeningBuyData(false), 1200)
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`relative p-3 text-center rounded-xl text-sm font-medium transition-all duration-200 overflow-visible ${isBuyData
+                    ? "text-green-500 hover:bg-green-500/10 hover:text-green-400"
+                    : "text-light hover:bg-accent/10 hover:text-accent"
+                    }`}
+                >
+                  {item.label === "Buy Data" && isOpeningBuyData ? "Opening…" : item.label}
+                  {isNews && newsBadgeCount > 0 && (
+                    <span className="absolute top-1 right-1 z-50 flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-red-500 text-white text-[11px] font-bold rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)] border-2 border-background">
+                      {newsBadgeCount > 9 ? "9+" : newsBadgeCount}
+                    </span>
+                  )}
+                </a>
+              )
+            })}
           </div>
         </header>
       </div>

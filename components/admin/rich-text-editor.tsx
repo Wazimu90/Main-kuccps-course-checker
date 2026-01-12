@@ -92,18 +92,54 @@ export default function RichTextEditor({ value, onChange }: Props) {
   const clearFormattingSelection = () => {
     try {
       const sel = document.getSelection()
-      if (!sel || sel.rangeCount === 0) return
+      if (!sel || sel.rangeCount === 0) {
+        // If nothing is selected, try to remove all formatting from the entire editor
+        if (ref.current) {
+          ref.current.focus()
+          document.execCommand("selectAll", false)
+          document.execCommand("removeFormat", false)
+          document.execCommand("unlink", false)
+          sel?.removeAllRanges()
+          onChange(ref.current.innerHTML)
+          updateStates()
+        }
+        return
+      }
+
       const range = sel.getRangeAt(0)
       if (!ref.current || !ref.current.contains(range.commonAncestorContainer)) return
+
+      // Get the selected text content
       const text = range.toString()
-      range.deleteContents()
-      range.insertNode(document.createTextNode(text))
-      if (ref.current) onChange(ref.current.innerHTML)
-      updateStates()
-    } catch {
-      // fallback to removeFormat and unlink
-      exec("removeFormat")
-      exec("unlink")
+
+      if (text) {
+        // Delete the formatted content and insert plain text
+        range.deleteContents()
+        const textNode = document.createTextNode(text)
+        range.insertNode(textNode)
+
+        // Move cursor to end of inserted text
+        range.setStartAfter(textNode)
+        range.setEndAfter(textNode)
+        sel.removeAllRanges()
+        sel.addRange(range)
+      }
+
+      if (ref.current) {
+        onChange(ref.current.innerHTML)
+        updateStates()
+      }
+    } catch (error) {
+      console.error("Clear formatting error:", error)
+      // Fallback to basic removeFormat and unlink
+      try {
+        document.execCommand("removeFormat", false)
+        document.execCommand("unlink", false)
+        if (ref.current) {
+          onChange(ref.current.innerHTML)
+          updateStates()
+        }
+      } catch { }
     }
   }
 
@@ -219,8 +255,57 @@ export default function RichTextEditor({ value, onChange }: Props) {
                   setLinkError("Please enter a valid URL (http, https, mailto, tel, /path or #anchor)")
                   return
                 }
-                exec("createLink", linkUrl)
-                setLinkOpen(false)
+
+                try {
+                  const sel = document.getSelection()
+                  if (!sel || sel.rangeCount === 0) {
+                    setLinkError("Please select text to convert into a link")
+                    return
+                  }
+
+                  const range = sel.getRangeAt(0)
+                  const selectedText = range.toString()
+
+                  if (!selectedText.trim()) {
+                    setLinkError("Please select text to convert into a link")
+                    return
+                  }
+
+                  // Create link element manually for better control
+                  const link = document.createElement("a")
+                  link.href = linkUrl
+                  link.textContent = selectedText
+                  link.style.color = "inherit"
+                  link.style.textDecoration = "underline"
+
+                  // Add target="_blank" for external links
+                  if (linkUrl.startsWith("http://") || linkUrl.startsWith("https://")) {
+                    link.target = "_blank"
+                    link.rel = "noopener noreferrer"
+                  }
+
+                  // Replace selected text with link
+                  range.deleteContents()
+                  range.insertNode(link)
+
+                  // Move cursor after the link
+                  range.setStartAfter(link)
+                  range.setEndAfter(link)
+                  sel.removeAllRanges()
+                  sel.addRange(range)
+
+                  if (ref.current) {
+                    onChange(ref.current.innerHTML)
+                    updateStates()
+                  }
+
+                  setLinkOpen(false)
+                  setLinkUrl("")
+                  setLinkError("")
+                } catch (error) {
+                  console.error("Link creation error:", error)
+                  setLinkError("Failed to create link. Please try again.")
+                }
               }}
             >
               Apply Link

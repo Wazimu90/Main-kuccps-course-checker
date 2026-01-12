@@ -9,9 +9,12 @@ export default function BackgroundProvider() {
   const isAdmin = pathname?.startsWith("/admin")
   const isMaintenance = pathname === "/maintenance"
   const isStudentTools = pathname === "/student-tools"
+  const isClusterCalculator = pathname === "/cluster-calculator"
+  const isLearnSkills = pathname === "/learn-skills"
+  const isNews = pathname === "/news" || pathname?.startsWith("/news/")
 
   useEffect(() => {
-    if (isAdmin || isMaintenance || isStudentTools) {
+    if (isAdmin || isMaintenance || isStudentTools || isClusterCalculator || isLearnSkills || isNews) {
       document.body.classList.add("admin-no-bg")
     } else {
       document.body.classList.remove("admin-no-bg")
@@ -19,9 +22,9 @@ export default function BackgroundProvider() {
     return () => {
       document.body.classList.remove("admin-no-bg")
     }
-  }, [isAdmin, isMaintenance, isStudentTools])
+  }, [isAdmin, isMaintenance, isStudentTools, isClusterCalculator, isLearnSkills, isNews])
 
-  if (isAdmin || isMaintenance || isStudentTools) {
+  if (isAdmin || isMaintenance || isStudentTools || isClusterCalculator || isLearnSkills || isNews) {
     return <div className="floating-lines-overlay hidden" />
   }
 

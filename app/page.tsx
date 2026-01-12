@@ -81,8 +81,7 @@ export default function Home() {
       title: "Short Courses",
       description: "For Free Learn a skill & improve your personal development.",
       icon: Briefcase,
-      href: "#",
-      onClick: showComingSoon,
+      href: "/learn-skills",
       colorScheme: "indigo",
     },
 

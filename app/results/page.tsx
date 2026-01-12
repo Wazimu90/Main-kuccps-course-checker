@@ -59,7 +59,7 @@ export default function ResultsPage() {
   const [availableInstitutions, setAvailableInstitutions] = useState([])
   const [availableLocations, setAvailableLocations] = useState([])
   const filtersRef = useRef(null)
-  const BUY_URL = process.env.NEXT_PUBLIC_SAFARICOM_BUY_URL || "https://www.safaricom.com/personal/data"
+  const BUY_URL = process.env.NEXT_PUBLIC_SAFARICOM_BUY_URL || "https://bingwazone.co.ke/app/Bfasta"
   const containerVariants = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.32, ease: "easeOut", staggerChildren: 0.1 } } }
   const itemVariants = { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }
   const launchConfetti = () => {
@@ -124,7 +124,7 @@ export default function ResultsPage() {
       setTimeout(() => {
         window.removeEventListener("resize", resize)
       }, duration + 500)
-    } catch {}
+    } catch { }
   }
   useEffect(() => {
     if (showPostDownloadModal) launchConfetti()
@@ -407,11 +407,11 @@ export default function ResultsPage() {
       // Add Header
       doc.setFillColor(41, 128, 185) // Blue header
       doc.rect(0, 0, 210, 40, "F")
-      
+
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(22)
       doc.text("KUCCPS Course Eligibility Results", 105, 20, { align: "center" })
-      
+
       doc.setFontSize(12)
       doc.text(`Category: ${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}`, 105, 30, { align: "center" })
 
@@ -421,17 +421,17 @@ export default function ResultsPage() {
       doc.text(`Student Name: ${paymentInfo?.name || "Student"}`, 14, 50)
       doc.text(`Email: ${paymentInfo?.email || "N/A"}`, 14, 56)
       doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 62)
-      
+
       // Summary
       doc.setDrawColor(200, 200, 200)
       doc.line(14, 66, 196, 66)
-      
+
       doc.setFontSize(14)
       doc.text("Results Summary", 14, 75)
       doc.setFontSize(11)
       doc.text(`Total Qualified Courses: ${filteredCourses.length}`, 14, 82)
       doc.text(`Institutions: ${[...new Set(filteredCourses.map((c) => c.institution || c.institution_name || c.campus))].length}`, 80, 82)
-      
+
       // Table
       const tableColumn = ["Course Name", "Institution", "Code", "Location"]
       const tableRows = filteredCourses.map((course) => [
@@ -456,7 +456,7 @@ export default function ResultsPage() {
 
       // Footer
       const pageCount = doc.internal.getNumberOfPages()
-      for(let i = 1; i <= pageCount; i++) {
+      for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i)
         doc.setFontSize(10)
         doc.setTextColor(150)
@@ -487,7 +487,7 @@ export default function ResultsPage() {
             },
           }),
         })
-      } catch {}
+      } catch { }
       try {
         const key = "downloadModalShown"
         const shown = sessionStorage.getItem(key)
@@ -495,7 +495,7 @@ export default function ResultsPage() {
           sessionStorage.setItem(key, "true")
           setShowPostDownloadModal(true)
         }
-      } catch {}
+      } catch { }
     } catch (error) {
       console.error("PDF generation error:", error)
       toast({
@@ -511,17 +511,17 @@ export default function ResultsPage() {
     const uniqueInstitutions =
       filteredCourses.length > 0
         ? [
-            ...new Set(
-              filteredCourses
-                .map((course) => {
-                  if (selectedCategory === "certificate" || selectedCategory === "artisan") {
-                    return course.institution
-                  }
-                  return course.institution_name || course.campus
-                })
-                .filter(Boolean),
-            ),
-          ].length
+          ...new Set(
+            filteredCourses
+              .map((course) => {
+                if (selectedCategory === "certificate" || selectedCategory === "artisan") {
+                  return course.institution
+                }
+                return course.institution_name || course.campus
+              })
+              .filter(Boolean),
+          ),
+        ].length
         : 0
     const highestCluster =
       filteredCourses.length > 0 ? Math.max(...filteredCourses.map((course) => course.cluster || 0), 0) : 0
@@ -654,7 +654,7 @@ export default function ResultsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             {searchQuery && (
-                <Button
+              <Button
                 variant="ghost"
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 text-light hover:text-light"

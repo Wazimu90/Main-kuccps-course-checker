@@ -34,15 +34,23 @@ export default function Footer({ showOnHomepage = false }: FooterProps) {
       try {
         const res = await fetch("/api/admin/settings")
         if (res.ok) {
-          const { settings } = await res.json()
-          setContacts({
-            phone: String(settings.contact_phone || "+254 700 000 000"),
-            whatsapp: String(settings.whatsapp_number || settings.contact_phone || "+254 700 000 000"),
-            email: String(settings.contact_email || "info@kuccpschecker.com")
-          })
+          const contentType = res.headers.get("content-type")
+          if (contentType && contentType.includes("application/json")) {
+            const { settings } = await res.json()
+            setContacts({
+              phone: String(settings.contact_phone || "+254 700 000 000"),
+              whatsapp: String(settings.whatsapp_number || settings.contact_phone || "+254 700 000 000"),
+              email: String(settings.contact_email || "info@kuccpschecker.com")
+            })
+          } else {
+            console.warn("Footer: Settings API returned non-JSON response, using defaults")
+          }
+        } else {
+          console.warn("Footer: Settings API returned", res.status, "using defaults")
         }
       } catch (e) {
-        console.error("Failed to load footer contacts", e)
+        // Silently use defaults - footer is not critical
+        console.warn("Footer: Failed to load contacts, using defaults")
       }
     }
     fetchSettings()
@@ -75,9 +83,8 @@ export default function Footer({ showOnHomepage = false }: FooterProps) {
 
         <div className="relative">
           <div
-            className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-6 flex flex-col gap-3 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-bottom ${
-              isContactOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-75 translate-y-4 pointer-events-none"
-            }`}
+            className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-6 flex flex-col gap-3 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-bottom ${isContactOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-75 translate-y-4 pointer-events-none"
+              }`}
           >
             <ContactOption
               icon={<Phone size={18} />}
@@ -108,11 +115,10 @@ export default function Footer({ showOnHomepage = false }: FooterProps) {
 
           <button
             onClick={toggleContact}
-            className={`relative group flex items-center gap-2 px-3 py-2 md:px-5 md:py-2.5 rounded-full font-medium text-sm transition-all duration-300 ${
-              isContactOpen
+            className={`relative group flex items-center gap-2 px-3 py-2 md:px-5 md:py-2.5 rounded-full font-medium text-sm transition-all duration-300 ${isContactOpen
                 ? "bg-accent text-base shadow-[0_0_15px_rgba(34,211,238,0.5)]"
                 : "bg-dim/20 text-text-light hover:bg-dim/40 hover:text-white"
-            }`}
+              }`}
           >
             <span className="relative z-10 md:hidden">
               <MessageSquare size={16} />

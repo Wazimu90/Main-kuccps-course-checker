@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import RichTextEditor from "@/components/admin/rich-text-editor"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
+import { VideoTutorialsTab } from "@/components/admin/video-tutorials-tab"
 
 type NewsItem = {
   id: string
@@ -29,9 +30,27 @@ type NewsItem = {
   comments_count: number | null
 }
 
+type VideoTutorial = {
+  id: string
+  title: string
+  description: string
+  youtube_id: string
+  duration: string | null
+  display_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export default function AdminNewsPage() {
   const { toast } = useToast()
-  const [summary, setSummary] = useState<{ totalPosts: number; publishedPosts: number; expertUses: number; engagement: { likes: number; comments: number; views: number } } | null>(null)
+  const [summary, setSummary] = useState<{
+    totalPosts: number
+    publishedPosts: number
+    videoTutorialsCount: number
+    expertUses: number
+    engagement: { likes: number; comments: number; views: number }
+  } | null>(null)
   const [items, setItems] = useState<NewsItem[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [savingSettings, setSavingSettings] = useState(false)
@@ -113,7 +132,7 @@ export default function AdminNewsPage() {
           fetch("/api/admin/news/assistant/settings")
             .then((r) => r.json())
             .then((s) => setSettings(s.settings || settings))
-            .catch(() => {})
+            .catch(() => { })
         },
       )
       .subscribe()
@@ -169,12 +188,12 @@ export default function AdminNewsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Published Posts</CardTitle>
+            <CardTitle className="text-sm font-medium">Video Tutorials</CardTitle>
             <Eye className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summary?.publishedPosts ?? 0}</div>
-            <p className="text-xs text-white">Tagged as published</p>
+            <div className="text-2xl font-bold">{summary?.videoTutorialsCount ?? 0}</div>
+            <p className="text-xs text-white">Total video tutorials</p>
           </CardContent>
         </Card>
 
@@ -211,6 +230,7 @@ export default function AdminNewsPage() {
         <TabsList>
           <TabsTrigger value="management">News Management</TabsTrigger>
           <TabsTrigger value="assistant">KUCCPS Expert Assistant</TabsTrigger>
+          <TabsTrigger value="videos">Video Tutorials</TabsTrigger>
         </TabsList>
 
         <TabsContent value="management">
@@ -256,7 +276,7 @@ export default function AdminNewsPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant={(item.status || (item.tags || []).includes("published")) ? "default" : "secondary"}>
-                            {item.status ? item.status : ( (item.tags || []).includes("published") ? "published" : "draft" )}
+                            {item.status ? item.status : ((item.tags || []).includes("published") ? "published" : "draft")}
                           </Badge>
                         </TableCell>
                         <TableCell>{item.likes_count ?? 0}</TableCell>
@@ -268,7 +288,7 @@ export default function AdminNewsPage() {
                                 <Edit className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end">
                               <DropdownMenuItem
                                 onClick={() => {
                                   setCurrentItem(item)
@@ -596,6 +616,11 @@ export default function AdminNewsPage() {
               </div>
             </CardContent>
           </Card>
+
+        </TabsContent>
+
+        <TabsContent value="videos">
+          <VideoTutorialsTab />
         </TabsContent>
       </Tabs>
 
@@ -777,13 +802,29 @@ export default function AdminNewsPage() {
               className="text-red-600"
               onClick={async () => {
                 if (!currentItem) return
-                const res = await fetch(`/api/admin/news/${currentItem.id}`, { method: "DELETE" })
-                if (res.ok) {
-                  setIsDeleteOpen(false)
-                  const list = await fetch("/api/admin/news").then((r) => r.json())
-                  setItems(list.items || [])
-                  const sum = await fetch("/api/admin/news/summary").then((r) => r.json())
-                  setSummary(sum)
+                try {
+                  const res = await fetch(`/api/admin/news/${currentItem.id}`, { method: "DELETE" })
+                  if (res.ok) {
+                    toast({ title: "Deleted", description: "News post has been deleted successfully" })
+                    setIsDeleteOpen(false)
+                    const list = await fetch("/api/admin/news").then((r) => r.json())
+                    setItems(list.items || [])
+                    const sum = await fetch("/api/admin/news/summary").then((r) => r.json())
+                    setSummary(sum)
+                  } else {
+                    const err = await res.json().catch(() => ({} as any))
+                    toast({
+                      title: "Error",
+                      description: err.error || "Failed to delete post",
+                      variant: "destructive"
+                    })
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Network error",
+                    description: "Could not reach server",
+                    variant: "destructive"
+                  })
                 }
               }}
             >
@@ -795,3 +836,4 @@ export default function AdminNewsPage() {
     </div>
   )
 }
+
