@@ -21,7 +21,6 @@ yarn-error.log*
 architecture.md
 kuccpscoursechecker.md
 changelog.md
-*.sql
 # vercel
 .vercel
 

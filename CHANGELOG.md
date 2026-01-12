@@ -7,7 +7,133 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added – 2026-01-11
+### Added - 2026-01-12
+- **Interactive AI Chat Assistant (Bingwa AI)**
+  - Successfully implemented a multi-turn conversational AI for result analysis.
+  - New API built with **Gemini 2.0 Flash** supporting chat history and context.
+  - **AIChatModal Component**: A high-end chat interface with smooth animations, message history, and mobile-responsive layout.
+  - **Context-Aware Analysis**: AI is automatically fed user grades, total KCSE points, and all calculated cluster weights.
+  - **Smart Rate Limiting**: Implemented a strict limit of 5 messages per user per day using `localStorage` to ensure fair usage.
+  - **Personalized Guidance**: AI explains "Tier A/B/C" results and suggests realistic courses based on actual student data.
+- **Advanced Context-Aware Mobile Tutorial System**
+  - Created a sophisticated, page-specific tutorial system (`components/mobile-tutorial.tsx`) that provides personalized guidance based on the current page (Home, Grade Entry, Payment, Results, Student Tools, Cluster Calculator).
+  - Friendly, conversational guidance with emojis to help students understand exactly what each feature does.
+  - Mobile-only implementation (screens < 768px) with smart tracking via `localStorage` to ensure tutorials only show once per page.
+  - Integration across all major flows: qualification process, results management, and payment verification.
+  - Added a developer utility (`components/tutorial-reset.tsx`) for easy testing and resetting of tutorial flags.
+  - Documentation available in `MOBILE_TUTORIAL_README.md`.
+  - References:
+    - [app/api/cluster-ai-chat/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/cluster-ai-chat/route.ts)
+    - [components/AIChatModal.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/AIChatModal.tsx)
+    - [app/cluster-calculator/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/cluster-calculator/page.tsx)
+    - [components/mobile-tutorial.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/mobile-tutorial.tsx)
+    - [app/layout.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/layout.tsx)
+
+### Changed - 2026-01-12
+- **Unlimited Subjects in Cluster Calculator**
+  - Removed the restriction of exactly 7 subjects; users can now enter all subjects they sat for (e.g., 8, 9, or more).
+  - Validation updated to allow calculation as long as at least 7 subjects are provided.
+  - Calculation engine (`calculateTotalKCSEPoints`) automatically selects the **top 7 subjects** for the official "t" value out of 84.
+  - Updated UI labels and counters to reflect new subject flexibility.
+- **Learn Skills Academy Updates**
+  - Migrated Skill Up Academy community to official WhatsApp Channel link.
+  - Added new skill categories: **AI Literacy** and **Tech Tools** (Softwares, Apps).
+  - References: [app/learn-skills/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/learn-skills/page.tsx)
+- **Branding & Content Consistency**
+  - Updated product name references from "Bingwa Zone" to **"Bfasta"** across all Buy Data modals.
+  - Clarified offer text: "Buy Data Even with **unpaid** Okoa Jahazi Debt!".
+- **Enhanced Grade Entry UX**
+  - Added a `bounce-subtle` animation to all subject group expand/collapse icons in the grade entry forms.
+  - Improved visual feedback to notify students that subject sections are interactive and expandable.
+  - Updated Tailwind configuration (`tailwind.config.ts`) with custom bounce keyframes.
+  - References: [components/grade-entry-form.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/grade-entry-form.tsx), [tailwind.config.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/tailwind.config.ts)
+
+### Fixed - 2026-01-12
+- **Buy Data Modal Responsiveness (Critical Flow)**
+  - Fixed modal height issues on mobile and desktop by implementing `max-h-[90vh]` and `overflow-y-auto`.
+  - Added a flex-column structure with a scrollable content wrapper to prevent buttons or content from being cut off.
+  - Synchronized these UI fixes across Cluster Calculator, News, and Learn Skills pages.
+- **News Page Background Performance**
+  - Disabled the animated floating lines background on the /news page to improve scrolling performance and readability.
+  - References: [components/background/BackgroundProvider.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/background/BackgroundProvider.tsx)
+### Fixed - 2026-01-11
+- **PesaFlux Payment Flow Critical Fixes**
+  - Fixed `amountToCharge is not defined` error by adding `currentChargeAmount` state variable accessible throughout payment lifecycle
+  - Fixed payments table not being populated by webhook - added `course_category` column to `payment_transactions` table
+  - Updated webhook to use `course_category` directly from transaction instead of querying previous payments
+  - Ensured complete payment flow: STK Push → Webhook → Both Tables Populated → Auto-redirect
+  - Both `payment_transactions` and `payments` tables now properly populated with all required data
+  - Payment success now correctly triggers redirect to results page after 2 seconds
+  - References:
+    - [app/payment/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/payment/page.tsx)
+    - [app/payment/actions.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/payment/actions.ts)
+    - [app/api/payments/webhook/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/payments/webhook/route.ts)
+
+
+### Changed - 2026-01-11
+- **PesaFlux Payment Integration Fixes** - Critical alignment with official API documentation
+  - Fixed STK Push response parsing to match PesaFlux API specification:
+    - Updated success detection to handle `success: "200"` (string) instead of boolean
+    - Corrected transaction ID field from `transaction_id` to `transaction_request_id`
+    - Added support for API typo: `massage` instead of `message` in responses
+  - Enhanced logging to track `transaction_request_id` for better debugging
+  - Verified webhook handler correctly processes all PesaFlux callback fields
+  - Verified polling mechanism properly checks database for webhook updates
+  - All changes ensure proper payment flow: STK Push → Webhook → Database → Polling
+  - References:
+    - [lib/pesaflux.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/lib/pesaflux.ts)
+    - [app/payment/actions.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/payment/actions.ts)
+    - [PESAFLUX_FIXES_2026-01-11.md](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/PESAFLUX_FIXES_2026-01-11.md)
+- **Video Tutorial Management UI Integration**
+  - Moved video tutorial admin interface from standalone page to News admin tab
+  - Added "Video Tutorials" tab in /admin/news alongside News Management and KUCCPS Expert Assistant
+  - Created reusable VideoTutorialsTab component for cleaner code organization
+  - Table-based design with YouTube thumbnails, inline editing, and status toggles
+  - Mobile-responsive layout matching existing admin UI patterns
+  - All CRUD operations (Create, Read, Update, Delete) accessible from one interface
+  - References:
+    - [components/admin/video-tutorials-tab.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/admin/video-tutorials-tab.tsx)
+    - [app/admin/news/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/admin/news/page.tsx)
+
+ – 2026-01-11
+- **PesaFlux Payment Integration** - Real M-Pesa STK Push payment processing
+  - Replaced simulated payment system with production-ready PesaFlux API integration
+  - **Core Files:**
+    - `lib/pesaflux.ts` - PesaFlux API client with STK Push functionality
+    - `app/payment/actions.ts` - Server actions for payment initiation and status checking
+    - `app/api/payments/webhook/route.ts` - Webhook endpoint for PesaFlux callbacks
+  - **Database:**
+    - New `payment_transactions` table for tracking all PesaFlux transactions
+    - Stores reference, transaction_id, status, M-Pesa receipt numbers
+    - RLS policies and auto-update triggers
+    - Migration: `supabase/migrations/2026-01-11_pesaflux_transactions.sql`
+  - **Features:**
+    - Real-time STK Push to user's M-Pesa phone
+    - Webhook-based payment status updates (no polling required)
+    - Phone number normalization (handles 07XX, +254XX, 254XX formats)
+    - Unique transaction references (format: `PAY-{timestamp}-{random}`)
+    - 5-minute timeout for pending payments
+    - Comprehensive error handling and logging
+    - Activity logging for all payment events
+    - Idempotent webhook processing (prevents duplicate payments)
+  - **Security:**
+    - Environment-based API credentials (never in code)
+    - HTTPS-only webhook endpoint
+    - Request validation and sanitization
+    - Database constraints on transaction references
+  - **Documentation:**
+    - `PESAFLUX_INTEGRATION.md` - Complete implementation summary
+    - `PESAFLUX_TESTING.md` - Testing procedures and troubleshooting
+    - `ENV_SETUP.md` - Environment setup instructions
+  - **Compatibility:**
+    - Admin bypass still works for testing (wazimuautomate@gmail.com)
+    - Existing payment recording flow preserved
+    - Backward compatible with current database schema
+  - References:
+    - [lib/pesaflux.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/lib/pesaflux.ts)
+    - [app/payment/actions.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/payment/actions.ts)
+    - [app/api/payments/webhook/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/payments/webhook/route.ts)
+    - [PESAFLUX_INTEGRATION.md](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/PESAFLUX_INTEGRATION.md)
 - **Student Tools Page** - A dedicated page for essential government services and student resources
   - Mobile-first responsive design optimized for 99% mobile traffic
   - Fast loading with disabled animated background for better performance
@@ -26,25 +152,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - External link indicators and category badges
   - Educational info section about official government services
   - Added "Student Tools" link to main navigation header
-  - **Video Tutorial Section** - Interactive YouTube tutorial videos with modal overlay
-    - 6 comprehensive video tutorials covering:
-      - How to check qualified courses using our website
-      - How to apply for KUCCPS university placement
-      - How to apply for KRA PIN online
-      - How to apply for HELB loan & scholarship
-      - Understanding KUCCPS cluster points & cut-off marks
-      - How to download KNEC results certificate
-    - Beautiful video cards with YouTube thumbnails and play buttons
-    - Duration badges on each video thumbnail
-    - Modal overlay system that opens videos without leaving the page
-    - Animated modal with smooth transitions and backdrop blur
-    - Close button with rotation animation
-    - Prevents body scroll when modal is open
-    - Click outside to close functionality
-    - Auto-play videos when modal opens
-    - Video information display below embedded player
-    - Fully mobile-responsive with touch-friendly controls
-    - Hover effects with scale animations on thumbnails
+  - **Video Tutorial Management System** - Complete admin system for managing video tutorials
+    - Database schema (`video_tutorials` table) with Supabase
+      - Fields: title, description, youtube_id, duration, display_order, is_active
+      - Row Level Security policies for public viewing and admin management
+      - Automatic timestamp updates with trigger functions
+      - Indexed on display_order and is_active for performance
+    - RESTful API endpoints for video tutorial CRUD operations:
+      - `GET /api/video-tutorials` - Fetch all active videos (or all with includeInactive param)
+      - `POST /api/video-tutorials` - Create new video tutorial
+      - `GET /api/video-tutorials/[id]` - Fetch single video tutorial
+      - `PUT /api/video-tutorials/[id]` - Update video tutorial
+      - `DELETE /api/video-tutorials/[id]` - Delete video tutorial
+    - Admin interface at `/admin/video-tutorials`:
+      - Beautiful mobile-responsive design matching site aesthetics
+      - YouTube thumbnail previews for each video
+      - Add new video tutorials with form validation
+      - Edit existing tutorials inline
+      - Delete tutorials with confirmation
+      - Toggle active/inactive status
+      - Display order management
+      - Link to view videos on YouTube
+      - Real-time loading states and error handling
+    - Student Tools page now fetches videos dynamically from database
+    - Loading states and empty state handling on public page
+  - References:
+    - [lib/video_tutorials_schema.md](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/lib/video_tutorials_schema.md)
+    - [api/video-tutorials/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/video-tutorials/route.ts)
+    - [api/video-tutorials/[id]/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/video-tutorials/[id]/route.ts)
+    - [admin/video-tutorials/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/admin/video-tutorials/page.tsx)
   - References:
     - [student-tools/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/student-tools/page.tsx)
     - [header.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/header.tsx)
@@ -54,6 +190,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Disabled animated floating lines background on Student Tools page for faster loading
 - Optimized page rendering for mobile devices with reduced visual effects
 - YouTube thumbnail images lazy-loaded for better initial page performance
+- Database indexing on video_tutorials table for efficient querying
 
 
 ### Changed – 2026-01-03
