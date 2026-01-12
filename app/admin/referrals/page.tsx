@@ -185,6 +185,12 @@ export default function ReferralsPage() {
                         <DropdownMenuItem onClick={() => onToggleSuspend(a)}>
                           {a.status === "disabled" ? "Unsuspend" : "Suspend"}
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          const link = a.link || `/rc=${a.code}`
+                          window.open(link.startsWith("http") ? link : window.location.origin + link, "_blank")
+                        }}>
+                          Visit
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onContact(a.phone_number)}>Contact</DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600" onClick={() => onRemove(a.id)}>
                           Delete

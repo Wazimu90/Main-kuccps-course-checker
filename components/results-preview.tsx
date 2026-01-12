@@ -258,7 +258,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
                 metadata: { category, resultId, count: courses.length },
               }),
             })
-          } catch {}
+          } catch { }
         }
 
         // Start count-up animations
@@ -619,7 +619,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
                           {location.qualifyingCoursesCount} qualifying course
                           {location.qualifyingCoursesCount !== 1 ? "s" : ""}
                         </div>
-                       
+
                       </div>
                     </div>
                     <div className="text-4xl font-bold text-teal-400">{location.qualifyingCoursesCount}</div>
@@ -640,7 +640,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
           <Button
             onClick={onProceed}
             size="lg"
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-full sm:w-auto max-w-full px-4 sm:px-8 md:px-12 py-3 sm:py-5 md:py-6 text-base sm:text-lg md:text-xl font-extrabold rounded-full shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:shadow-[0_0_50px_rgba(168,85,247,0.8)] transition-all duration-300 hover:scale-105 hover:-translate-y-1 mb-8 border-2 border-white/20"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-full sm:w-auto max-w-full px-4 sm:px-8 md:px-12 py-4 sm:py-5 md:py-6 text-base sm:text-lg md:text-xl font-extrabold rounded-full shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:shadow-[0_0_50px_rgba(168,85,247,0.8)] transition-all duration-300 hover:scale-105 hover:-translate-y-1 mb-8 border-2 border-white/20 whitespace-normal h-auto break-words flex flex-col sm:flex-row items-center justify-center gap-2"
           >
             View All {eligibleCourses.length} Qualified Courses
             <ArrowRight className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6 animate-pulse" />

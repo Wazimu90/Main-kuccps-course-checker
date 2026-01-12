@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server"
 import { supabaseServer } from "@/lib/supabaseServer"
+import { revalidatePath } from "next/cache"
+
+export const dynamic = "force-dynamic"
 
 export async function GET() {
   try {
@@ -86,6 +89,9 @@ export async function PUT(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    revalidatePath("/")
+    revalidatePath("/payment")
 
     return NextResponse.json({ success: true })
   } catch (error) {

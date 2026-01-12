@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, MessageCircle, ArrowRight, Search, Smartphone, X, ExternalLink } from "lucide-react"
+import { Calendar, MessageCircle, ArrowRight, Search, Smartphone, X, ExternalLink, Bot } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { fetchNewsList, summarizeContent, formatDate, type NewsRow } from "@/lib/news-service"
 
 import Footer from "@/components/footer"
+import NewsChatModal from "@/components/NewsChatModal"
 
 export default function NewsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL")
@@ -19,6 +20,7 @@ export default function NewsPage() {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string>("")
   const [showBuyDataModal, setShowBuyDataModal] = useState<boolean>(false)
+  const [showNewsChat, setShowNewsChat] = useState<boolean>(false)
 
   useEffect(() => {
     let active = true
@@ -199,6 +201,25 @@ export default function NewsPage() {
         </section>
 
         <Footer />
+
+        {/* News Assistant Modal */}
+        <NewsChatModal
+          isOpen={showNewsChat}
+          onClose={() => setShowNewsChat(false)}
+          articles={articles}
+        />
+
+        {/* Floating Chat Button */}
+        <motion.button
+          onClick={() => setShowNewsChat(true)}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          className="fixed bottom-6 left-6 md:bottom-8 md:left-8 z-40 w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 shadow-[0_0_25px_rgba(59,130,246,0.6)] hover:shadow-[0_0_35px_rgba(59,130,246,0.8)] border-2 border-blue-400/30 flex items-center justify-center transition-all duration-300 group"
+        >
+          <Bot className="w-6 h-6 md:w-8 md:h-8 text-white group-hover:rotate-12 transition-transform" />
+        </motion.button>
       </div>
 
       {/* Buy Data Modal - Redesigned */}

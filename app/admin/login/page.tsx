@@ -65,30 +65,30 @@ export default function AdminLoginPage() {
         setFailedAttempts((prev) => prev + 1)
         setError("Invalid email or password")
       } else {
-        toast({ title: "Login Successful", description: "Redirecting to admin dashboard" })
-        try {
-          const at = data.session?.access_token || ""
-          const rt = data.session?.refresh_token || ""
-          if (at && rt) {
-            await fetch("/api/auth/session", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ access_token: at, refresh_token: rt }),
-            })
-          }
-        } catch {}
-        try {
-          await fetch("/api/admin/activity", {
+        toast({ title: "Login Successful", description: "Redirecting to admin dashboard", variant: "success" })
+
+        // Trigger session and activity logging without blocking
+        const at = data.session?.access_token || ""
+        const rt = data.session?.refresh_token || ""
+        if (at && rt) {
+          fetch("/api/auth/session", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              event_type: "admin_login",
-              description: "Admin login",
-              email: formData.email,
-              actor_role: "admin",
-            }),
-          })
-        } catch {}
+            body: JSON.stringify({ access_token: at, refresh_token: rt }),
+          }).catch(() => { })
+        }
+
+        fetch("/api/admin/activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_type: "admin_login",
+            description: "Admin login",
+            email: formData.email,
+            actor_role: "admin",
+          }),
+        }).catch(() => { })
+
         router.push("/admin/dashboard")
       }
     } catch {
@@ -115,7 +115,7 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email: formData.email, access_code: twoFACode }),
       })
       if (resp.ok) {
-        toast({ title: "Authentication Successful", description: "Welcome to the admin dashboard" })
+        toast({ title: "Authentication Successful", description: "Welcome to the admin dashboard", variant: "success" })
         try {
           await fetch("/api/admin/activity", {
             method: "POST",
@@ -127,7 +127,7 @@ export default function AdminLoginPage() {
               actor_role: "admin",
             }),
           })
-        } catch {}
+        } catch { }
         router.push("/admin/dashboard")
       } else {
         setError("Invalid access code. Please try again.")

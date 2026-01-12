@@ -48,7 +48,7 @@ export default function PaymentPage() {
     const fetchPaymentAmount = async () => {
       try {
         setIsLoadingAmount(true)
-        const res = await fetch("/api/admin/settings")
+        const res = await fetch("/api/admin/settings", { cache: "no-store", next: { revalidate: 0 } })
         if (res.ok) {
           const { settings } = await res.json()
           if (settings?.payment_amount) {
@@ -254,7 +254,7 @@ export default function PaymentPage() {
         courseCategory: courseCategory,
       })
 
-      if (response.success) {
+      if (response.success && response.paymentId) {
         setPaymentId(response.paymentId)
 
         // Start polling for payment status

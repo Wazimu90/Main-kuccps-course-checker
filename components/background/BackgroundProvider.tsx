@@ -12,9 +12,17 @@ export default function BackgroundProvider() {
   const isClusterCalculator = pathname === "/cluster-calculator"
   const isLearnSkills = pathname === "/learn-skills"
   const isNews = pathname === "/news" || pathname?.startsWith("/news/")
+  const isPayment = pathname === "/payment"
+  const isResults = pathname === "/results" || pathname?.startsWith("/results")
+  const isGradeEntry =
+    pathname === "/degree" ||
+    pathname === "/diploma" ||
+    pathname === "/certificate" ||
+    pathname === "/artisan" ||
+    pathname === "/kmtc"
 
   useEffect(() => {
-    if (isAdmin || isMaintenance || isStudentTools || isClusterCalculator || isLearnSkills || isNews) {
+    if (isAdmin || isMaintenance || isStudentTools || isClusterCalculator || isLearnSkills || isNews || isPayment || isResults || isGradeEntry) {
       document.body.classList.add("admin-no-bg")
     } else {
       document.body.classList.remove("admin-no-bg")
@@ -22,9 +30,9 @@ export default function BackgroundProvider() {
     return () => {
       document.body.classList.remove("admin-no-bg")
     }
-  }, [isAdmin, isMaintenance, isStudentTools, isClusterCalculator, isLearnSkills, isNews])
+  }, [isAdmin, isMaintenance, isStudentTools, isClusterCalculator, isLearnSkills, isNews, isPayment, isResults, isGradeEntry])
 
-  if (isAdmin || isMaintenance || isStudentTools || isClusterCalculator || isLearnSkills || isNews) {
+  if (isAdmin || isMaintenance || isStudentTools || isClusterCalculator || isLearnSkills || isNews || isPayment || isResults || isGradeEntry) {
     return <div className="floating-lines-overlay hidden" />
   }
 

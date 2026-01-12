@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/lib/supabase"
 
 type Activity = { id: number; type: "admin" | "user" | "news"; action: string; user: string; timestamp: string }
 
@@ -58,8 +59,27 @@ export default function ActivityLog() {
 
   useEffect(() => {
     loadData()
-    const id = setInterval(() => loadData(), 15000)
-    return () => clearInterval(id)
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('activity_logs_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'activity_logs'
+        },
+        (payload) => {
+          // Reload data when any change happens to stay in sync
+          loadData()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [params])
 
   return (

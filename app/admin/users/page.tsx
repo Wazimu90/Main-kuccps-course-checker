@@ -62,6 +62,48 @@ export default function UsersPage() {
           <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
           <p className="text-white">Manage and monitor platform users</p>
         </div>
+        <Button onClick={async () => {
+          try {
+            toast({ title: "Exporting...", description: "Preparing CSV file." })
+            const exportParams = new URLSearchParams(params.toString())
+            exportParams.delete("page")
+            exportParams.set("pageSize", "10000") // Fetch up to 10k users for export
+
+            const res = await fetch(`/api/admin/users?${exportParams.toString()}`)
+            if (!res.ok) throw new Error("Failed to fetch data")
+
+            const json = await res.json()
+            const allUsers = json.items || []
+
+            if (allUsers.length === 0) {
+              toast({ title: "No Data", description: "No users found to export", variant: "destructive" })
+              return
+            }
+
+            const header = ["Name", "Email", "Phone", "Status", "Joined"]
+            const rows = allUsers.map((u: any) => [
+              `"${u.name || ""}"`,
+              `"${u.email || ""}"`,
+              `"${u.phone_number || ""}"`,
+              `"${u.status || ""}"`,
+              `"${new Date(u.created_at).toLocaleString()}"`
+            ])
+            const csv = [header.join(","), ...rows.map((r: any[]) => r.join(","))].join("\n")
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url
+            a.download = `users_export_${Date.now()}.csv`
+            a.click()
+            URL.revokeObjectURL(url)
+
+            toast({ title: "Export Successful", description: `Exported ${allUsers.length} users.`, variant: "success" })
+          } catch (e) {
+            toast({ title: "Export Failed", description: "Could not generate CSV.", variant: "destructive" })
+          }
+        }}>
+          Export CSV
+        </Button>
       </div>
 
       {/* Stats Cards */}

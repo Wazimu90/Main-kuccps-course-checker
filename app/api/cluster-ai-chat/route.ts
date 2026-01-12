@@ -3,28 +3,14 @@ import { NextRequest, NextResponse } from "next/server"
 /**
  * AI Chat System for KUCCPS Cluster Analysis
  */
-const SYSTEM_PROMPT = `You are a helpful, encouraging, and knowledgeable educational assistant for a Kenyan KCSE student.
-Your name is "Bingwa AI".
+const SYSTEM_PROMPT = `You are Kuccps Course checker News AI Assistant, a friendly and knowledgeable education assistant for students in Kenya. 
+Your role is to help students understand their KCSE results, explore university coures, and navigate the KUCCPS placement process.
 
-Context:
-The student has just calculated their KUCCPS cluster weights. You have access to their grades and calculation results.
-Your goal is to explain their performance, suggest courses, and answer their questions about university placement in Kenya.
-
-Guidelines:
-1. **Be Encouraging & Empathetic**: KCSE results can be stressful. Speak warmly.
-2. **Be Realistic**: Acknowledge that cluster weights are estimates (±5 points).
-3. **No False Promises**: Never guarantee admission. Use words like "likely", "competitive for", "strong chance".
-4. **Kenyan Context**: Use local context where appropriate (e.g., mention KUCCPS, TVET if grades are lower, popular universities).
-5. **Concise**: Keep responses easy to read on mobile (short paragraphs).
-
-Data Access:
-You will be provided with the student's Mean Grade, Total KCSE Points, and Cluster Weights.
-REFER to this data when answering. If a student asks "What can I do?", look at their strongest clusters.
-
-Strict Rules:
-- Do NOT recalculate cluster points. Assume the provided values are correct.
-- If the student asks about a specific course, check if their cluster weight for that category is competitive (Tier A is >40, Tier B is 35-40).
-- If they failed a required subject (e.g., Maths for Engineering), point it out gently.
+Personalize your responses using the Student's Data provided.
+You are free to chat about general education topics, career advice, and student life in Kenya.
+Verify course suggestions against the student's cluster weights if asked, but you can also suggest related fields if they don't qualify.
+Keep your tone encouraging, realistic, and helpful.
+If you don't know something, suggest checking the official KUCCPS website.
 `
 
 export async function POST(request: NextRequest) {
@@ -36,10 +22,11 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Invalid messages format" }, { status: 400 })
         }
 
-        const apiKey = process.env.GEMINI_API_KEY
+        const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY
         if (!apiKey) {
+            console.error("AI API Key missing. Checked GEMINI_API_KEY and GOOGLE_API_KEY")
             return NextResponse.json(
-                { error: "AI service temporarily unavailable" },
+                { error: "AI service not configured", content: null },
                 { status: 500 }
             )
         }
@@ -91,8 +78,9 @@ Top Clusters: ${topClusters || "None qualified"}
 
         if (!response.ok) {
             const errorText = await response.text()
-            console.error("Gemini API Error:", errorText)
-            throw new Error(`Gemini API error: ${response.status}`)
+            console.error("Gemini API Error Status:", response.status)
+            console.error("Gemini API Error Text:", errorText)
+            throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
         }
 
         const json = await response.json()
@@ -100,10 +88,11 @@ Top Clusters: ${topClusters || "None qualified"}
 
         return NextResponse.json({ content })
 
-    } catch (error) {
-        console.error("Error in AI chat:", error)
+    } catch (error: any) {
+        console.error("Critical Error in AI chat route:", error)
+        console.error("Error Stack:", error.stack)
         return NextResponse.json(
-            { error: "Failed to generate response" },
+            { error: `Failed to generate response: ${error.message}` },
             { status: 500 }
         )
     }

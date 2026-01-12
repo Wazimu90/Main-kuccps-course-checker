@@ -227,7 +227,7 @@ export default function AdminNewsPage() {
       </div>
 
       <Tabs defaultValue="management" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto justify-start">
           <TabsTrigger value="management">News Management</TabsTrigger>
           <TabsTrigger value="assistant">KUCCPS Expert Assistant</TabsTrigger>
           <TabsTrigger value="videos">Video Tutorials</TabsTrigger>

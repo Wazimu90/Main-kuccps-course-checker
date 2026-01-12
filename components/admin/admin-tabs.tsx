@@ -29,7 +29,7 @@ export default function AdminTabs() {
   const handleLogoutConfirm = () => {
     try {
       localStorage.removeItem("adminToken")
-    } catch {}
+    } catch { }
     setConfirmOpen(false)
     router.replace("/admin/login")
   }
@@ -39,7 +39,7 @@ export default function AdminTabs() {
       <nav
         role="tablist"
         aria-label="Admin sections"
-        className="flex items-center w-full md:justify-between gap-2 overflow-x-auto py-3"
+        className="flex items-center w-full md:justify-between gap-2 overflow-x-auto py-3 no-scrollbar"
         onKeyDown={onKeyDown}
       >
         {adminNavItems.map((item, idx) => {
@@ -52,14 +52,13 @@ export default function AdminTabs() {
               role="tab"
               aria-selected={isActive}
               tabIndex={isActive ? 0 : -1}
-              ref={(el) => (tabRefs.current[idx] = el)}
-              className="focus:outline-none flex-1 md:flex-none"
+              ref={(el) => { tabRefs.current[idx] = el }}
+              className="focus:outline-none shrink-0"
             >
               <Button
                 variant={isActive ? "secondary" : "ghost"}
-                className={`h-9 w-full md:w-auto px-4 has-[>svg]:px-3 inline-flex items-center justify-center gap-2 ${
-                  isActive ? "bg-primary/10 text-primary border-b-2 border-primary" : ""
-                }`}
+                className={`h-9 px-4 has-[>svg]:px-3 inline-flex items-center justify-center gap-2 whitespace-nowrap ${isActive ? "bg-primary/10 text-primary border-b-2 border-primary" : ""
+                  }`}
               >
                 <Icon className="h-4 w-4" />
                 {item.title}

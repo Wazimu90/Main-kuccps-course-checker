@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - 2026-01-12 (Evening Update)
+- **News AI Assistant**
+  - Implemented a specialized AI assistant for the News page (`components/NewsChatModal.tsx`).
+  - Context-aware: Reads current articles on the page to answer user questions with relevant sources.
+  - Rate limited to 5 messages per day.
+  - Accessible via a floating action button on the mobile and desktop news interface.
+- **Realtime Admin Dashboard**
+  - Integrated **Supabase Realtime** for the entire Admin Dashboard.
+  - **Activity Log**: Now updates instantly without polling when users perform actions.
+  - **Live Metrics**: Revenue, User count, and News stats update in realtime as they happen.
+  - References: `components/admin/activity-log.tsx`, `app/admin/dashboard/page.tsx`.
+
+### Fixed - 2026-01-12 (Evening Update)
+- **Cluster Calculator AI Critical Fixes**
+  - **Error 500 Resolved**: Fixed "AI service not configured" error by adding redundant checks for `GEMINI_API_KEY` and `GOOGLE_API_KEY`.
+  - **Enhanced Reliability**: Improved error handling in `app/api/cluster-ai-chat/route.ts` to log specific API failures.
+  - **Client Stability**: Updated `AIChatModal.tsx` to safely handle error objects, preventing console crashes.
+  - **Usage Limits**: Increased daily message limit from 5 to **10 messages** per user.
+- **Payment System Accuracy**
+  - Fixed a critical bug where the recorded payment amount was hardcoded (often to 200).
+  - Updated `app/api/payments/webhook/route.ts` to capture and record the *actual* `TransactionAmount` from the PesaFlux webhook payload.
+- **Performance & UI Polish**
+  - **Animated Background**: Disabled on high-traffic pages (Payment, Results, News, Grade Entry) to prevent lag on mobile devices.
+  - **Mobile UX**: "Download" and "Apply" buttons on the Results page now display full text labels on mobile for better accessibility.
+  - **Notifications**: Fixed Toast notification styling to ensure text is visible against white/dark backgrounds.
+
 ### Added - 2026-01-12
 - **Interactive AI Chat Assistant (Bingwa AI)**
   - Successfully implemented a multi-turn conversational AI for result analysis.

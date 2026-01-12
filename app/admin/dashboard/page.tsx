@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast"
 import RevenueChart from "@/components/admin/revenue-chart"
 import ActivityLog from "@/components/admin/activity-log"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { supabase } from "@/lib/supabase"
 
 // Tabs and legacy analytics sections removed
 
@@ -35,64 +36,39 @@ export default function AdminDashboard() {
   })
 
   // Initialize stats with default values
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalPayments: 0,
-    totalRevenue: 0,
-    pdfGenerated: 0,
-    failedAttempts: 0,
-    contactMessages: 0,
-    successRate: 0,
-    avgResponseTime: 0,
-  })
+
 
   // Load dashboard data
   useEffect(() => {
+    // Load metrics function
+    const fetchMetrics = async () => {
+      try {
+        const res = await fetch("/api/admin/metrics", { cache: "no-store" })
+        if (res.ok) {
+          const json = await res.json()
+          setMetrics(json)
+        }
+      } catch (error) {
+        console.error("Error fetching metrics:", error)
+      }
+    }
+
     const loadDashboardData = async () => {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 500))
-
+        // ... existing dummy data setup ...
         const newDashboardData = {
           totalUsers: 1247,
           totalCourses: 8934,
           totalInstitutions: 156,
           successRate: 87.3,
-          recentUsers: [
-            { id: 1, name: "John Doe", email: "john@example.com", joinedAt: "2024-01-15", status: "active" },
-            { id: 2, name: "Jane Smith", email: "jane@example.com", joinedAt: "2024-01-14", status: "active" },
-            { id: 3, name: "Mike Johnson", email: "mike@example.com", joinedAt: "2024-01-13", status: "pending" },
-          ],
-          systemAlerts: [
-            { id: 1, type: "warning", message: "High server load detected", timestamp: "2024-01-15 10:30" },
-            { id: 2, type: "info", message: "Database backup completed", timestamp: "2024-01-15 09:00" },
-          ],
-          recentActivity: [
-            { id: 1, action: "User registered", user: "John Doe", timestamp: "2 minutes ago" },
-            { id: 2, action: "Course search", user: "Jane Smith", timestamp: "5 minutes ago" },
-            { id: 3, action: "PDF downloaded", user: "Mike Johnson", timestamp: "10 minutes ago" },
-          ],
+          recentUsers: [],
+          systemAlerts: [],
+          recentActivity: [], // ActivityLog component handles this
         }
-
-        const newStats = {
-          totalUsers: newDashboardData.totalUsers,
-          totalPayments: 856,
-          totalRevenue: 428000,
-          pdfGenerated: 1234,
-          failedAttempts: 23,
-          contactMessages: 45,
-          successRate: newDashboardData.successRate,
-          avgResponseTime: 1.2,
-        }
-
         setDashboardData(newDashboardData)
-        setStats(newStats)
-        try {
-          const res = await fetch("/api/admin/metrics", { cache: "no-store" })
-          if (res.ok) {
-            const json = await res.json()
-            setMetrics(json)
-          }
-        } catch {}
+
+        // Fetch initial metrics
+        await fetchMetrics()
         setIsLoading(false)
       } catch (error) {
         console.error("Error loading dashboard data:", error)
@@ -106,15 +82,29 @@ export default function AdminDashboard() {
     }
 
     loadDashboardData()
-    const id = setInterval(() => {
-      fetch("/api/admin/metrics", { cache: "no-store" })
-        .then((res) => (res.ok ? res.json() : null))
-        .then((json) => {
-          if (json) setMetrics(json)
-        })
-        .catch(() => {})
-    }, 15000)
-    return () => clearInterval(id)
+
+    // Subscribe to realtime updates for metrics tables
+    const channel = supabase
+      .channel('admin_dashboard_metrics')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payment_transactions' },
+        () => fetchMetrics()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'news' },
+        () => fetchMetrics()
+      )
+      .subscribe()
+
+    // Keep a slower polling interval as fallback and for non-subscribed data (like auth users)
+    const id = setInterval(fetchMetrics, 30000)
+
+    return () => {
+      supabase.removeChannel(channel)
+      clearInterval(id)
+    }
   }, [toast])
 
   if (isLoading) {
@@ -140,139 +130,139 @@ export default function AdminDashboard() {
 
       {/* KPI Cards */}
       <TooltipProvider>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-800">Revenue</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center">
-              <CreditCard className="h-4 w-4 text-green-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="text-xs text-green-700">Today</div>
-                <div className="text-xl font-bold text-green-900">
-                  {new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(metrics.revenue.today)}
-                </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-green-800">Revenue</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center">
+                <CreditCard className="h-4 w-4 text-green-600" />
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-green-700" />
-                </TooltipTrigger>
-                <TooltipContent>Revenue generated today</TooltipContent>
-              </Tooltip>
-            </div>
-            <div className="mt-3 flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="text-xs text-green-700">Total</div>
-                <div className="text-xl font-bold text-green-900">
-                  {new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(metrics.revenue.total)}
-                </div>
-              </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-green-700" />
-                </TooltipTrigger>
-                <TooltipContent>Cumulative revenue to date</TooltipContent>
-              </Tooltip>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800">Referrals</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-blue-200 flex items-center justify-center">
-              <Users className="h-4 w-4 text-blue-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {metrics.referrals.agents.slice(0, 3).map((a) => (
-                <div key={a.id} className="flex items-center justify-between">
-                  <div className="text-sm font-medium text-blue-900">
-                    {a.name} ({a.code.toUpperCase()})
-                  </div>
-                  <div className="text-xs text-blue-700">
-                    Today: {a.today} • Total: {a.total}
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="text-xs text-green-700">Today</div>
+                  <div className="text-xl font-bold text-green-900">
+                    {new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(metrics.revenue.today)}
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-green-700" />
+                  </TooltipTrigger>
+                  <TooltipContent>Revenue generated today</TooltipContent>
+                </Tooltip>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="text-xs text-green-700">Total</div>
+                  <div className="text-xl font-bold text-green-900">
+                    {new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(metrics.revenue.total)}
+                  </div>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-green-700" />
+                  </TooltipTrigger>
+                  <TooltipContent>Cumulative revenue to date</TooltipContent>
+                </Tooltip>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-yellow-800">Users</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center">
-              <Users className="h-4 w-4 text-yellow-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="text-xs text-yellow-700">Today</div>
-                <div className="text-xl font-bold text-yellow-900">{metrics.users.today}</div>
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-blue-800">Referrals</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-blue-200 flex items-center justify-center">
+                <Users className="h-4 w-4 text-blue-600" />
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-yellow-700" />
-                </TooltipTrigger>
-                <TooltipContent>Users registered today</TooltipContent>
-              </Tooltip>
-            </div>
-            <div className="mt-3 flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="text-xs text-yellow-700">Total</div>
-                <div className="text-xl font-bold text-yellow-900">{metrics.users.total}</div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {metrics.referrals.agents.slice(0, 3).map((a) => (
+                  <div key={a.id} className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-blue-900">
+                      {a.name} ({a.code.toUpperCase()})
+                    </div>
+                    <div className="text-xs text-blue-700">
+                      Today: {a.today} • Total: {a.total}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-yellow-700" />
-                </TooltipTrigger>
-                <TooltipContent>Total registered users</TooltipContent>
-              </Tooltip>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-800">News</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-orange-200 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-orange-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="text-xs text-orange-700">Total Posts</div>
-                <div className="text-xl font-bold text-orange-900">{metrics.news.total}</div>
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-yellow-800">Users</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center">
+                <Users className="h-4 w-4 text-yellow-600" />
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-orange-700" />
-                </TooltipTrigger>
-                <TooltipContent>Total news posts</TooltipContent>
-              </Tooltip>
-            </div>
-            <div className="mt-3 flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="text-xs text-orange-700">Total Likes</div>
-                <div className="text-xl font-bold text-orange-900">{metrics.news.likes}</div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="text-xs text-yellow-700">Today</div>
+                  <div className="text-xl font-bold text-yellow-900">{metrics.users.today}</div>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-yellow-700" />
+                  </TooltipTrigger>
+                  <TooltipContent>Users registered today</TooltipContent>
+                </Tooltip>
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-orange-700" />
-                </TooltipTrigger>
-                <TooltipContent>Aggregate likes across news</TooltipContent>
-              </Tooltip>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <div className="mt-3 flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="text-xs text-yellow-700">Total</div>
+                  <div className="text-xl font-bold text-yellow-900">{metrics.users.total}</div>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-yellow-700" />
+                  </TooltipTrigger>
+                  <TooltipContent>Total registered users</TooltipContent>
+                </Tooltip>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-orange-800">News</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-orange-200 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-orange-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="text-xs text-orange-700">Total Posts</div>
+                  <div className="text-xl font-bold text-orange-900">{metrics.news.total}</div>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-orange-700" />
+                  </TooltipTrigger>
+                  <TooltipContent>Total news posts</TooltipContent>
+                </Tooltip>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="text-xs text-orange-700">Total Likes</div>
+                  <div className="text-xl font-bold text-orange-900">{metrics.news.likes}</div>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-orange-700" />
+                  </TooltipTrigger>
+                  <TooltipContent>Aggregate likes across news</TooltipContent>
+                </Tooltip>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </TooltipProvider>
 
       {/* Revenue Trends */}

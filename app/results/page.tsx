@@ -630,17 +630,17 @@ export default function ResultsPage() {
         </div>
 
         {/* Mobile Actions */}
-        <div className="mb-4 flex items-center justify-between md:hidden">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => setShowPdfDialog(true)}>
-              <Download className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" asChild>
-              <a href="https://students.kuccps.net" target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
-          </div>
+        <div className="mb-4 flex items-center justify-between md:hidden gap-3">
+          <Button variant="outline" className="flex-1 gap-2" onClick={() => setShowPdfDialog(true)}>
+            <Download className="h-4 w-4" />
+            <span>Download</span>
+          </Button>
+          <Button variant="outline" className="flex-1 gap-2" asChild>
+            <a href="https://students.kuccps.net" target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4" />
+              <span>Apply on KUCCPS</span>
+            </a>
+          </Button>
         </div>
 
         {/* Search and Filters */}

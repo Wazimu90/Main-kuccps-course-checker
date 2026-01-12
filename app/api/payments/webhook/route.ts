@@ -79,6 +79,7 @@ export async function POST(request: Request) {
                 mpesa_receipt_number: mpesaReceiptNumber,
                 transaction_id: transactionId || transaction?.transaction_id,
                 webhook_data: body, // Store full payload for debugging
+                amount: amount, // Update amount with actual paid amount
                 completed_at: internalStatus === "COMPLETED" ? new Date().toISOString() : null,
             })
             .eq("reference", reference)

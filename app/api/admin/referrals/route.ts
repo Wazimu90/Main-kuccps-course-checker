@@ -5,22 +5,43 @@ import { cookies, headers } from "next/headers"
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const q = String(searchParams.get("q") || "").trim()
+
+  // select agents
   let query = supabaseServer
     .from("referrals")
-    .select("id,name,code,users_today,total_users,link,phone_number,status")
+    .select("id,name,code,total_users,link,phone_number,status")
     .order("created_at", { ascending: false })
   if (q) {
     query = query.or(`name.ilike.%${q}%,code.ilike.%${q}%`)
   }
-  const { data, error } = await query
+  const { data: agentsData, error } = await query
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
-  const agents = (data || []).map((r: any) => ({
+
+  // calculate users_today from payments
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+
+  const { data: todayPayments } = await supabaseServer
+    .from("payments")
+    .select("agent_id")
+    .gte("paid_at", todayStart.toISOString())
+    .not("agent_id", "is", null)
+
+  const todayMap = new Map<string, number>()
+  if (todayPayments) {
+    for (const p of todayPayments) {
+      const aid = String(p.agent_id)
+      todayMap.set(aid, (todayMap.get(aid) || 0) + 1)
+    }
+  }
+
+  const agents = (agentsData || []).map((r: any) => ({
     id: r.id,
     name: r.name,
     code: r.code,
-    today: r.users_today || 0,
+    today: todayMap.get(r.id) || 0,
     total: r.total_users || 0,
     link: r.link || null,
     phone_number: r.phone_number || null,
