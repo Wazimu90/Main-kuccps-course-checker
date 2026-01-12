@@ -38,7 +38,41 @@ export default function PaymentPage() {
   const [isAdminMode, setIsAdminMode] = useState(false)
   const [adminKey, setAdminKey] = useState("")
   const [courseCategory, setCourseCategory] = useState<string | null>(null)
+  const [paymentAmount, setPaymentAmount] = useState<number | null>(null) // Will be fetched from database
+  const [isLoadingAmount, setIsLoadingAmount] = useState(true)
+  const [currentChargeAmount, setCurrentChargeAmount] = useState<number>(200) // Track current charge amount
   const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "wazimuautomate@gmail.com"
+
+  // Load payment amount from admin settings
+  useEffect(() => {
+    const fetchPaymentAmount = async () => {
+      try {
+        setIsLoadingAmount(true)
+        const res = await fetch("/api/admin/settings")
+        if (res.ok) {
+          const { settings } = await res.json()
+          if (settings?.payment_amount) {
+            setPaymentAmount(settings.payment_amount)
+            log("payment:settings", "Payment amount loaded from database", "debug", { amount: settings.payment_amount })
+          } else {
+            // Fallback if no setting exists
+            setPaymentAmount(200)
+            log("payment:settings", "No payment_amount in settings, using fallback", "warn")
+          }
+        } else {
+          // API error fallback
+          setPaymentAmount(200)
+          log("payment:settings", "Failed to fetch settings, using fallback", "warn")
+        }
+      } catch (e) {
+        setPaymentAmount(200)
+        log("payment:settings", "Exception loading payment amount, using fallback", "warn", e)
+      } finally {
+        setIsLoadingAmount(false)
+      }
+    }
+    fetchPaymentAmount()
+  }, [])
 
   // Load saved grade data from localStorage
   useEffect(() => {
@@ -57,7 +91,7 @@ export default function PaymentPage() {
       const resolved = (category || parsed?.category || "").toString()
       setCourseCategory(resolved || null)
       log("payment:init", "Loaded grade data and category", "debug", { category: resolved || null })
-    } catch {}
+    } catch { }
   }, [router, toast])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,7 +209,7 @@ export default function PaymentPage() {
         )
         try {
           document.cookie = `user_email=${encodeURIComponent(formData.email)}; path=/; max-age=${60 * 60 * 24 * 365}`
-        } catch {}
+        } catch { }
         toast({ title: "Admin Access Granted", description: "Redirecting to results..." })
         log("payment:admin", "Admin access granted; redirecting to results", "success")
         try {
@@ -190,7 +224,7 @@ export default function PaymentPage() {
               metadata: { course_category: courseCategory },
             }),
           })
-        } catch {}
+        } catch { }
         setTimeout(() => router.push("/results"), 1200)
         return
       } catch (err) {
@@ -207,12 +241,17 @@ export default function PaymentPage() {
     try {
       setPaymentState(PaymentState.PROCESSING)
 
-      // Initiate payment
+      // Use paymentAmount from settings, fallback to 200 if not loaded
+      const amountToCharge = paymentAmount || 200
+      setCurrentChargeAmount(amountToCharge) // Store in state for use in polling
+
+      // Initiate payment with dynamic amount from settings
       const response = await initiatePayment({
         phone: formData.phone,
         email: formData.email,
         name: formData.name,
-        amount: 200, // KES 200 as specified
+        amount: amountToCharge,
+        courseCategory: courseCategory,
       })
 
       if (response.success) {
@@ -230,10 +269,10 @@ export default function PaymentPage() {
               email: formData.email,
               phone_number: formData.phone,
               description: "Client initiated payment",
-              metadata: { paymentId: response.paymentId, amount: 200, category: courseCategory },
+              metadata: { paymentId: response.paymentId, amount: amountToCharge, category: courseCategory },
             }),
           })
-        } catch {}
+        } catch { }
         pollPaymentStatus(response.paymentId)
       } else {
         setPaymentState(PaymentState.FAILED)
@@ -253,10 +292,10 @@ export default function PaymentPage() {
               email: formData.email,
               phone_number: formData.phone,
               description: "Payment initiation failed",
-              metadata: { amount: 200, category: courseCategory },
+              metadata: { amount: amountToCharge, category: courseCategory },
             }),
           })
-        } catch {}
+        } catch { }
       }
     } catch (error) {
       log("payment:error", "Unhandled payment error", "error", error)
@@ -286,17 +325,17 @@ export default function PaymentPage() {
               email: formData.email,
               phone_number: formData.phone,
               description: "Payment completed",
-              metadata: { paymentId: id, amount: 200, category: courseCategory },
+              metadata: { paymentId: id, amount: currentChargeAmount, category: courseCategory },
             }),
           })
-        } catch {}
+        } catch { }
 
         // Save payment info to localStorage
         localStorage.setItem(
           "paymentInfo",
           JSON.stringify({
             id,
-            amount: 200,
+            amount: currentChargeAmount,
             phone: formData.phone,
             email: formData.email,
             name: formData.name,
@@ -312,7 +351,7 @@ export default function PaymentPage() {
               name: formData.name,
               email: formData.email,
               phone_number: formData.phone,
-              amount: 200,
+              amount: currentChargeAmount,
               course_category: courseCategory,
             }),
           })
@@ -322,12 +361,12 @@ export default function PaymentPage() {
             sessionStorage.removeItem("referral_code")
             document.cookie = "referral_code=; path=/; max-age=0"
             document.cookie = "referral_sticky=; path=/; max-age=0"
-          } catch {}
-        } catch {}
+          } catch { }
+        } catch { }
 
         try {
           document.cookie = `user_email=${encodeURIComponent(formData.email)}; path=/; max-age=${60 * 60 * 24 * 365}`
-        } catch {}
+        } catch { }
 
         // Redirect to results page after 2 seconds
         setTimeout(() => {
@@ -346,10 +385,10 @@ export default function PaymentPage() {
               email: formData.email,
               phone_number: formData.phone,
               description: "Payment failed",
-              metadata: { paymentId: id, amount: 200, category: courseCategory },
+              metadata: { paymentId: id, amount: currentChargeAmount, category: courseCategory },
             }),
           })
-        } catch {}
+        } catch { }
       } else {
         // Continue polling if still pending
         log("payment:status", "Payment pending; continue polling", "debug", { paymentId: id })
@@ -362,6 +401,7 @@ export default function PaymentPage() {
   }
 
   const handleRetry = () => {
+    log("payment:retry", "User initiated payment retry", "info", { previousPaymentId: paymentId })
     setPaymentState(PaymentState.INITIAL)
     setPaymentId(null)
   }
@@ -383,161 +423,169 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-    <div className="container mx-auto px-4 py-8 flex-1">
-      <div className="mb-8 flex items-center">
-        <Button variant="ghost" className="flex items-center gap-2" onClick={handleBack}>
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Button>
-      </div>
+      <div className="container mx-auto px-4 py-8 flex-1">
+        <div className="mb-8 flex items-center">
+          <Button variant="ghost" className="flex items-center gap-2" onClick={handleBack}>
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </div>
 
-      <div className="mx-auto max-w-2xl">
-        <div className="">
-          <Card className="rounded-2xl border border-border shadow-sm overflow-hidden">
-            <CardHeader className="bg-muted/30 pb-8 pt-6">
-              <CardTitle className="text-center text-2xl">Complete Your Payment</CardTitle>
-              <CardDescription className="text-center">
-                Unlock all courses you qualify for based on your KCSE grades
-              </CardDescription>
-            </CardHeader>
+        <div className="mx-auto max-w-2xl">
+          <div className="">
+            <Card className="rounded-2xl border border-border shadow-sm overflow-hidden">
+              <CardHeader className="bg-muted/30 pb-8 pt-6">
+                <CardTitle className="text-center text-2xl">Complete Your Payment</CardTitle>
+                <CardDescription className="text-center">
+                  Unlock all courses you qualify for based on your KCSE grades
+                </CardDescription>
+              </CardHeader>
 
-            <CardContent className="p-6">
-              {paymentState === PaymentState.INITIAL && (
-                <>
-                  <PaymentSummary />
+              <CardContent className="p-6">
+                {paymentState === PaymentState.INITIAL && (
+                  <>
+                    <PaymentSummary />
 
-                  <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                    {!isAdminMode && (
-                      <>
-                        <div className="space-y-2">
-                          <Label htmlFor="name">Full Name</Label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                              <User className="h-4 w-4 text-white" />
-                            </div>
-                            <Input
-                              id="name"
-                              name="name"
-                              value={formData.name}
-                              onChange={handleInputChange}
-                              className={`pl-10 ${errors.name ? "border-destructive" : ""}`}
-                              placeholder="Enter your full name"
-                            />
-                          </div>
-                          {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">M-Pesa Phone Number</Label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                              <Phone className="h-4 w-4 text-white" />
-                            </div>
-                            <Input
-                              id="phone"
-                              name="phone"
-                              value={formData.phone}
-                              onChange={handleInputChange}
-                              className={`pl-10 ${errors.phone ? "border-destructive" : ""}`}
-                              placeholder="07XXXXXXXX"
-                            />
-                          </div>
-                          {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
-                        </div>
-                      </>
-                    )}
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                          <Mail className="h-4 w-4 text-white" />
-                        </div>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          className={`pl-10 ${errors.email ? "border-destructive" : ""}`}
-                          placeholder="your.email@example.com"
-                          aria-describedby={isAdminMode ? "admin-detected" : undefined}
-                        />
-                      </div>
-                      {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
-                      {isAdminMode && (
-                        <p id="admin-detected" className="text-xs font-medium text-primary">
-                          Admin detected — enter Admin Access Key to proceed.
-                        </p>
-                      )}
-                    </div>
-
-                    {!isAdminMode && (
-                      <div className="mt-6">
-                        <div className="flex justify-center">
-                          <div
-                            className={`border rounded-md p-4 w-full flex justify-center ${
-                              errors.captcha ? "border-destructive" : "border-border"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                id="captcha-checkbox"
-                                onChange={() => handleCaptchaVerify()}
-                                className="h-4 w-4"
+                    <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                      {!isAdminMode && (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="name">Full Name</Label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <User className="h-4 w-4 text-white" />
+                              </div>
+                              <Input
+                                id="name"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                className={`pl-10 ${errors.name ? "border-destructive" : ""}`}
+                                placeholder="Enter your full name"
                               />
-                              <label htmlFor="captcha-checkbox" className="text-sm">
-                                I'm not a robot
-                              </label>
+                            </div>
+                            {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="phone">M-Pesa Phone Number</Label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <Phone className="h-4 w-4 text-white" />
+                              </div>
+                              <Input
+                                id="phone"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={handleInputChange}
+                                className={`pl-10 ${errors.phone ? "border-destructive" : ""}`}
+                                placeholder="07XXXXXXXX"
+                              />
+                            </div>
+                            {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+                          </div>
+                        </>
+                      )}
+
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email Address</Label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <Mail className="h-4 w-4 text-white" />
+                          </div>
+                          <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            className={`pl-10 ${errors.email ? "border-destructive" : ""}`}
+                            placeholder="your.email@example.com"
+                            aria-describedby={isAdminMode ? "admin-detected" : undefined}
+                          />
+                        </div>
+                        {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+                        {isAdminMode && (
+                          <p id="admin-detected" className="text-xs font-medium text-primary">
+                            Admin detected — enter Admin Access Key to proceed.
+                          </p>
+                        )}
+                      </div>
+
+                      {!isAdminMode && (
+                        <div className="mt-6">
+                          <div className="flex justify-center">
+                            <div
+                              className={`border rounded-md p-4 w-full flex justify-center ${errors.captcha ? "border-destructive" : "border-border"
+                                }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  id="captcha-checkbox"
+                                  onChange={() => handleCaptchaVerify()}
+                                  className="h-4 w-4"
+                                />
+                                <label htmlFor="captcha-checkbox" className="text-sm">
+                                  I'm not a robot
+                                </label>
+                              </div>
                             </div>
                           </div>
+                          {errors.captcha && <p className="text-xs text-destructive mt-1">{errors.captcha}</p>}
                         </div>
-                        {errors.captcha && <p className="text-xs text-destructive mt-1">{errors.captcha}</p>}
-                      </div>
-                    )}
+                      )}
 
-                    {isAdminMode && (
-                      <div className="space-y-2">
-                        <Label htmlFor="adminKey">Admin Access Key</Label>
-                        <Input
-                          id="adminKey"
-                          name="adminKey"
-                          value={adminKey}
-                          onChange={(e) => setAdminKey(e.target.value)}
-                          placeholder="Enter admin key"
-                          aria-label="Admin Access Key"
-                        />
-                      </div>
-                    )}
+                      {isAdminMode && (
+                        <div className="space-y-2">
+                          <Label htmlFor="adminKey">Admin Access Key</Label>
+                          <Input
+                            id="adminKey"
+                            name="adminKey"
+                            value={adminKey}
+                            onChange={(e) => setAdminKey(e.target.value)}
+                            placeholder="Enter admin key"
+                            aria-label="Admin Access Key"
+                          />
+                        </div>
+                      )}
 
-                    {!isAdminMode && (
-                      <div className="flex items-center gap-2 text-xs text-white mt-4">
-                        <Shield className="h-3 w-3" />
-                        <p>Your payment information is secure. Protected by M-Pesa.</p>
-                      </div>
-                    )}
+                      {!isAdminMode && (
+                        <div className="flex items-center gap-2 text-xs text-white mt-4">
+                          <Shield className="h-3 w-3" />
+                          <p>Your payment information is secure. Protected by M-Pesa.</p>
+                        </div>
+                      )}
 
-                    <Button type="submit" className="w-full mt-6" size="lg">
-                      {isAdminMode ? "Continue as Admin" : "Pay KES 200 with M-Pesa"}
-                    </Button>
-                  </form>
-                </>
-              )}
+                      <Button type="submit" className="w-full mt-6" size="lg" disabled={isLoadingAmount}>
+                        {isLoadingAmount
+                          ? "Loading..."
+                          : isAdminMode
+                            ? "Continue as Admin"
+                            : `Pay KES ${paymentAmount} with M-Pesa`}
+                      </Button>
+                    </form>
+                  </>
+                )}
 
-              {paymentState !== PaymentState.INITIAL && (
-                <PaymentStatus state={paymentState} onRetry={handleRetry} phone={formData.phone} />
-              )}
-            </CardContent>
+                {paymentState !== PaymentState.INITIAL && (
+                  <PaymentStatus
+                    state={paymentState}
+                    onRetry={handleRetry}
+                    phone={formData.phone}
+                    paymentAmount={paymentAmount || 200}
+                  />
+                )}
+              </CardContent>
 
-            <CardFooter className="bg-muted/30 flex flex-col space-y-4 px-6 py-4">
-              <div className="text-center text-sm text-white">Need help? Use the contact options in the footer below.</div>
-            </CardFooter>
-          </Card>
+              <CardFooter className="bg-muted/30 flex flex-col space-y-4 px-6 py-4">
+                <div className="text-center text-sm text-white">Need help? Use the contact options in the footer below.</div>
+              </CardFooter>
+            </Card>
+          </div>
         </div>
       </div>
-    </div>
-    <Footer showOnHomepage={true} />
+      <Footer showOnHomepage={true} />
     </div>
   )
 }

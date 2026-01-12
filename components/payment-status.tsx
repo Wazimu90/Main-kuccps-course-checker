@@ -8,9 +8,10 @@ interface PaymentStatusProps {
   state: "initial" | "processing" | "success" | "failed"
   onRetry: () => void
   phone: string
+  paymentAmount?: number // Optional, defaults to 200
 }
 
-export default function PaymentStatus({ state, onRetry, phone }: PaymentStatusProps) {
+export default function PaymentStatus({ state, onRetry, phone, paymentAmount = 200 }: PaymentStatusProps) {
   const renderContent = () => {
     switch (state) {
       case "processing":
@@ -35,6 +36,20 @@ export default function PaymentStatus({ state, onRetry, phone }: PaymentStatusPr
                 <div className="h-2 w-2 animate-pulse rounded-full bg-primary" style={{ animationDelay: "0.4s" }}></div>
               </div>
             </div>
+
+            {/* Retry button for cases where STK was cancelled or not received */}
+            <div className="mt-6 w-full space-y-2">
+              <Button
+                onClick={onRetry}
+                variant="outline"
+                className="w-full"
+              >
+                Cancel & Retry Payment
+              </Button>
+              <p className="text-xs text-white text-center">
+                Didn't receive the STK prompt? Click above to retry.
+              </p>
+            </div>
           </div>
         )
 
@@ -50,7 +65,7 @@ export default function PaymentStatus({ state, onRetry, phone }: PaymentStatusPr
             </motion.div>
             <h3 className="mb-2 text-xl font-semibold">Payment Successful!</h3>
             <p className="mb-6 text-center text-white">
-              Your payment of KES 200 has been received. Thank you!
+              Your payment of KES {paymentAmount} has been received. Thank you!
             </p>
             <p className="text-sm text-white">Redirecting to your results...</p>
             <div className="mt-4 flex items-center justify-center">

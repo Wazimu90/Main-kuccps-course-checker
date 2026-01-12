@@ -1,76 +1,196 @@
 "use server"
 
-import { v4 as uuidv4 } from "uuid"
 import { log } from "@/lib/logger"
+import { initiateStkPush } from "@/lib/pesaflux"
+import { supabaseServer } from "@/lib/supabaseServer"
 
-// This is a mock implementation. In a real application, you would integrate with Pesaflux API
+/**
+ * Initiate payment via PesaFlux STK Push
+ */
 export async function initiatePayment(data: {
   phone: string
   email: string
   name: string
   amount: number
+  courseCategory?: string | null
 }) {
   try {
-    // Generate a unique payment ID
-    const paymentId = uuidv4()
+    // Generate a unique reference for this transaction
+    const reference = `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`
 
-    // In a real implementation, you would call the Pesaflux API here
-    // For demo purposes, we'll simulate a successful API call
-    log("payment:init", "Initiating payment", "info", { ...data, paymentId })
+    log("payment:init", "Initiating PesaFlux payment", "info", {
+      ...data,
+      reference,
+      phone: data.phone.substring(0, 4) + "****" // Mask phone for logs
+    })
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    // Call PesaFlux STK Push API
+    const response = await initiateStkPush({
+      amount: data.amount,
+      msisdn: data.phone,
+      reference,
+    })
 
-    // Return success response with payment ID
-    return {
-      success: true,
-      paymentId,
-      message: "Payment initiated successfully",
+    if (response.success) {
+      log("payment:init", "✅ PesaFlux STK Push successful", "success", {
+        reference,
+        transaction_id: response.transaction_id,
+        message: response.message
+      })
+
+      // Store payment initiation in database for tracking
+      try {
+        await supabaseServer.from("payment_transactions").insert({
+          reference,
+          transaction_id: response.transaction_id,
+          phone_number: data.phone,
+          email: data.email,
+          name: data.name,
+          amount: data.amount,
+          course_category: data.courseCategory || null,
+          status: "PENDING",
+          created_at: new Date().toISOString(),
+        })
+
+        log("payment:db", "Transaction stored in database", "debug", {
+          reference,
+          transaction_id: response.transaction_id,
+          course_category: data.courseCategory
+        })
+      } catch (dbError: any) {
+        // If table doesn't exist, log warning but continue (webhook will handle final recording)
+        log("payment:db", "Failed to store transaction - table may not exist yet", "warn", {
+          error: dbError.message,
+          hint: "Run migration: supabase/migrations/2026-01-11_pesaflux_transactions.sql"
+        })
+        // Don't fail the payment - webhook can still record it later
+      }
+
+      return {
+        success: true,
+        paymentId: reference, // Use reference as paymentId for tracking
+        message: response.message || "STK Push sent to your phone",
+      }
+    } else {
+      log("payment:init", "PesaFlux STK Push failed", "error", response)
+      return {
+        success: false,
+        message: response.message || "Failed to initiate payment",
+      }
     }
   } catch (error) {
-    log("payment:init", "Payment initiation error", "error", error)
+    log("payment:init", "Payment initiation exception", "error", error)
     return {
       success: false,
-      message: "Failed to initiate payment",
+      message: "Failed to initiate payment. Please try again.",
     }
   }
 }
 
-// Mock function to check payment status
+/**
+ * Check payment status from database (updated by webhook)
+ */
 export async function checkPaymentStatus(paymentId: string) {
   try {
-    // In a real implementation, you would call the Pesaflux API to check status
-    log("payment:status", "Checking payment status", "debug", { paymentId })
+    log("payment:status", "🔍 Starting status check", "info", { paymentId })
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    // Query database for payment status (updated by webhook)
+    const { data: transaction, error } = await supabaseServer
+      .from("payment_transactions")
+      .select("status, updated_at, webhook_data, mpesa_receipt_number")
+      .eq("reference", paymentId)
+      .single()
 
-    // For demo purposes, randomly determine payment status
-    // In production, this would be based on actual payment status from Pesaflux
-    const random = Math.random()
+    if (error) {
+      // If table doesn't exist or other DB error, return pending to continue polling
+      log("payment:status", "⚠️ Database query error - table may not exist yet", "warn", {
+        paymentId,
+        error: error.message,
+        errorCode: error.code,
+        hint: "Run migration: supabase/migrations/2026-01-11_pesaflux_transactions.sql"
+      })
+      return {
+        status: "PENDING",
+        message: "Awaiting payment confirmation",
+      }
+    }
 
-    // 70% chance of success after a few seconds
-    if (random < 0.7) {
+    if (!transaction) {
+      log("payment:status", "❌ Transaction not found in database", "warn", {
+        paymentId,
+        hint: "Payment may not have been initiated"
+      })
+      return {
+        status: "PENDING",
+        message: "Awaiting payment confirmation",
+      }
+    }
+
+    log("payment:status", "📊 Transaction found - current status", "debug", {
+      paymentId,
+      status: transaction.status,
+      hasWebhookData: !!transaction.webhook_data,
+      mpesaReceipt: transaction.mpesa_receipt_number || "none",
+      lastUpdated: transaction.updated_at
+    })
+
+    // Map database status to frontend status
+    const status = transaction.status.toUpperCase()
+
+    if (status === "COMPLETED" || status === "SUCCESS") {
+      log("payment:status", "✅ Payment COMPLETED!", "success", {
+        paymentId,
+        mpesaReceipt: transaction.mpesa_receipt_number
+      })
       return {
         status: "COMPLETED",
         message: "Payment completed successfully",
       }
-    } else if (random < 0.9) {
-      return {
-        status: "PENDING",
-        message: "Payment is still being processed",
-      }
-    } else {
+    } else if (status === "FAILED" || status === "CANCELLED") {
+      log("payment:status", "❌ Payment FAILED", "error", { paymentId, status })
       return {
         status: "FAILED",
         message: "Payment failed or was cancelled",
       }
+    } else {
+      // Check if payment has been pending for too long (5 minutes)
+      const updatedAt = new Date(transaction.updated_at)
+      const ageMinutes = (Date.now() - updatedAt.getTime()) / 1000 / 60
+
+      log("payment:status", "⏳ Payment still PENDING", "debug", {
+        paymentId,
+        ageMinutes: ageMinutes.toFixed(2),
+        willTimeoutIn: (5 - ageMinutes).toFixed(2) + " minutes"
+      })
+
+      if (ageMinutes > 5) {
+        log("payment:status", "⏰ Payment TIMEOUT - stuck for > 5 minutes", "warn", {
+          paymentId,
+          ageMinutes,
+          hint: "Webhook likely didn't receive callback. Check PAYMENT_FLOW_DEBUG.md"
+        })
+        return {
+          status: "FAILED",
+          message: "Payment timed out. Please try again.",
+        }
+      }
+
+      return {
+        status: "PENDING",
+        message: "Awaiting payment confirmation",
+      }
     }
-  } catch (error) {
-    log("payment:status", "Payment status check error", "error", error)
+  } catch (error: any) {
+    log("payment:status", "💥 Status check exception", "error", {
+      error: error.message,
+      stack: error.stack,
+      hint: "Ensure payment_transactions table exists"
+    })
+
+    // Return PENDING on any error to allow polling to continue
     return {
-      status: "ERROR",
-      message: "Failed to check payment status",
+      status: "PENDING",
+      message: "Checking payment status...",
     }
   }
 }
