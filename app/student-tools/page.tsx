@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { ExternalLink, CheckCircle, Clock, Wifi, Play, X } from "lucide-react"
@@ -18,16 +18,24 @@ interface VideoTutorial {
     id: string
     title: string
     description: string
-    youtubeId: string
-    thumbnail?: string
-    duration?: string
+    youtube_id: string
+    duration: string | null
+    display_order: number
+    is_active: boolean
 }
 
 const GOVERNMENT_SERVICES: GovernmentService[] = [
     {
+        name: "KUCCPS Cluster Calculator + AI Explanation",
+        description: "Calculate your estimated cluster points using the public KUCCPS formula. Get instant AI-powered insights to understand your results and course eligibility. For guidance and testing only - not official KUCCPS results.",
+        website: "/cluster-calculator",
+        logo: "/cluster-calculator-logo.png",
+        status: "online",
+    },
+    {
         name: "Kenya Universities and Colleges Central Placement Service (KUCCPS)",
         description: "A state corporation that offers career guidance and coordinates placement of Government-sponsored students into universities, national polytechnics, technical training institutes and other accredited higher learning institutions in Kenya.",
-        website: "https://kuccps.net",
+        website: "https://students.kuccps.net",
         logo: "/images/kuccpslogo.png",
         status: "not-open",
     },
@@ -68,53 +76,28 @@ const GOVERNMENT_SERVICES: GovernmentService[] = [
     }
 ]
 
-const VIDEO_TUTORIALS: VideoTutorial[] = [
-    {
-        id: "1",
-        title: "How to Check Qualified Courses on Our Website",
-        description: "Step-by-step guide on using our KUCCPS Course Checker to find courses you qualify for based on your KCSE grades.",
-        youtubeId: "dQw4w9WgXcQ", // Replace with actual YouTube video ID
-        duration: "5:30"
-    },
-    {
-        id: "2",
-        title: "How to Apply for KUCCPS University Placement",
-        description: "Complete walkthrough of the KUCCPS application process, from account creation to course selection and submission.",
-        youtubeId: "dQw4w9WgXcQ", // Replace with actual YouTube video ID
-        duration: "8:45"
-    },
-    {
-        id: "3",
-        title: "How to Apply for KRA PIN Online",
-        description: "Easy tutorial on registering for your KRA PIN through iTax, required for HELB and other government services.",
-        youtubeId: "dQw4w9WgXcQ", // Replace with actual YouTube video ID
-        duration: "6:15"
-    },
-    {
-        id: "4",
-        title: "How to Apply for HELB Loan & Scholarship",
-        description: "Comprehensive guide on applying for Higher Education Loans and Scholarships through the HELB online portal.",
-        youtubeId: "dQw4w9WgXcQ", // Replace with actual YouTube video ID
-        duration: "10:20"
-    },
-    {
-        id: "5",
-        title: "Understanding KUCCPS Cluster Points & Cut-off",
-        description: "Learn how cluster points are calculated and how to interpret cut-off marks for different courses and universities.",
-        youtubeId: "dQw4w9WgXcQ", // Replace with actual YouTube video ID
-        duration: "7:30"
-    },
-    {
-        id: "6",
-        title: "How to Download Your KNEC Results Certificate",
-        description: "Guide on accessing and downloading your official KCSE results certificate from the KNEC portal.",
-        youtubeId: "dQw4w9WgXcQ", // Replace with actual YouTube video ID
-        duration: "4:20"
-    }
-]
-
 export default function StudentToolsPage() {
     const [selectedVideo, setSelectedVideo] = useState<VideoTutorial | null>(null)
+    const [videoTutorials, setVideoTutorials] = useState<VideoTutorial[]>([])
+    const [videosLoading, setVideosLoading] = useState(true)
+
+    // Fetch video tutorials from API
+    useEffect(() => {
+        const fetchVideos = async () => {
+            try {
+                const response = await fetch("/api/video-tutorials")
+                const data = await response.json()
+                if (response.ok && data.videos) {
+                    setVideoTutorials(data.videos)
+                }
+            } catch (error) {
+                console.error("Error fetching videos:", error)
+            } finally {
+                setVideosLoading(false)
+            }
+        }
+        fetchVideos()
+    }, [])
 
     const getStatusBadge = (status: string) => {
         if (status === "open") {
@@ -305,66 +288,79 @@ export default function StudentToolsPage() {
                         </p>
                     </motion.div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {VIDEO_TUTORIALS.map((video, index) => (
-                            <motion.div
-                                key={video.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
-                            >
-                                <button
-                                    onClick={() => openVideoModal(video)}
-                                    className="group block h-full w-full text-left"
+                    {videosLoading ? (
+                        <div className="text-center py-12">
+                            <div className="inline-block w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+                            <p className="mt-4 text-dim">Loading video tutorials...</p>
+                        </div>
+                    ) : videoTutorials.length === 0 ? (
+                        <div className="text-center py-12 rounded-2xl bg-surface/50 border border-white/10">
+                            <Play className="w-16 h-16 text-dim mx-auto mb-4" />
+                            <p className="text-light text-lg font-semibold mb-2">No video tutorials available</p>
+                            <p className="text-dim">Check back later for helpful guides!</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {videoTutorials.map((video, index) => (
+                                <motion.div
+                                    key={video.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.5, delay: index * 0.1 }}
                                 >
-                                    <div className="h-full relative overflow-hidden rounded-2xl bg-surface border border-white/10 transition-all duration-300 hover:border-accent/50 hover:shadow-[0_0_30px_rgba(34,211,238,0.15)] hover:-translate-y-1">
-                                        {/* Video Thumbnail */}
-                                        <div className="relative aspect-video bg-gradient-to-br from-accent/10 to-accent/5 overflow-hidden">
-                                            <Image
-                                                src={`https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg`}
-                                                alt={video.title}
-                                                fill
-                                                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                                            />
-                                            {/* Play Button Overlay */}
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors duration-300">
-                                                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-accent/90 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-[0_0_20px_rgba(34,211,238,0.5)]">
-                                                    <Play className="w-8 h-8 md:w-10 md:h-10 text-dark fill-dark ml-1" />
+                                    <button
+                                        onClick={() => openVideoModal(video)}
+                                        className="group block h-full w-full text-left"
+                                    >
+                                        <div className="h-full relative overflow-hidden rounded-2xl bg-surface border border-white/10 transition-all duration-300 hover:border-accent/50 hover:shadow-[0_0_30px_rgba(34,211,238,0.15)] hover:-translate-y-1">
+                                            {/* Video Thumbnail */}
+                                            <div className="relative aspect-video bg-gradient-to-br from-accent/10 to-accent/5 overflow-hidden">
+                                                <Image
+                                                    src={`https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`}
+                                                    alt={video.title}
+                                                    fill
+                                                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                                />
+                                                {/* Play Button Overlay */}
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors duration-300">
+                                                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-accent/90 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-[0_0_20px_rgba(34,211,238,0.5)]">
+                                                        <Play className="w-8 h-8 md:w-10 md:h-10 text-dark fill-dark ml-1" />
+                                                    </div>
+                                                </div>
+                                                {/* Duration Badge */}
+                                                {video.duration && (
+                                                    <div className="absolute bottom-3 right-3 px-2 py-1 rounded-md bg-black/80 backdrop-blur-sm">
+                                                        <span className="text-xs font-semibold text-white">{video.duration}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="p-5 space-y-3">
+                                                <h3 className="text-base md:text-lg font-bold text-light leading-tight line-clamp-2 group-hover:text-accent transition-colors duration-300">
+                                                    {video.title}
+                                                </h3>
+                                                <p className="text-sm text-dim leading-relaxed line-clamp-2">
+                                                    {video.description}
+                                                </p>
+                                                <div className="flex items-center gap-2 pt-2">
+                                                    <Play className="w-4 h-4 text-accent" />
+                                                    <span className="text-xs font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        Watch Tutorial
+                                                    </span>
                                                 </div>
                                             </div>
-                                            {/* Duration Badge */}
-                                            {video.duration && (
-                                                <div className="absolute bottom-3 right-3 px-2 py-1 rounded-md bg-black/80 backdrop-blur-sm">
-                                                    <span className="text-xs font-semibold text-white">{video.duration}</span>
-                                                </div>
-                                            )}
-                                        </div>
 
-                                        {/* Content */}
-                                        <div className="p-5 space-y-3">
-                                            <h3 className="text-base md:text-lg font-bold text-light leading-tight line-clamp-2 group-hover:text-accent transition-colors duration-300">
-                                                {video.title}
-                                            </h3>
-                                            <p className="text-sm text-dim leading-relaxed line-clamp-2">
-                                                {video.description}
-                                            </p>
-                                            <div className="flex items-center gap-2 pt-2">
-                                                <Play className="w-4 h-4 text-accent" />
-                                                <span className="text-xs font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                    Watch Tutorial
-                                                </span>
-                                            </div>
+                                            {/* Hover Glow Effect */}
+                                            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/0 via-accent/0 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                                         </div>
-
-                                        {/* Hover Glow Effect */}
-                                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/0 via-accent/0 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                                    </div>
-                                </button>
-                            </motion.div>
-                        ))}
-                    </div>
+                                    </button>
+                                </motion.div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -400,7 +396,7 @@ export default function StudentToolsPage() {
                             <div className="relative rounded-2xl overflow-hidden bg-black shadow-[0_0_60px_rgba(34,211,238,0.3)] border border-accent/20">
                                 <div className="relative aspect-video">
                                     <iframe
-                                        src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0`}
+                                        src={`https://www.youtube.com/embed/${selectedVideo.youtube_id}?autoplay=1&rel=0`}
                                         title={selectedVideo.title}
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                         allowFullScreen
