@@ -10,6 +10,7 @@ import BackButton from "@/components/back-button"
 import BackgroundProvider from "@/components/background/BackgroundProvider"
 import ReferrerTracker from "@/components/referrer-tracker"
 import MobileTutorial from "@/components/mobile-tutorial"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -55,6 +56,7 @@ export default function RootLayout({
             <MobileTutorial />
             <main className="min-h-screen">{children}</main>
             <Toaster />
+            <SpeedInsights />
           </ThemeProvider>
         </Suspense>
       </body>
