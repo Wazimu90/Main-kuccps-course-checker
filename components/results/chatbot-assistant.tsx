@@ -117,9 +117,9 @@ export default function ChatbotAssistant({ isOpen, onClose, selectedCategory, qu
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           className="fixed bottom-4 right-4 z-50 w-[95vw] md:w-[420px] max-w-[420px] max-h-[80vh]"
         >
-          <Card className="shadow-2xl border border-border/50 bg-background/95 backdrop-blur-xl overflow-hidden">
+          <Card className="shadow-2xl border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
             {/* Header */}
-            <CardHeader className="p-4 border-b border-border/50 bg-muted/30">
+            <CardHeader className="p-4 border-b border-gray-100 bg-slate-50 dark:bg-gray-800 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="relative">
@@ -148,19 +148,19 @@ export default function ChatbotAssistant({ isOpen, onClose, selectedCategory, qu
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={handleClearChat} 
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleClearChat}
+                    className="h-8 w-8 text-slate-500 hover:text-destructive transition-colors dark:text-slate-400"
                     title="Clear conversation"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="h-8 w-8 text-muted-foreground">
+                  <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="h-8 w-8 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                     <Minimize2 className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -224,11 +224,10 @@ export default function ChatbotAssistant({ isOpen, onClose, selectedCategory, qu
                           </div>
                         )}
                         <div
-                          className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
-                            message.sender === "user" 
-                              ? "bg-primary text-primary-foreground rounded-tr-sm" 
-                              : "bg-muted/80 text-foreground rounded-tl-sm border border-border/50"
-                          }`}
+                          className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${message.sender === "user"
+                            ? "bg-primary text-primary-foreground rounded-tr-sm"
+                            : "bg-muted/80 text-foreground rounded-tl-sm border border-border/50"
+                            }`}
                         >
                           <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
                           <p className={`text-[10px] mt-1.5 ${message.sender === "user" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
@@ -275,8 +274,8 @@ export default function ChatbotAssistant({ isOpen, onClose, selectedCategory, qu
                   </div>
 
                   {/* Input Area */}
-                  <div className="p-4 border-t border-border/50 bg-background/50 backdrop-blur-sm">
-                    <form 
+                  <div className="p-4 border-t border-gray-100 bg-white dark:bg-gray-900 dark:border-gray-800">
+                    <form
                       onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
                       className="flex gap-2"
                     >
@@ -286,7 +285,7 @@ export default function ChatbotAssistant({ isOpen, onClose, selectedCategory, qu
                         onChange={(e) => setInputMessage(e.target.value)}
                         placeholder={isConfigured ? "Type your question..." : "Chatbot offline"}
                         disabled={isLoading || !isConfigured}
-                        className="flex-1 bg-background/50 focus-visible:ring-primary/20"
+                        className="flex-1 bg-slate-50 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:ring-primary/20 dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:placeholder:text-slate-400"
                       />
                       <Button
                         type="submit"

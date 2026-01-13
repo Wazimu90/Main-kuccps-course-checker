@@ -58,11 +58,23 @@ export default function ResultsPage() {
   const [selectedCategory, setSelectedCategory] = useState("degree")
   const [availableInstitutions, setAvailableInstitutions] = useState<any[]>([])
   const [availableLocations, setAvailableLocations] = useState<any[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
   const filtersRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setIsAdmin(true)
+      }
+    }
+    checkAdmin()
+  }, [])
+
   const BUY_URL = process.env.NEXT_PUBLIC_SAFARICOM_BUY_URL || "https://bingwazone.co.ke/app/Bfasta"
   const containerVariants = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.32, ease: "easeOut", staggerChildren: 0.1 } } }
   const itemVariants = { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }
-  
+
   const launchConfetti = () => {
     try {
       const canvas = document.createElement("canvas")
@@ -419,8 +431,12 @@ export default function ResultsPage() {
       // Student Info
       doc.setTextColor(0, 0, 0)
       doc.setFontSize(12)
-      doc.text(`Student Name: ${paymentInfo?.name || "Student"}`, 14, 50)
-      doc.text(`Email: ${paymentInfo?.email || "N/A"}`, 14, 56)
+
+      if (!isAdmin) {
+        doc.text(`Student Name: ${paymentInfo?.name || "Student"}`, 14, 50)
+        doc.text(`Email: ${paymentInfo?.email || "N/A"}`, 14, 56)
+      }
+
       doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 62)
 
       // Summary
