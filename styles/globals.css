@@ -4,19 +4,53 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Background layers */
-  --background: oklch(0.18 0.03 260); /* deep academic navy */
-  --foreground: oklch(0.92 0.02 240); /* soft light text */
+  /* Fallbacks for old browsers */
+  --background: #ffffff;
+  --foreground: #111111;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+  --primary: #1f2937;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #111111;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: #f3f4f6;
+  --accent-foreground: #111111;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #3b82f6;
+  --radius: 0.5rem;
+  --sidebar: #f9fafb;
+  --sidebar-foreground: #111111;
+  --sidebar-primary: #1f2937;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f3f4f6;
+  --sidebar-accent-foreground: #111111;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #3b82f6;
+
+  /* Modern browsers override - deep academic navy theme */
+  --background: oklch(0.18 0.03 260);
+  /* deep academic navy */
+  --foreground: oklch(0.92 0.02 240);
+  /* soft light text */
 
   /* Surfaces */
-  --card: oklch(0.22 0.03 250); /* slate navy surface */
+  --card: oklch(0.22 0.03 250);
+  /* slate navy surface */
   --card-foreground: oklch(0.92 0.02 240);
 
   --popover: oklch(0.20 0.03 250);
   --popover-foreground: oklch(0.92 0.02 240);
 
   /* Primary action */
-  --primary: oklch(0.78 0.13 220); /* bright cyan */
+  --primary: oklch(0.78 0.13 220);
+  /* bright cyan */
   --primary-foreground: oklch(0.14 0.02 250);
 
   /* Secondary (soft surfaces) */
@@ -24,12 +58,15 @@
   --secondary-foreground: oklch(0.92 0.02 240);
 
   /* Muted + muted text */
-  --muted: oklch(0.27 0.01 260); /* soft dark navy */
+  --muted: oklch(0.27 0.01 260);
+  /* soft dark navy */
   --muted-foreground: #FFFFFF;
-  --white: #f6fffb; /* readable soft grey */
+  --white: #f6fffb;
+  /* readable soft grey */
 
   /* Accent */
-  --accent: oklch(0.78 0.13 220); /* same electric cyan */
+  --accent: oklch(0.78 0.13 220);
+  /* same electric cyan */
   --accent-foreground: oklch(0.14 0.02 255);
 
   /* Status colors */
@@ -41,7 +78,7 @@
   --input: oklch(0.30 0.01 260);
   --ring: oklch(0.78 0.13 220);
 
-  /* Charts (leave these alone unless needed) */
+  /* Charts */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -64,18 +101,22 @@
 
 .dark {
   /* Background layers */
-  --background: oklch(0.18 0.03 260); /* deep academic navy */
-  --foreground: oklch(0.92 0.02 240); /* soft light text */
+  --background: oklch(0.18 0.03 260);
+  /* deep academic navy */
+  --foreground: oklch(0.92 0.02 240);
+  /* soft light text */
 
   /* Surfaces */
-  --card: oklch(0.22 0.03 250); /* slate navy surface */
+  --card: oklch(0.22 0.03 250);
+  /* slate navy surface */
   --card-foreground: oklch(0.92 0.02 240);
 
   --popover: oklch(0.20 0.03 250);
   --popover-foreground: oklch(0.92 0.02 240);
 
   /* Primary action */
-  --primary: oklch(0.78 0.13 220); /* bright cyan */
+  --primary: oklch(0.78 0.13 220);
+  /* bright cyan */
   --primary-foreground: oklch(0.14 0.02 250);
 
   /* Secondary (soft surfaces) */
@@ -83,12 +124,15 @@
   --secondary-foreground: oklch(0.92 0.02 240);
 
   /* Muted + muted text */
-  --muted: oklch(0.27 0.01 260); /* soft dark navy */
+  --muted: oklch(0.27 0.01 260);
+  /* soft dark navy */
   --muted-foreground: #FFFFFF;
-  --white: oklch(0.82 0.02 240); /* readable soft grey */
+  --white: oklch(0.82 0.02 240);
+  /* readable soft grey */
 
   /* Accent */
-  --accent: oklch(0.78 0.13 220); /* same electric cyan */
+  --accent: oklch(0.78 0.13 220);
+  /* same electric cyan */
   --accent-foreground: oklch(0.14 0.02 255);
 
   /* Status colors */
@@ -100,7 +144,7 @@
   --input: oklch(0.30 0.01 260);
   --ring: oklch(0.78 0.13 220);
 
-  /* Charts (leave these alone unless needed) */
+  /* Charts */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -166,7 +210,10 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
+    background-color: #ffffff;
+    color: #000000;
     @apply bg-background text-foreground;
   }
 }
@@ -274,7 +321,7 @@
 
 .news-content th,
 .news-content td {
-  @apply border border-white/20 px-4 py-2;
+  @apply border-white/20 px-4 py-2 border;
 }
 
 .news-content th {
