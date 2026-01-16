@@ -47,22 +47,71 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   }
   try {
     const body = await request.json()
-    const status = String(body.status || "").trim()
-    if (!["active", "disabled"].includes(status)) {
-      return NextResponse.json({ error: "invalid_status" }, { status: 400 })
+
+    // Build update object based on what's provided
+    const updates: any = {}
+
+    if (body.status !== undefined) {
+      const status = String(body.status || "").trim()
+      if (!["active", "disabled"].includes(status)) {
+        return NextResponse.json({ error: "invalid_status" }, { status: 400 })
+      }
+      updates.status = status
     }
+
+    if (body.name !== undefined) {
+      const name = String(body.name || "").trim()
+      if (!name) {
+        return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 })
+      }
+      updates.name = name
+    }
+
+    if (body.phone_number !== undefined) {
+      updates.phone_number = String(body.phone_number || "").trim()
+    }
+
+    if (body.code !== undefined) {
+      const code = String(body.code || "").trim()
+      if (!code) {
+        return NextResponse.json({ error: "Code cannot be empty" }, { status: 400 })
+      }
+      updates.code = code
+    }
+
+    if (body.link !== undefined) {
+      updates.link = String(body.link || "").trim() || null
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 })
+    }
+
     const { data, error } = await supabaseServer
       .from("referrals")
-      .update({ status })
+      .update(updates)
       .or(`id.eq.${id},code.eq.${id}`)
-      .select("id,code")
+      .select("id,code,name")
       .single()
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    // Log the activity
+    let eventType = "referral_updated"
+    let description = `Referral ${data.code} updated`
+
+    if (updates.status === "disabled") {
+      eventType = "referral_suspended"
+      description = `Referral ${data.code} suspended`
+    } else if (updates.status === "active") {
+      eventType = "referral_activated"
+      description = `Referral ${data.code} activated`
+    }
+
     await supabaseServer.from("activity_logs").insert({
-      event_type: status === "disabled" ? "referral_suspended" : "referral_activated",
-      description: `Referral ${data.code} ${status === "disabled" ? "suspended" : "activated"}`,
+      event_type: eventType,
+      description,
       actor_role: "admin",
       created_at: new Date().toISOString(),
     })

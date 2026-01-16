@@ -18,8 +18,6 @@ export async function GET() {
 
     // Default settings if none exist
     const settings = data || {
-      site_name: "KUCCPS Course Checker",
-      site_description: "Find the perfect courses based on your KCSE results",
       contact_email: "info@kuccpschecker.com",
       contact_phone: null,
       whatsapp_number: null,
@@ -38,8 +36,6 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json()
     const {
-      site_name,
-      site_description,
       contact_email,
       contact_phone,
       whatsapp_number,
@@ -60,8 +56,6 @@ export async function PUT(request: Request) {
       const { error: updateError } = await supabaseServer
         .from("system_settings")
         .update({
-          site_name,
-          site_description,
           contact_email,
           contact_phone,
           whatsapp_number,
@@ -74,8 +68,6 @@ export async function PUT(request: Request) {
       error = updateError
     } else {
       const { error: insertError } = await supabaseServer.from("system_settings").insert({
-        site_name,
-        site_description,
         contact_email,
         contact_phone,
         whatsapp_number,

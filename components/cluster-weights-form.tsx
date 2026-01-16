@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import EmbeddedClusterCalculator from "@/components/embedded-cluster-calculator"
 
 interface ClusterWeightsFormProps {
   onSubmit: (data: any) => void
@@ -163,8 +164,50 @@ export default function ClusterWeightsForm({ onSubmit, onProgressUpdate }: Clust
     },
   ]
 
+  const handleCalculatorWeights = (calculatedWeights: Record<number, number>) => {
+    // Prefill the weights from calculator
+    const newWeights: Record<number, string> = { ...weights } // Keep existing weights
+    let filledCount = 0
+
+    Object.entries(calculatedWeights).forEach(([clusterId, weight]) => {
+      const id = Number(clusterId)
+      newWeights[id] = weight.toFixed(3)
+      filledCount++
+    })
+
+    console.log("Calculated weights:", calculatedWeights)
+    console.log("New weights to set:", newWeights)
+
+    setWeights(newWeights)
+
+    // Clear any existing errors for prefilled clusters
+    const newErrors = { ...errors }
+    Object.keys(calculatedWeights).forEach((clusterId) => {
+      delete newErrors[`cluster-${clusterId}`]
+    })
+    setErrors(newErrors)
+
+    // Show success toast
+    toast({
+      title: "✅ Weights Prefilled Successfully!",
+      description: `${filledCount} cluster weights have been filled in the form below. Scroll down to see them.`,
+      duration: 5000,
+    })
+
+    // Scroll to cluster weights form section after a short delay
+    setTimeout(() => {
+      const clusterForm = document.querySelector('.cluster-weights-grid')
+      if (clusterForm) {
+        clusterForm.scrollIntoView({ behavior: "smooth", block: "start" })
+      }
+    }, 500)
+  }
+
   return (
     <div className="space-y-6">
+      {/* Embedded Cluster Calculator */}
+      <EmbeddedClusterCalculator onUseWeights={handleCalculatorWeights} />
+
       {/* Animated Instructions Section */}
       <AnimatePresence>
         {showInstructions && (
@@ -175,7 +218,7 @@ export default function ClusterWeightsForm({ onSubmit, onProgressUpdate }: Clust
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="max-w-md lg:max-w-2xl mx-auto"
           >
-            <Card variant="outline" className="bg-blue-50/80 border-blue-200 shadow-lg backdrop-blur-sm">
+            <Card className="bg-blue-50/80 border-blue-200 shadow-lg backdrop-blur-sm border-2">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -287,14 +330,15 @@ export default function ClusterWeightsForm({ onSubmit, onProgressUpdate }: Clust
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 cluster-weights-grid">
         {clusters.map((cluster) => (
           <motion.div
             key={cluster.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: cluster.id * 0.03 }}
-            className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-4"
+            className={`rounded-xl border border-border bg-card/50 backdrop-blur-sm p-4 ${weights[cluster.id] ? 'ring-2 ring-accent/50 bg-accent/5' : ''
+              }`}
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
@@ -328,7 +372,8 @@ export default function ClusterWeightsForm({ onSubmit, onProgressUpdate }: Clust
                   placeholder="00.000"
                   value={weights[cluster.id] || ""}
                   onChange={(e) => handleWeightChange(cluster.id, e.target.value)}
-                  className={`text-right ${errors[`cluster-${cluster.id}`] ? "border-destructive" : ""}`}
+                  className={`text-right ${errors[`cluster-${cluster.id}`] ? "border-destructive" : ""} ${weights[cluster.id] ? 'border-accent bg-accent/10' : ''
+                    }`}
                 />
               </div>
             </div>

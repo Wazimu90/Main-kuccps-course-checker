@@ -35,6 +35,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import UserSummary from "@/components/results/user-summary"
 import CourseTable from "@/components/results/course-table"
 import ChatbotAssistant from "@/components/results/chatbot-assistant"
+import FloatingHelpButton from "@/components/floating-help-button"
 import { supabase } from "@/lib/supabase"
 // import { jsPDF } from "jspdf" // Dynamically imported
 // import autoTable from "jspdf-autotable" // Dynamically imported
@@ -920,6 +921,14 @@ export default function ResultsPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Floating Help Button */}
+        <FloatingHelpButton
+          userName={paymentInfo?.name || "Student"}
+          userPhone={paymentInfo?.phone || "N/A"}
+          courseCategory={selectedCategory}
+          qualifiedCoursesCount={filteredCourses.length}
+        />
       </div>
     </div>
   )

@@ -230,7 +230,7 @@ export function calculateAllClusters(
             totalKCSEPoints: 0,
             allSubjectsSorted: [],
             clusterResults: [],
-            errorMessage: `You must enter at least 7 subjects. You entered ${subjectCount} subjects.`
+            errorMessage: `You must enter at least 7 subjects. You entered ${subjectCount} subject${subjectCount === 1 ? '' : 's'}.`
         }
     }
 

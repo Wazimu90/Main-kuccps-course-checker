@@ -80,6 +80,7 @@ export default function StudentToolsPage() {
     const [selectedVideo, setSelectedVideo] = useState<VideoTutorial | null>(null)
     const [videoTutorials, setVideoTutorials] = useState<VideoTutorial[]>([])
     const [videosLoading, setVideosLoading] = useState(true)
+    const [governmentServices, setGovernmentServices] = useState<GovernmentService[]>([])
 
     // Fetch video tutorials from API
     useEffect(() => {
@@ -97,6 +98,97 @@ export default function StudentToolsPage() {
             }
         }
         fetchVideos()
+    }, [])
+
+    // Fetch application statuses and update government services
+    useEffect(() => {
+        const fetchApplicationStatuses = async () => {
+            try {
+                const response = await fetch("/api/application-status")
+                const data = await response.json()
+
+                // Create a map of application statuses
+                const statusMap: Record<string, boolean> = {}
+                if (data.statuses) {
+                    data.statuses.forEach((status: any) => {
+                        statusMap[status.application_type] = status.is_open
+                    })
+                }
+
+                // Update KUCCPS and HELB status based on database
+                const kuccpsOpen = statusMap.degree || statusMap.diploma || statusMap.kmtc || statusMap.certificate || statusMap.artisan
+
+                // Get open application types to show on HELB card
+                const openApplicationTypes = Object.entries(statusMap)
+                    .filter(([_, isOpen]) => isOpen)
+                    .map(([type]) => type.charAt(0).toUpperCase() + type.slice(1))
+
+                const helbStatusText = openApplicationTypes.length > 0
+                    ? `${openApplicationTypes.join(", ")} Application${openApplicationTypes.length > 1 ? "s" : ""} Open`
+                    : "Applications Not Open Yet"
+
+                const helbOpen = openApplicationTypes.length > 0
+
+                // Set government services with dynamic status
+                setGovernmentServices([
+                    {
+                        name: "KUCCPS Cluster Calculator + AI Explanation",
+                        description: "Calculate your estimated cluster points using the public KUCCPS formula. Get instant AI-powered insights to understand your results and course eligibility. For guidance and testing only - not official KUCCPS results.",
+                        website: "/cluster-calculator",
+                        logo: "/cluster-calculator-logo.png",
+                        status: "online",
+                    },
+                    {
+                        name: "Kenya Universities and Colleges Central Placement Service (KUCCPS)",
+                        description: "A state corporation that offers career guidance and coordinates placement of Government-sponsored students into universities, national polytechnics, technical training institutes and other accredited higher learning institutions in Kenya.",
+                        website: "https://students.kuccps.net",
+                        logo: "/images/kuccpslogo.png",
+                        status: kuccpsOpen ? "open" : "not-open",
+                    },
+                    {
+                        name: "Higher Education Loans Board (HELB)",
+                        description: helbStatusText,
+                        website: "https://www.helb.co.ke",
+                        logo: "/images/helblogo.png",
+                        status: helbOpen ? "open" : "not-open",
+                    },
+                    {
+                        name: "Kenya Revenue Authority (KRA)",
+                        description: "A government agency established by an Act of Parliament to assess, collect and account for all government revenue, advise on revenue administration, and support automation of tax services through online platforms.",
+                        website: "https://www.kra.go.ke",
+                        logo: "/images/kralogo.jpg",
+                        status: "open",
+                    },
+                    {
+                        name: "Kenya National Examinations Council (KNEC)",
+                        description: "The national body responsible for quality assessment and administration of credible public examinations in Kenya, including registration of candidates and release of national exam results.",
+                        website: "https://www.knec.ac.ke",
+                        logo: "/images/kneclogo.png",
+                        status: "open",
+                    },
+                    {
+                        name: "Ministry of Education (MOE), Republic of Kenya",
+                        description: "The ministry that formulates and implements policies on education and training, including curricula, standards, examinations, university charters, and management of basic, tertiary and university education in Kenya.",
+                        website: "https://www.education.go.ke",
+                        logo: "/images/ministrylogo.png",
+                        status: "open",
+                    },
+                    {
+                        name: "Skylink Bundlesfasta - Fast Bundles, Trusted deals.",
+                        description: "Buy Safaricom Data even if you have not paid your Okoa Jahazi. Get affordable Data, Minutes and SMS Bundles instantly.",
+                        website: "https://www.bingwazone.co.ke/app/bfasta",
+                        logo: "/images/datalogo.png",
+                        status: "online",
+                    }
+                ])
+            } catch (error) {
+                console.error("Error fetching application statuses:", error)
+                // Fallback to default services if fetch fails
+                setGovernmentServices(GOVERNMENT_SERVICES)
+            }
+        }
+
+        fetchApplicationStatuses()
     }, [])
 
     const getStatusBadge = (status: string) => {
@@ -179,7 +271,7 @@ export default function StudentToolsPage() {
             <section className="py-12">
                 <div className="container mx-auto px-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {GOVERNMENT_SERVICES.map((service, index) => (
+                        {governmentServices.map((service, index) => (
                             <motion.div
                                 key={service.name}
                                 initial={{ opacity: 0, y: 20 }}

@@ -7,7 +7,142 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - 2026-01-16 (Critical UX Fixes)
+- **Embedded Cluster Calculator Improvements**
+  - Hardcoded all subjects (Mathematics to Aviation) - users now only select grades instead of searching for subjects
+  - Improved mobile UX with compact grade dropdowns and scrollable subject list
+  - Added subject counter showing "Selected: X of 7 subjects"
+  - Faster input workflow reduces user friction
+  - References: [components/embedded-cluster-calculator.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/embedded-cluster-calculator.tsx)
+
+- **Cluster Weights Prefill Actually Working**
+  - Fixed critical bug where "Use These Weights" button didn't actually prefill form fields
+  - Added visual feedback: prefilled cluster cards get blue glow ring, inputs get blue borders
+  - Improved toast notification: "✅ Weights Prefilled Successfully! X cluster weights filled"
+  - Auto-scroll to cluster weights form after prefill for better UX
+  - Preserved existing weights when prefilling new ones
+  - References: [components/cluster-weights-form.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/cluster-weights-form.tsx)
+
+### Changed - 2026-01-16 (Homepage & Navigation)
+- **Homepage Banner Positioning**
+  - Moved application status banner below header (was hidden before)
+  - Removed standalone "Official KUCCPS Data • Verified Results" badge (banner replaces it)
+  - Added "Check Qualified Courses →" CTA button to banner
+  - CTA routes users to grade entry page for the open application type
+  - Cleaner hero section layout
+  - References:
+    - [components/application-status-banner.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/application-status-banner.tsx)
+    - [app/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/page.tsx)
+
+- **Student Tools HELB Card Dynamic Status**
+  - HELB card now shows which specific applications are open (e.g., "KMTC Application Open")
+  - Previously showed generic "Applications Open" text
+  - Dynamically updates based on application_status table
+  - Shows multiple open applications: "KMTC, Diploma Applications Open"
+  - References: [app/student-tools/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/student-tools/page.tsx)
+
+### Added - 2026-01-16 (Admin Enhancements)
+- **Admin Application Status Management**
+  - New "Application Status Management" section in Admin Settings
+  - Toggle switches for each application type (Degree, Diploma, KMTC, Certificate, Artisan)
+  - Optional status message input for each open application
+  - Real-time updates to homepage banner and student tools
+  - Positioned at top of settings page for easy access
+  - References: [app/admin/settings/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/admin/settings/page.tsx)
+
+### Removed - 2026-01-16 (Admin Cleanup)
+- **Site Name and Site Description Fields**
+  - Removed unused "Site Name" and "Site Description" from admin settings
+  - Cleaned backend API to remove these fields from GET/PUT logic
+  - Database migration provided to drop columns: `remove_site_name_description.sql`
+  - Cleaner admin interface focused on actual configuration needs
+  - References:
+    - [app/api/admin/settings/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/admin/settings/route.ts)
+    - [supabase/migrations/remove_site_name_description.sql](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/supabase/migrations/remove_site_name_description.sql)
+
+### UX Improvements - 2026-01-16
+- **Better Visual Feedback**
+  - Prefilled cluster weights highlighted with blue accent colors
+  - Toast notifications more descriptive and encouraging
+  - Smooth auto-scroll to relevant sections after actions
+  - Mobile-optimized touch targets and spacing
+
+- **Improved User Flow**
+  - Homepage banner → CTA button → Grade entry: 1-click flow
+  - Embedded calculator → Prefill → Highlighted fields: Clear visual connection
+  - Admin toggles → Immediate frontend updates: Real-time feedback
+
+### Added - 2026-01-16 (Application Status & Embedded Calculator)
+- **Application Status Management System**
+  - Dynamic application status banners on homepage showing currently open applications
+  - Database-driven status management for all course categories (Degree, Diploma, KMTC, Certificate, Artisan)
+  - Real-time status updates for government portals (KUCCPS, HELB) on Student Tools page
+  - Admin interface to manage application open/close status with custom messages and date ranges
+  - Mobile-first responsive banner with auto-dismiss functionality (24-hour cache)
+  - Color-coded badges for each application type
+  - References:
+    - [components/application-status-banner.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/application-status-banner.tsx)
+    - [app/api/application-status/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/application-status/route.ts)
+    - [app/api/application-status/active/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/application-status/active/route.ts)
+
+- **Embedded Cluster Calculator for Degree Students**
+  - Minimal cluster calculator integrated directly into degree cluster weight entry page
+  - Helps students estimate cluster weights when official ones are unavailable from KUCCPS
+  - Exactly 7 subjects required (enforced validation)
+  - Compact, mobile-optimized design that doesn't overload the page
+  - Clear disclaimers about ±5 point estimation accuracy
+  - One-click prefill of calculated weights into cluster form fields
+  - Collapsible interface to save screen space
+  - Shows top 5 qualified clusters initially with "Show All" option
+  - Smooth scroll to prefilled fields with visual feedback
+  - Toast notifications for successful prefill
+  - References:
+    - [components/embedded-cluster-calculator.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/embedded-cluster-calculator.tsx)
+    - [components/cluster-weights-form.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/cluster-weights-form.tsx)
+
+### Changed - 2026-01-16
+- **Student Tools Page Enhancement**
+  - Replaced hardcoded application status with dynamic database-driven status
+  - KUCCPS and HELB status now updates automatically based on database settings
+  - Status badges reflect real-time application availability
+  - References: [app/student-tools/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/student-tools/page.tsx)
+
+- **Homepage Updates**
+  - Added application status banner at the top of homepage
+  - Banner displays all currently open applications with visual indicators
+  - Auto-dismissible with localStorage tracking
+  - References: [app/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/page.tsx)
+
+### Database - 2026-01-16
+- **New Table: `application_status`**
+  - Stores application open/close status for all course categories
+  - Fields: id, application_type, is_open, status_message, start_date, end_date, created_at, updated_at
+  - Unique constraint on application_type
+  - Row Level Security enabled (public read, admin write)
+  - Indexed on application_type and is_open for performance
+  - Auto-update trigger for updated_at timestamp
+  - Migration: [supabase/migrations/20260116_application_status.sql](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/supabase/migrations/20260116_application_status.sql)
+
+### Performance - 2026-01-16
+- Optimized banner loading with client-side caching
+- Minimal re-renders with efficient state management
+- Lazy loading of embedded calculator (only when expanded)
+- Efficient database queries with proper indexing
+
+### UX Improvements - 2026-01-16
+- **Better Guidance for Degree Students**
+  - Students without official cluster weights can now estimate them directly on the form
+  - Clear warnings about estimation accuracy prevent misuse
+  - Seamless prefill workflow reduces manual data entry
+  - Mobile-optimized interface ensures accessibility on phones
+
+- **Improved Information Discovery**
+  - Students immediately see which applications are currently open
+  - Reduces confusion about application timelines
+  - Dynamic status updates keep information current
+
 ### Added - 2026-01-16 (SEO & Analytics Implementation)
+
 - **Google Analytics Integration**
   - Integrated Google Analytics tracking (ID: G-77JHPKF3VZ) across all pages
   - Tracking code placed immediately after `<head>` element in root layout for optimal performance

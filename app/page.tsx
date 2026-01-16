@@ -103,16 +103,6 @@ export default function Home() {
               transition={{ duration: 0.8 }}
               className="text-center"
             >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="mb-6 mt-16 md:mt-0 inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20"
-              >
-                <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
-                <span className="text-sm font-medium text-light">Official KUCCPS Data • Verified Results</span>
-              </motion.div>
-
               <h1 className="mb-6 text-4xl md:text-6xl lg:text-7xl font-bold leading-tight min-h-[200px] md:min-h-[300px]">
                 <TextType
                   text={["I have my KCSE results. Now what exactly do I qualify for?", "Check Which KUCCPS Courses You Qualify For Based on Your KCSE Grades", "Your future is yours. We just make it clearer."]}

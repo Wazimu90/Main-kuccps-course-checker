@@ -7,10 +7,12 @@ import { Suspense } from "react"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import Header from "@/components/header"
+import ApplicationStatusBanner from "@/components/application-status-banner"
 import BackButton from "@/components/back-button"
 import BackgroundProvider from "@/components/background/BackgroundProvider"
 import ReferrerTracker from "@/components/referrer-tracker"
 import MobileTutorial from "@/components/mobile-tutorial"
+import ClientBannerWrapper from "@/components/client-banner-wrapper"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -66,6 +68,10 @@ export default function RootLayout({
             <BackgroundProvider />
             <BackButton />
             <Header />
+            {/* Application Status Banner - only on homepage, with padding for non-admin pages */}
+            <ClientBannerWrapper>
+              <ApplicationStatusBanner />
+            </ClientBannerWrapper>
             <ReferrerTracker />
             <MobileTutorial />
             <main className="min-h-screen">{children}</main>
