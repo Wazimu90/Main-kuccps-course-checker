@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 import { Suspense } from "react"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -77,6 +78,7 @@ export default function RootLayout({
             <main className="min-h-screen">{children}</main>
             <Toaster />
             <Analytics />
+            <SpeedInsights />
           </ThemeProvider>
         </Suspense>
       </body>
