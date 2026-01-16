@@ -15,9 +15,9 @@ import MobileTutorial from "@/components/mobile-tutorial"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "KUCCPS Course Checker 2026 | Check Courses You Qualify For Using KCSE Grades",
+  title: "KUCCPS Course Checker 2026 | Check Degree, Diploma & KMTC Courses",
   description:
-    "Use our free KUCCPS Course Checker to see degree and diploma courses you qualify for based on your KCSE results. Accurate cluster point calculations using official KUCCPS formulas.",
+    "Check KUCCPS course eligibility instantly for Degree, Diploma, KMTC, Certificate and Artisan courses. Smart AI explanations based on your KCSE results.",
   keywords: [
     "KUCCPS course checker",
     "course checker",
@@ -28,13 +28,13 @@ export const metadata: Metadata = {
     "degree courses KUCCPS",
     "diploma courses KUCCPS",
     "certificate courses KUCCPS",
-    "artican courses KUCCPS",
+    "artisan courses KUCCPS",
     "kmtc courses KUCCPS"
   ],
   openGraph: {
-    title: "KUCCPS Course Checker 2026",
+    title: "KUCCPS Course Checker 2026 | Check Degree, Diploma & KMTC Courses",
     description:
-      "Check KUCCPS courses you qualify for using your KCSE grades and official cluster point formulas.",
+      "Check KUCCPS course eligibility instantly for Degree, Diploma, KMTC, Certificate and Artisan courses. Smart AI explanations based on your KCSE results.",
     type: "website"
   }
 };
