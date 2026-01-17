@@ -116,8 +116,8 @@ export default function Footer({ showOnHomepage = false }: FooterProps) {
           <button
             onClick={toggleContact}
             className={`relative group flex items-center gap-2 px-3 py-2 md:px-5 md:py-2.5 rounded-full font-medium text-sm transition-all duration-300 ${isContactOpen
-                ? "bg-accent text-base shadow-[0_0_15px_rgba(34,211,238,0.5)]"
-                : "bg-dim/20 text-text-light hover:bg-dim/40 hover:text-white"
+              ? "bg-accent text-base shadow-[0_0_15px_rgba(34,211,238,0.5)]"
+              : "bg-dim/20 text-text-light hover:bg-dim/40 hover:text-white"
               }`}
           >
             <span className="relative z-10 md:hidden">

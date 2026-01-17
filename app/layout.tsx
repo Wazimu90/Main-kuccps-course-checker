@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import Script from "next/script"
 import "./globals.css"
 import { Suspense } from "react"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -11,8 +12,9 @@ import ApplicationStatusBanner from "@/components/application-status-banner"
 import BackButton from "@/components/back-button"
 import BackgroundProvider from "@/components/background/BackgroundProvider"
 import ReferrerTracker from "@/components/referrer-tracker"
-import MobileTutorial from "@/components/mobile-tutorial"
 import ClientBannerWrapper from "@/components/client-banner-wrapper"
+import Breadcrumbs from "@/components/Breadcrumbs"
+import MobileTutorialWrapper from "@/components/mobile-tutorial-wrapper"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -48,10 +50,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Google tag (gtag.js) */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-77JHPKF3VZ"></script>
-        <script
+
+      <body className={`${inter.className} bg-base text-light relative`}>
+        <Script
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=G-77JHPKF3VZ`}
+        />
+        <Script
+          id="gtag-init"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
@@ -61,25 +68,32 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className={`${inter.className} bg-base text-light relative`}>
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            {/* Skip to Main Content Link for Accessibility */}
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:px-4 focus:py-2 focus:bg-accent focus:text-dark focus:rounded-lg focus:font-bold focus:shadow-glow"
+            >
+              Skip to main content
+            </a>
+
             <BackgroundProvider />
             <BackButton />
             <Header />
+            <Breadcrumbs />
             {/* Application Status Banner - only on homepage, with padding for non-admin pages */}
             <ClientBannerWrapper>
               <ApplicationStatusBanner />
             </ClientBannerWrapper>
             <ReferrerTracker />
-            <MobileTutorial />
-            <main className="min-h-screen">{children}</main>
+            <MobileTutorialWrapper />
+            <main id="main-content" className="min-h-screen">{children}</main>
             <Toaster />
             <Analytics />
           </ThemeProvider>
         </Suspense>
       </body>
-    </html>
+    </html >
   )
 }

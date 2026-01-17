@@ -16,6 +16,8 @@ import {
   CheckCircle,
   Users,
   Star,
+  Calculator,
+  ExternalLink,
 } from "lucide-react"
 import MagicMenu from "@/components/MagicMenu"
 import { useToast } from "@/hooks/use-toast"
@@ -98,9 +100,6 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
               className="text-center"
             >
               <h1 className="mb-6 text-4xl md:text-6xl lg:text-7xl font-bold leading-tight min-h-[200px] md:min-h-[300px]">
@@ -187,7 +186,6 @@ export default function Home() {
                   description={category.description}
                   icon={category.icon}
                   href={category.href}
-                  onClick={category.onClick}
                   delay={index}
                   colorScheme={category.colorScheme}
                 />
@@ -197,6 +195,94 @@ export default function Home() {
         </section>
 
         <HowItWorks />
+
+        {/* Complete Process Section with Internal Links */}
+        <section className="py-16 bg-base">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-light mb-4">
+                Complete KUCCPS Course Checking Process
+              </h2>
+              <p className="text-dim max-w-2xl mx-auto">
+                Follow these simple steps to find and apply for courses you qualify for
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <a
+                  href="/cluster-calculator"
+                  className="group block p-6 bg-surface border border-white/10 rounded-xl hover:border-accent/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all"
+                >
+                  <div className="w-12 h-12 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                    <Calculator className="w-6 h-6 text-accent" />
+                  </div>
+                  <h3 className="text-xl font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                    1. Calculate Cluster Points
+                  </h3>
+                  <p className="text-sm text-dim">
+                    Estimate your cluster weights for all 20 KUCCPS categories using our AI-powered calculator
+                  </p>
+                </a>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <a
+                  href="/degree"
+                  className="group block p-6 bg-surface border border-white/10 rounded-xl hover:border-accent/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all"
+                >
+                  <div className="w-12 h-12 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                    <BookOpen className="w-6 h-6 text-accent" />
+                  </div>
+                  <h3 className="text-xl font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                    2. Check Course Eligibility
+                  </h3>
+                  <p className="text-sm text-dim">
+                    Find degree, diploma, certificate, KMTC, or artisan courses you qualify for based on your grades
+                  </p>
+                </a>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <a
+                  href="/student-tools"
+                  className="group block p-6 bg-surface border border-white/10 rounded-xl hover:border-accent/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all"
+                >
+                  <div className="w-12 h-12 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                    <ExternalLink className="w-6 h-6 text-accent" />
+                  </div>
+                  <h3 className="text-xl font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                    3. Apply via KUCCPS Portal
+                  </h3>
+                  <p className="text-sm text-dim">
+                    Access official KUCCPS and HELB portals to submit your course choices and apply for loans
+                  </p>
+                </a>
+              </motion.div>
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* Testimonials Section */}

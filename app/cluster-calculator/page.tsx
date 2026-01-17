@@ -762,7 +762,7 @@ export default function ClusterCalculatorPage() {
                         </motion.div>
 
                         <h1 className="mb-4 text-3xl md:text-5xl lg:text-6xl font-bold leading-tight text-light">
-                            KUCCPS Cluster Calculator + AI
+                            KUCCPS Cluster Points Calculator 2026 with AI Explanation
                         </h1>
 
                         <p className="mb-6 text-base md:text-lg text-dim max-w-2xl mx-auto leading-relaxed">

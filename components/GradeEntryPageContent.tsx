@@ -2,8 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import RealTimeProgressBar from "@/components/real-time-progress-bar"
@@ -20,6 +18,7 @@ import ArtisanResultsPreview from "@/components/artisan-results-preview"
 import KmtcProcessingAnimation from "@/components/kmtc-processing-animation"
 import KmtcResultsPreview from "@/components/kmtc-results-preview"
 import { log } from "@/lib/logger"
+import { InternalLinksSection, courseCategoryLinks, CrossCategoryLinks } from "@/components/InternalLinksSection"
 
 import type { DiplomaCourse } from "@/lib/diploma-course-eligibility"
 import type { CertificateCourse } from "@/lib/certificate-course-eligibility"
@@ -182,13 +181,8 @@ export default function GradeEntryPageContent({ category }: GradeEntryPageConten
       <div className="relative z-10 container mx-auto px-4 py-8">
         {!isLoading && !showResults && (
           <>
-            <div className="mb-8 flex items-center justify-between">
-              <Button variant="ghost" className="flex items-center gap-2" onClick={handleBack}>
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
+            <div className="mb-8 text-center">
               <h1 className="text-2xl font-bold md:text-3xl text-white">{categoryTitle} Course Eligibility</h1>
-              <div className="w-20"></div>
             </div>
 
             <Card className="mx-auto max-w-4xl rounded-2xl p-6 backdrop-blur-sm bg-card/80 border border-border shadow-sm">
@@ -282,6 +276,19 @@ export default function GradeEntryPageContent({ category }: GradeEntryPageConten
 
         {showResults && category === "degree" && (
           <ResultsPreview category={category} userData={formData} onProceed={handleProceedToPayment} />
+        )}
+
+        {/* Internal Links for SEO and Navigation - Show only when not in loading or form state */}
+        {!isLoading && !showResults && (
+          <>
+            <InternalLinksSection
+              title="Need Help with Your Application?"
+              links={courseCategoryLinks}
+              className="mt-8"
+            />
+
+            <CrossCategoryLinks currentCategory={`/${category}`} />
+          </>
         )}
       </div>
     </div>

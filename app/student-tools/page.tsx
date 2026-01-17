@@ -257,11 +257,11 @@ export default function StudentToolsPage() {
                         </motion.div>
 
                         <h1 className="mb-6 text-4xl md:text-6xl font-bold leading-tight text-light">
-                            Student Tools & Resources
+                            Student Tools & Resources for KUCCPS Applications
                         </h1>
 
                         <p className="mb-8 text-lg md:text-xl text-dim max-w-3xl mx-auto leading-relaxed">
-                            Quick access to essential government services and platforms for Kenyan students. All official portals in one place.
+                            Quick access to essential government services and official portals for Kenyan students. All important resources in one place.
                         </p>
                     </motion.div>
                 </div>
@@ -270,6 +270,7 @@ export default function StudentToolsPage() {
             {/* Services Grid */}
             <section className="py-12">
                 <div className="container mx-auto px-4">
+                    <h2 className="sr-only">Official Government Services and Student Portals</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {governmentServices.map((service, index) => (
                             <motion.div
@@ -374,7 +375,7 @@ export default function StudentToolsPage() {
                             <Play className="h-4 w-4 text-accent mr-2" />
                             <span className="text-sm font-medium text-light">Video Tutorials</span>
                         </div>
-                        <h2 className="mb-4 text-3xl md:text-5xl font-bold text-light">Learn How It Works</h2>
+                        <h2 className="mb-4 text-3xl md:text-5xl font-bold text-light">Learn How to Use KUCCPS & Student Services</h2>
                         <p className="mx-auto max-w-2xl text-lg text-dim">
                             Watch our step-by-step video guides to navigate student services with confidence
                         </p>

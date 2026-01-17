@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { HelpCircle, ChevronDown, ChevronUp, Search } from "lucide-react"
+import { HelpCircle, ChevronDown, ChevronUp, Search, ExternalLink } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
- 
+import Link from "next/link"
 
 export default function FAQPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -13,111 +13,229 @@ export default function FAQPage() {
 
   const faqs = [
     {
-      question: "What is KUCCPS Course Checker and what does it do?",
-      answer:
-        "KUCCPS Course Checker is a smart tool that instantly shows you all the university, diploma, certificate, KMTC and Artisan courses you qualify for using your KCSE grades, cluster points, and official cutoff points. It removes guesswork and gives you accurate results based on real KUCCPS data.",
+      question: "I have my KCSE results. What should I do before applying on KUCCPS?",
+      answer: (
+        <>
+          Before applying on KUCCPS, you should first confirm which courses you actually qualify for based on your KCSE grades and cluster requirements. Many students lose chances by guessing. Use our{" "}
+          <Link href="/degree" className="text-accent hover:underline font-semibold">
+            KUCCPS course checker
+          </Link>{" "}
+          and{" "}
+          <Link href="/cluster-calculator" className="text-accent hover:underline font-semibold">
+            cluster calculator
+          </Link>{" "}
+          to avoid selecting courses you are not eligible for.
+        </>
+      ),
     },
     {
-      question: "How does KUCCPS Course Checker calculate course eligibility?",
-      answer:
-        "You simply enter your KCSE grades and cluster points, then we compare your points with the latest cutoffs and generate all courses you qualify for. You also get institution options and course codes.",
+      question: "How do I know which KUCCPS courses I qualify for with my KCSE grades?",
+      answer: (
+        <>
+          You need to compare your KCSE grades with official KUCCPS requirements such as mean grade, subject combinations, and cluster points. Our KUCCPS Course Checker does this automatically and shows eligible{" "}
+          <Link href="/degree" className="text-accent hover:underline">
+            Degree
+          </Link>
+          ,{" "}
+          <Link href="/diploma" className="text-accent hover:underline">
+            Diploma
+          </Link>
+          ,{" "}
+          <Link href="/kmtc" className="text-accent hover:underline">
+            KMTC
+          </Link>
+          ,{" "}
+          <Link href="/certificate" className="text-accent hover:underline">
+            Certificate
+          </Link>
+          , and{" "}
+          <Link href="/artisan" className="text-accent hover:underline">
+            Artisan
+          </Link>{" "}
+          courses instantly.
+        </>
+      ),
     },
     {
-      question: "Are the results accurate and updated?",
-      answer:
-        "Yes. The platform uses verified KUCCPS cutoff points, KUCCPS cluster formulas, and official course requirements from the latest publicly available data. The calculations match what KUCCPS uses during placement.",
+      question: "What are KUCCPS cluster points and why are they important?",
+      answer: (
+        <>
+          Cluster points are calculated using specific KCSE subjects depending on the course. KUCCPS uses them to rank applicants. Even if you meet the mean grade, low cluster points can make you miss a course. Our{" "}
+          <Link href="/cluster-calculator" className="text-accent hover:underline font-semibold">
+            cluster points calculator
+          </Link>{" "}
+          helps you understand and estimate your chances clearly.
+        </>
+      ),
     },
     {
-      question: "Which courses can I check with this tool?",
-      answer:
-        "You can check Degree, Diploma, Certificate, Artisan, and KMTC programs across all public and selected private institutions. The tool supports 1000+ programs including Medicine, Nursing, Engineering, Teaching, ICT, Business, Hospitality, and more.",
+      question: "Can I calculate my cluster points before applying?",
+      answer: (
+        <>
+          Yes. You can use the{" "}
+          <Link href="/cluster-calculator" className="text-accent hover:underline font-semibold">
+            cluster calculator
+          </Link>{" "}
+          on this site to estimate your cluster points and understand how KUCCPS evaluates different subject combinations. This helps you choose realistic courses before the application or revision period.
+        </>
+      ),
     },
     {
-      question: "Does the tool show cluster points and cutoff points?",
-      answer:
-        "Yes. Your results include your cluster points, each course’s previous cutoff points, and how your score compares. This helps you understand your chances before applying.",
+      question: "What courses can I apply for if I got C+, C, C-, or D+?",
+      answer: (
+        <>
+          <p className="mb-3">Your KCSE mean grade determines the category of courses you can apply for:</p>
+          <ul className="list-disc pl-5 space-y-2 mb-3">
+            <li>
+              <strong>C+ and above:</strong>{" "}
+              <Link href="/degree" className="text-accent hover:underline">
+                Degree
+              </Link>
+              ,{" "}
+              <Link href="/diploma" className="text-accent hover:underline">
+                Diploma
+              </Link>
+              ,{" "}
+              <Link href="/kmtc" className="text-accent hover:underline">
+                KMTC
+              </Link>
+            </li>
+            <li>
+              <strong>C to C-:</strong>{" "}
+              <Link href="/diploma" className="text-accent hover:underline">
+                Diploma
+              </Link>
+              ,{" "}
+              <Link href="/certificate" className="text-accent hover:underline">
+                Certificate
+              </Link>
+            </li>
+            <li>
+              <strong>D+ and below:</strong>{" "}
+              <Link href="/certificate" className="text-accent hover:underline">
+                Certificate
+              </Link>{" "}
+              and{" "}
+              <Link href="/artisan" className="text-accent hover:underline">
+                Artisan
+              </Link>
+            </li>
+          </ul>
+          <p>The tool automatically filters courses based on your grade so you don't waste choices.</p>
+        </>
+      ),
     },
     {
-      question: "How much does it cost to use KUCCPS Course Checker?",
+      question: "Can this tool help me choose the best course, not just any course?",
       answer:
-        "Access to the full results, course codes, institutions, and downloadable PDF costs KES 200, payable through M-Pesa.",
+        "Yes. After showing eligible courses, the AI assistant explains your options, strengths, and common mistakes students with similar grades make. This helps you make smarter decisions, not random ones.",
     },
     {
-      question: "What payment methods do you accept?",
+      question: "Does this tool work for competitive courses like Medicine, Engineering, Nursing, or Teaching?",
       answer:
-        "Payments are processed securely via Pesaflux, which supports all Safaricom M-Pesa lines.",
+        "Yes. The checker includes competitive courses and shows whether you meet minimum requirements. However, final placement depends on competition, cutoff points, and applicant volume. The tool helps you avoid applying blindly.",
+    },
+    {
+      question: "Does the system show cutoff points?",
+      answer:
+        "Where available, the system displays previous cutoff points and explains how they affect selection. Cutoff points change yearly, so they are used for guidance, not guarantees.",
+    },
+    {
+      question: "Can I use this tool during KUCCPS revision periods?",
+      answer:
+        "Yes. The tool is designed specifically to help during first application, second revision, and subsequent revisions. Many students use it to adjust choices after being unplaced.",
+    },
+    {
+      question: "Does the tool show universities and colleges offering each course?",
+      answer:
+        "Yes. For each eligible course, the system shows institutions offering it, helping you compare options instead of guessing.",
+    },
+    {
+      question: "What if I already applied but I'm not sure I did it correctly?",
+      answer:
+        "You can still use the checker to review your eligibility and confirm whether your selected courses make sense. This is especially useful before revision windows close.",
     },
     {
       question: "Do I need to create an account to use the tool?",
       answer:
-        "No account is required. Just enter your grades, pay via M-Pesa, and instantly access your personalized results.",
+        "No. You can use the course checker, cluster calculator, and guidance tools without creating an account. The system is designed for one-time use by many students, even on shared devices.",
     },
     {
-      question: "Can I use someone’s M-Pesa number to pay?",
-      answer:
-        "Yes, you can pay with any M-Pesa line, but the code can only be used once. Once redeemed, it is tied to your results.",
+      question: "Is this tool officially owned by KUCCPS?",
+      answer: (
+        <>
+          No. This is an independent student support platform designed to help you understand KUCCPS requirements and avoid mistakes. All final applications are done on the{" "}
+          <a
+            href="https://students.kuccps.net"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent hover:underline font-semibold inline-flex items-center gap-1"
+          >
+            official KUCCPS portal
+            <ExternalLink className="w-3 h-3" />
+          </a>
+          .
+        </>
+      ),
     },
     {
-      question: "What if I paid but my results didn’t load?",
+      question: "Is my KCSE data safe?",
       answer:
-        "If your results don’t appear immediately, wait a few minutes and confirm you received the M-Pesa confirmation SMS. If the issue continues, contact support via WhatsApp or email for instant assistance.",
+        "Yes. Your grades are processed temporarily for eligibility checking and are not publicly shared. The system is designed to respect student privacy.",
     },
     {
-      question: "Will I get a refund if I made a mistake?",
+      question: "What if my school used different subject names or I repeated a subject?",
       answer:
-        "Refunds are not available because each result is generated instantly and customized. However, if there is a technical problem, support will fix it for you.",
-    },
-    {
-      question: "Is KUCCPS Course Checker officially owned by KUCCPS?",
-      answer:
-        "No. This is an independent platform created by Kenyan developers to help students understand their course options using publicly accessible KUCCPS data. It is not affiliated with the KUCCPS organization.",
-    },
-    {
-      question: "Can this tool help me know the best course for my cluster points?",
-      answer:
-        "Yes. After generating your results, you can filter by your strongest cluster points and see the best courses matched to your performance.",
-    },
-    {
-      question: "Does this system work for all KCSE grades?",
-      answer:
-        "The tool works for all grades from A to E, including Degree, Diploma, Certificate, Artisan, and KMTC pathways.",
-    },
-    {
-      question: "Can I check courses for Medicine, Engineering, Nursing, or Teaching?",
-      answer:
-        "Yes. The tool includes full requirements and cutoff points for competitive programs like Medicine and Surgery, Nursing, Pharmacy, Engineering, Law, and Education.",
-    },
-    {
-      question: "Can I use the tool during KUCCPS revision periods?",
-      answer:
-        "Yes. Most students use it during the first and second revision to avoid applying for courses they don’t qualify for. It helps you pick safe, realistic choices.",
-    },
-    {
-      question: "Does the tool show universities offering each course?",
-      answer:
-        "Every eligible course comes with a list of institutions, campus options, course codes, and cutoff comparisons.",
-    },
-    {
-      question: "Is my data safe?",
-      answer:
-        "Yes. Your KCSE grades and payment details are never stored or shared. Payments are handled by Pesaflux, and all results are processed securely.",
-    },
-    {
-      question: "What if my school used different grade names or I repeated a subject?",
-      answer:
-        "The tool supports all KCSE grading formats and subject combinations. Just enter the grades as they appear on your results slip.",
+        "KCSE subject variations and repeats are accounted for. The system follows standard KUCCPS subject groupings. If something looks unclear, the AI assistant explains it in simple terms.",
     },
     {
       question: "Can I download or print my results?",
       answer:
-        "Yes. After payment, you can download a clean, organized PDF report showing all your courses, cluster points, and institutions.",
+        "Yes. You can download or export your results for reference when applying or revising your KUCCPS choices.",
+    },
+    {
+      question: "What if I paid and my results did not load?",
+      answer:
+        "In rare cases of network or session issues, the system allows recovery of your results. If a problem persists, support assistance is available.",
+    },
+    {
+      question: "Can I use someone else's M-Pesa number to pay?",
+      answer:
+        "Yes. Payment can be made using any M-Pesa number as long as it is active and approved.",
+    },
+    {
+      question: "Will I get a refund if I make a mistake?",
+      answer:
+        "Because this is a digital service that processes results instantly, refunds are generally not available. However, genuine technical issues are handled case-by-case.",
+    },
+    {
+      question: "Where do I apply after checking my courses?",
+      answer: (
+        <>
+          After confirming your eligibility, you apply directly on the{" "}
+          <a
+            href="https://students.kuccps.net"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent hover:underline font-semibold inline-flex items-center gap-1"
+          >
+            official KUCCPS portal
+            <ExternalLink className="w-3 h-3" />
+          </a>
+          . This site also provides direct links to government portals on our{" "}
+          <Link href="/student-tools" className="text-accent hover:underline font-semibold">
+            Student Tools page
+          </Link>
+          {" "}to make the process easier.
+        </>
+      ),
     },
   ]
 
   const filteredFAQs = faqs.filter(
     (faq) =>
       faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchTerm.toLowerCase()),
+      (typeof faq.answer === "string" && faq.answer.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
   const toggleItem = (index: number) => {
@@ -125,122 +243,175 @@ export default function FAQPage() {
   }
 
   return (
-    <>
-      
-
-      <div className="min-h-screen py-20">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <div className="mb-6 inline-flex items-center justify-center h-16 w-16 rounded-full bg-accent text-dark">
-              <HelpCircle className="h-8 w-8" />
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              <span className="text-white">Frequently Asked Questions</span>
-            </h1>
-            <p className="text-lg text-white">
-              Find answers to common questions about our course checker platform.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mb-12"
-          >
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white" />
-              <Input
-                type="text"
-                placeholder="Search FAQs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 py-3 text-lg"
-              />
-            </div>
-          </motion.div>
-
-          <div className="space-y-4">
-            {filteredFAQs.map((faq, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 + index * 0.05 }}
-              >
-                <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader className="cursor-pointer" onClick={() => toggleItem(index)}>
-                    <CardTitle className="flex items-center justify-between text-lg">
-                      <span>{faq.question}</span>
-                      {openItems.includes(index) ? (
-                        <ChevronUp className="h-5 w-5 text-white" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-white" />
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <AnimatePresence>
-                    {openItems.includes(index) && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <CardContent className="pt-0">
-                          <p className="text-white leading-relaxed">{faq.answer}</p>
-                        </CardContent>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </Card>
-              </motion.div>
-            ))}
+    <div className="min-h-screen py-20">
+      <div className="container mx-auto px-4 max-w-4xl">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <div className="mb-6 inline-flex items-center justify-center h-16 w-16 rounded-full bg-accent/10 border border-accent/20">
+            <HelpCircle className="h-8 w-8 text-accent" />
           </div>
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 text-light">
+            KUCCPS Course Checker – 2026 Student FAQ
+          </h1>
+          <p className="text-base md:text-lg text-dim max-w-2xl mx-auto">
+            Get answers to common questions about KUCCPS course checking, cluster points, eligibility, and applications.
+          </p>
+        </motion.div>
 
-          {filteredFAQs.length === 0 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
-              <p className="text-white text-lg">No FAQs found matching your search.</p>
+        {/* Search Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-8"
+        >
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-dim" />
+            <Input
+              type="text"
+              placeholder="Search FAQs (e.g., cluster points, eligibility, payment)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-12 py-6 text-base md:text-lg bg-surface border-white/10 focus:border-accent/40"
+            />
+          </div>
+        </motion.div>
+
+        {/* FAQ Accordion */}
+        <div className="space-y-3">
+          {filteredFAQs.map((faq, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 + index * 0.03 }}
+            >
+              <Card className="bg-surface border-white/10 hover:border-accent/30 transition-all duration-300">
+                <CardHeader className="cursor-pointer p-4 md:p-6" onClick={() => toggleItem(index)}>
+                  <CardTitle className="flex items-start justify-between text-base md:text-lg gap-4">
+                    <span className="text-light leading-relaxed">{faq.question}</span>
+                    <div className="flex-shrink-0 mt-1">
+                      {openItems.includes(index) ? (
+                        <ChevronUp className="h-5 w-5 text-accent" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-dim" />
+                      )}
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <AnimatePresence>
+                  {openItems.includes(index) && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <CardContent className="pt-0 px-4 md:px-6 pb-4 md:pb-6">
+                        <div className="text-dim leading-relaxed text-sm md:text-base">{faq.answer}</div>
+                      </CardContent>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Card>
             </motion.div>
-          )}
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="mt-16"
-          >
-            <Card className="bg-surface/80 backdrop-blur-xl border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.25)] rounded-2xl">
-              <CardContent className="p-8 text-center">
-                <h3 className="text-xl font-bold mb-4">Still have questions?</h3>
-                <p className="text-white mb-6">
-                  Can't find what you're looking for? Contact our support team and we'll get back to you within 24
-                  hours.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <a
-                    href="mailto:kuccpscoursechecker1@gmail.com"
-                    className="premium-btn inline-flex items-center justify-center px-6 py-3"
-                  >
-                    Send Email
-                  </a>
-                  <a
-                    href="/contact"
-                    className="inline-flex items-center justify-center px-6 py-3 border border-dim text-accent rounded-lg hover:bg-surface transition-all duration-300"
-                  >
-                    Contact Form
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          ))}
         </div>
+
+        {/* No Results */}
+        {filteredFAQs.length === 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
+            <p className="text-dim text-lg">No FAQs found matching "{searchTerm}". Try a different search term.</p>
+          </motion.div>
+        )}
+
+        {/* Related Links Section - SEO Internal Linking */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          className="mt-12 pt-8 border-t border-white/10"
+        >
+          <h2 className="text-2xl font-bold text-light mb-6 text-center">Helpful Resources</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link
+              href="/cluster-calculator"
+              className="p-4 bg-surface border border-white/10 rounded-xl hover:border-accent/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all group"
+            >
+              <h3 className="font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                Calculate Cluster Points
+              </h3>
+              <p className="text-sm text-dim">Estimate your cluster weights for all 20 KUCCPS categories</p>
+            </Link>
+
+            <Link
+              href="/student-tools"
+              className="p-4 bg-surface border border-white/10 rounded-xl hover:border-accent/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all group"
+            >
+              <h3 className="font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                Student Portals & Tools
+              </h3>
+              <p className="text-sm text-dim">Access KUCCPS, HELB, and other official government portals</p>
+            </Link>
+
+            <Link
+              href="/degree"
+              className="p-4 bg-surface border border-white/10 rounded-xl hover:border-accent/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all group"
+            >
+              <h3 className="font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                Check Degree Courses
+              </h3>
+              <p className="text-sm text-dim">Find degree programs you qualify for with your KCSE grades</p>
+            </Link>
+
+            <Link
+              href="/news"
+              className="p-4 bg-surface border border-white/10 rounded-xl hover:border-accent/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all group"
+            >
+              <h3 className="font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                Latest KUCCPS News
+              </h3>
+              <p className="text-sm text-dim">Stay updated with KUCCPS announcements and education news</p>
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Contact Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1 }}
+          className="mt-12"
+        >
+          <Card className="bg-surface/80 backdrop-blur-xl border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.25)] rounded-2xl">
+            <CardContent className="p-6 md:p-8 text-center">
+              <h3 className="text-xl md:text-2xl font-bold mb-3 text-light">Still have questions?</h3>
+              <p className="text-dim mb-6 text-sm md:text-base">
+                Can't find what you're looking for? Contact our support team and we'll get back to you within 24 hours.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <a
+                  href="mailto:kuccpscoursechecker1@gmail.com"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-accent text-dark font-semibold rounded-lg hover:bg-accent/90 transition-all duration-300 text-sm md:text-base"
+                >
+                  Send Email
+                </a>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-dim text-light rounded-lg hover:bg-surface transition-all duration-300 text-sm md:text-base"
+                >
+                  Contact Us
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
-    </>
+    </div>
   )
 }

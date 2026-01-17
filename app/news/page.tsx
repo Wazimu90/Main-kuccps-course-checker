@@ -77,7 +77,7 @@ export default function NewsPage() {
               transition={{ duration: 0.6 }}
               className="text-4xl md:text-6xl font-bold text-white mb-6"
             >
-              Education News
+              KUCCPS Education News & Updates
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -130,6 +130,7 @@ export default function NewsPage() {
         {/* News Grid */}
         <section className="py-8 px-4">
           <div className="container mx-auto">
+            <h2 className="sr-only">Latest KUCCPS News Articles</h2>
             {loading ? (
               <div className="text-center py-12">
                 <p className="text-light text-lg">Loading news…</p>
