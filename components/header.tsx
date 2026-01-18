@@ -146,7 +146,7 @@ export const Header: React.FC = () => {
                     setTimeout(() => setIsOpeningBuyData(false), 1200)
                     setIsMobileMenuOpen(false)
                   }}
-                  className={`relative p-3 text-center rounded-xl text-sm font-medium transition-all duration-200 overflow-visible ${isBuyData
+                  className={`relative p-4 text-center rounded-xl text-sm font-medium transition-all duration-200 overflow-visible ${isBuyData
                     ? "text-green-500 hover:bg-green-500/10 hover:text-green-400"
                     : "text-light hover:bg-accent/10 hover:text-accent"
                     }`}

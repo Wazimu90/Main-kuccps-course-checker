@@ -22,10 +22,16 @@ import {
 import MagicMenu from "@/components/MagicMenu"
 import { useToast } from "@/hooks/use-toast"
 import CourseCategoryCard from "@/components/course-category-card"
-import TestimonialCarousel from "@/components/testimonial-carousel"
-import Footer from "@/components/footer"
+import dynamic from "next/dynamic"
 import TextType from "@/components/ui/text-type"
-import HowItWorks from "@/components/how-it-works"
+import Footer from "@/components/footer"
+
+const HowItWorks = dynamic(() => import("@/components/how-it-works"), {
+  loading: () => <div className="h-96 w-full animate-pulse bg-surface/10 rounded-2xl" />,
+})
+const TestimonialCarousel = dynamic(() => import("@/components/testimonial-carousel"), {
+  loading: () => <div className="h-96 w-full animate-pulse bg-surface/10 rounded-2xl" />,
+})
 
 export default function Home() {
   const { toast } = useToast()

@@ -17,7 +17,7 @@ import ClientBannerWrapper from "@/components/client-banner-wrapper"
 import Breadcrumbs from "@/components/Breadcrumbs"
 import MobileTutorialWrapper from "@/components/mobile-tutorial-wrapper"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"], display: 'swap' })
 
 export const metadata: Metadata = {
   title: "KUCCPS Course Checker 2026 | Check Degree, Diploma & KMTC Courses",
