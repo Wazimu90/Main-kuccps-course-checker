@@ -27,6 +27,7 @@ import { motion } from "framer-motion"
 import { supabase } from "@/lib/supabase"
 import { v4 as uuidv4 } from "uuid"
 import { log } from "@/lib/logger"
+import PaymentWarningModal from "@/components/payment-warning-modal"
 
 interface ResultsPreviewProps {
   category: string
@@ -88,6 +89,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
   const [eligibleCourses, setEligibleCourses] = useState<EligibleCourse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
 
   // Progress tracking states
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
@@ -109,14 +111,14 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
       icon: Clock,
       mainStatus: "Preparing Your Application Data...",
       miniProcesses: ["Reading submitted results...", "Parsing data for analysis...", "Structuring student profile..."],
-      duration: 10000,
+      duration: 9000,
     },
     {
       label: "KUCCPS Connection",
       icon: Database,
       mainStatus: "Connecting to KUCCPS Database...",
       miniProcesses: ["Establishing secure connection...", "Verifying database access..."],
-      duration: 6000,
+      duration: 5000,
     },
     {
       label: "Cluster Analysis",
@@ -127,21 +129,21 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
         "Checking cutoff requirements...",
         "Filtering qualified programmes...",
       ],
-      duration: 20000,
+      duration: 10000,
     },
     {
       label: "Subject Requirements",
       icon: BookOpen,
       mainStatus: "Verifying Subject Requirements...",
       miniProcesses: ["Cross-referencing minimum grades...", "Validating essential subjects..."],
-      duration: 6000,
+      duration: 5000,
     },
     {
       label: "Results Compilation",
       icon: FileText,
       mainStatus: "Compiling Final Course Matches...",
       miniProcesses: ["Arranging qualified programs...", "Generating personalized report..."],
-      duration: 20000,
+      duration: 15000,
     },
   ]
 
@@ -638,11 +640,11 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
           className="bg-slate-700/30 backdrop-blur-sm rounded-2xl p-8 md:p-12 border border-slate-600/30 text-center"
         >
           <Button
-            onClick={onProceed}
+            onClick={() => setShowPaymentModal(true)}
             size="lg"
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-full sm:w-auto max-w-full px-4 sm:px-8 md:px-12 py-4 sm:py-5 md:py-6 text-base sm:text-lg md:text-xl font-extrabold rounded-full shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:shadow-[0_0_50px_rgba(168,85,247,0.8)] transition-all duration-300 hover:scale-105 hover:-translate-y-1 mb-8 border-2 border-white/20 whitespace-normal h-auto break-words flex flex-col sm:flex-row items-center justify-center gap-2"
           >
-            View All {eligibleCourses.length} Qualified Courses
+            View Your {eligibleCourses.length} Courses
             <ArrowRight className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6 animate-pulse" />
           </Button>
 
@@ -671,6 +673,14 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Payment Warning Modal */}
+      <PaymentWarningModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        onProceed={onProceed}
+        courseCount={eligibleCourses.length}
+      />
     </div>
   )
 }

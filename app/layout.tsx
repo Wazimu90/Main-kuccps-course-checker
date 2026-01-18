@@ -13,6 +13,7 @@ import BackgroundProvider from "@/components/background/BackgroundProvider"
 import ReferrerTracker from "@/components/referrer-tracker"
 import MobileTutorial from "@/components/mobile-tutorial"
 import ClientBannerWrapper from "@/components/client-banner-wrapper"
+import Breadcrumbs from "@/components/Breadcrumbs"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -82,6 +83,9 @@ export default function RootLayout({
             </ClientBannerWrapper>
             <ReferrerTracker />
             <MobileTutorial />
+            <div className="container mx-auto max-w-7xl">
+              <Breadcrumbs />
+            </div>
             <main id="main-content" className="min-h-screen">{children}</main>
             <Toaster />
             <Analytics />

@@ -2,8 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import RealTimeProgressBar from "@/components/real-time-progress-bar"
@@ -182,13 +180,82 @@ export default function GradeEntryPageContent({ category }: GradeEntryPageConten
       <div className="relative z-10 container mx-auto px-4 py-8">
         {!isLoading && !showResults && (
           <>
-            <div className="mb-8 flex items-center justify-between">
-              <Button variant="ghost" className="flex items-center gap-2" onClick={handleBack}>
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
+            <div className="mb-8 text-center">
               <h1 className="text-2xl font-bold md:text-3xl text-white">{categoryTitle} Course Eligibility</h1>
-              <div className="w-20"></div>
+              <p className="text-dim mt-2 max-w-2xl mx-auto">
+                {category === "degree" && "Enter your KCSE grades to check KUCCPS degree courses you qualify for"}
+                {category === "diploma" && "Find KUCCPS diploma courses you qualify for with your KCSE grade"}
+                {category === "certificate" && "Check certificate courses available for your KCSE grade"}
+                {category === "kmtc" && "Discover KMTC courses offered through KUCCPS that you qualify for"}
+                {category === "artisan" && "Explore artisan courses and technical trades available via KUCCPS"}
+              </p>
+            </div>
+
+            {/* Internal Linking Section - Category Specific Helpful Resources */}
+            <div className="mb-6 max-w-4xl mx-auto">
+              <div className="bg-surface/50 border border-white/10 rounded-xl p-4">
+                <p className="text-sm text-dim mb-3 flex items-center gap-2">
+                  <span className="text-accent">💡</span>
+                  <span className="font-semibold">Helpful Resources:</span>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {/* Cluster Calculator - For Degree and KMTC */}
+                  {(category === "degree" || category === "kmtc") && (
+                    <a
+                      href="/cluster-calculator"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 hover:bg-accent/20 border border-accent/20 hover:border-accent/40 rounded-lg text-xs font-medium text-accent transition-all"
+                    >
+                      <span>Calculate cluster points</span>
+                    </a>
+                  )}
+
+                  {/* Student Tools - For all categories */}
+                  <a
+                    href="/student-tools"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg text-xs font-medium text-light transition-all"
+                  >
+                    <span>Student tools & resources</span>
+                  </a>
+
+                  {/* FAQs - For all categories */}
+                  <a
+                    href="/faq"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg text-xs font-medium text-light transition-all"
+                  >
+                    <span>Frequently asked questions</span>
+                  </a>
+
+                  {/* Certificate (fallback for Diploma) */}
+                  {category === "diploma" && (
+                    <a
+                      href="/certificate"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/40 rounded-lg text-xs font-medium text-amber-300 transition-all"
+                    >
+                      <span>Certificate courses (fallback)</span>
+                    </a>
+                  )}
+
+                  {/* Artisan (fallback for Certificate) */}
+                  {category === "certificate" && (
+                    <a
+                      href="/artisan"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 hover:border-purple-500/40 rounded-lg text-xs font-medium text-purple-300 transition-all"
+                    >
+                      <span>Artisan technical courses</span>
+                    </a>
+                  )}
+
+                  {/* Learn Skills (for Certificate and Artisan) */}
+                  {(category === "certificate" || category === "artisan") && (
+                    <a
+                      href="/learn-skills"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 hover:border-green-500/40 rounded-lg text-xs font-medium text-green-300 transition-all"
+                    >
+                      <span>Learn digital skills for free</span>
+                    </a>
+                  )}
+                </div>
+              </div>
             </div>
 
             <Card className="mx-auto max-w-4xl rounded-2xl p-6 backdrop-blur-sm bg-card/80 border border-border shadow-sm">

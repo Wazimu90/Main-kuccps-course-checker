@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import type { KmtcCourse } from "@/lib/kmtc-course-eligibility"
+import PaymentWarningModal from "@/components/payment-warning-modal"
 
 interface KmtcResultsPreviewProps {
   courses: KmtcCourse[]
@@ -15,6 +16,7 @@ interface KmtcResultsPreviewProps {
 
 export default function KmtcResultsPreview({ courses, onProceed }: KmtcResultsPreviewProps) {
   const [animatedCount, setAnimatedCount] = useState(0)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [topLocations, setTopLocations] = useState<Array<{ county: string; count: number }>>([])
   const [topInstitutions, setTopInstitutions] = useState<Array<{ institution: string; count: number }>>([])
   const [uniqueInstitutionsCount, setUniqueInstitutionsCount] = useState(0)
@@ -237,11 +239,11 @@ export default function KmtcResultsPreview({ courses, onProceed }: KmtcResultsPr
               {/* CTA Section */}
               <div className="text-center">
                 <Button
-                  onClick={() => (window.location.href = "/payment")}
+                  onClick={() => setShowPaymentModal(true)}
                   size="lg"
                   className="premium-btn w-full sm:w-auto max-w-full px-4 sm:px-8 md:px-12 py-3 sm:py-5 md:py-6 text-base sm:text-lg md:text-xl font-semibold mb-6 whitespace-normal break-words leading-tight"
                 >
-                  View All Qualified Courses & PDF Download
+                  View Your {courses.length} Courses
                   <ArrowRight className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
@@ -287,6 +289,14 @@ export default function KmtcResultsPreview({ courses, onProceed }: KmtcResultsPr
           </Card>
         </motion.div>
       </div>
+
+      {/* Payment Warning Modal */}
+      <PaymentWarningModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        onProceed={onProceed}
+        courseCount={courses.length}
+      />
     </div>
   )
 }

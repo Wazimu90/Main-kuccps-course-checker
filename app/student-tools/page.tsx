@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
-import { ExternalLink, CheckCircle, Clock, Wifi, Play, X } from "lucide-react"
+import { ExternalLink, CheckCircle, Clock, Wifi, Play, X, Calculator, BookOpen } from "lucide-react"
 import Footer from "@/components/footer"
 
 interface GovernmentService {
@@ -261,7 +261,7 @@ export default function StudentToolsPage() {
                         </h1>
 
                         <p className="mb-8 text-lg md:text-xl text-dim max-w-3xl mx-auto leading-relaxed">
-                            Quick access to essential government services and platforms for Kenyan students. All official portals in one place.
+                            Quick access to essential government services and platforms for Kenyan students. Before applying on KUCCPS, use our <a href="/cluster-calculator" className="text-accent hover:underline font-semibold">cluster points calculator</a> to understand your eligibility, then <a href="/degree" className="text-accent hover:underline font-semibold">check which courses you qualify for</a> based on your KCSE results. All official portals in one place.
                         </p>
                     </motion.div>
                 </div>
@@ -505,6 +505,103 @@ export default function StudentToolsPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Related Resources Section */}
+            <section className="py-16 bg-surface/30">
+                <div className="container mx-auto px-4">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                        className="text-center mb-12"
+                    >
+                        <h2 className="text-3xl md:text-4xl font-bold text-light mb-4">
+                            More Helpful Resources
+                        </h2>
+                        <p className="text-dim max-w-2xl mx-auto">
+                            Everything you need for a successful KUCCPS application
+                        </p>
+                    </motion.div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                        {/* Cluster Calculator */}
+                        <motion.a
+                            href="/cluster-calculator"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            whileHover={{ y: -5 }}
+                            className="group p-6 bg-surface border border-white/10 rounded-xl hover:border-accent/30 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all"
+                        >
+                            <Calculator className="w-10 h-10 text-accent mb-4 group-hover:scale-110 transition-transform" />
+                            <h3 className="text-lg font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                                Cluster Calculator
+                            </h3>
+                            <p className="text-sm text-dim leading-relaxed">
+                                <a href="/cluster-calculator" className="text-accent hover:underline">Calculate your KUCCPS cluster points</a> before applying to understand your chances for different courses.
+                            </p>
+                        </motion.a>
+
+                        {/* Course Checker */}
+                        <motion.a
+                            href="/degree"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.1 }}
+                            whileHover={{ y: -5 }}
+                            className="group p-6 bg-surface border border-white/10 rounded-xl hover:border-accent/30 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all"
+                        >
+                            <BookOpen className="w-10 h-10 text-accent mb-4 group-hover:scale-110 transition-transform" />
+                            <h3 className="text-lg font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                                Check Eligible Courses
+                            </h3>
+                            <p className="text-sm text-dim leading-relaxed">
+                                Find out <a href="/degree" className="text-accent hover:underline">which KUCCPS courses you qualify for</a> with your KCSE grades across all categories.
+                            </p>
+                        </motion.a>
+
+                        {/* FAQ */}
+                        <motion.a
+                            href="/faq"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.2 }}
+                            whileHover={{ y: -5 }}
+                            className="group p-6 bg-surface border border-white/10 rounded-xl hover:border-accent/30 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all"
+                        >
+                            <CheckCircle className="w-10 h-10 text-accent mb-4 group-hover:scale-110 transition-transform" />
+                            <h3 className="text-lg font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                                KUCCPS FAQ
+                            </h3>
+                            <p className="text-sm text-dim leading-relaxed">
+                                Get answers to <a href="/faq" className="text-accent hover:underline">common KUCCPS questions</a> about applications, cluster points, and course selection.
+                            </p>
+                        </motion.a>
+
+                        {/* News */}
+                        <motion.a
+                            href="/news"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.3 }}
+                            whileHover={{ y: -5 }}
+                            className="group p-6 bg-surface border border-white/10 rounded-xl hover:border-accent/30 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all"
+                        >
+                            <ExternalLink className="w-10 h-10 text-accent mb-4 group-hover:scale-110 transition-transform" />
+                            <h3 className="text-lg font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                                Latest Updates
+                            </h3>
+                            <p className="text-sm text-dim leading-relaxed">
+                                Stay informed with <a href="/news" className="text-accent hover:underline">latest KUCCPS news</a> and important application deadlines.
+                            </p>
+                        </motion.a>
+                    </div>
+                </div>
+            </section>
 
             <Footer showOnHomepage={false} />
         </div>

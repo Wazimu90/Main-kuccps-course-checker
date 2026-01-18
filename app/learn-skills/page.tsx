@@ -106,7 +106,7 @@ export default function LearnSkillsPage() {
                             </h1>
 
                             <p className="text-lg md:text-xl text-dim max-w-3xl mx-auto mb-12 leading-relaxed">
-                                We are building the ultimate platform for you to learn practical, job-ready digital skills at absolutely no cost. Don't miss the launch!
+                                We are building the ultimate platform for you to learn practical, job-ready digital skills at absolutely no cost. Perfect for students waiting for KUCCPS placement or exploring <a href="/certificate" className="text-accent hover:underline font-semibold">certificate courses</a> and <a href="/artisan" className="text-accent hover:underline font-semibold">artisan technical trades</a>. Don't miss the launch!
                             </p>
 
                             <motion.div

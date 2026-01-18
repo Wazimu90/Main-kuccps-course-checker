@@ -120,7 +120,7 @@ export default function Home() {
               </h1>
 
               <p className="mb-8 text-lg md:text-xl text-light max-w-3xl mx-auto leading-relaxed">
-                Powered by official KUCCPS Data | With Intelligent Assistant to help you understand and choose the best Courses.
+                Powered by official KUCCPS Data. Use our <a href="/cluster-calculator" className="text-accent hover:underline font-semibold">cluster calculator</a> to understand your chances, then  <a href="/degree" className="text-accent hover:underline font-semibold">check which courses you qualify for</a> based on your KCSE results. Get intelligent AI assistance to help you make the best choices.
               </p>
 
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -283,6 +283,103 @@ export default function Home() {
                   </p>
                 </a>
               </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Student Resources Hub - Internal Linking Section */}
+        <section className="py-16 bg-surface/30">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-light mb-4">
+                Additional Resources for KUCCPS Applicants
+              </h2>
+              <p className="text-dim max-w-2xl mx-auto">
+                Everything you need to make informed decisions about your future
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+              {/* FAQ Link */}
+              <motion.a
+                href="/faq"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -5 }}
+                className="group p-6 bg-surface border border-white/10 rounded-xl hover:border-accent/30 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all"
+              >
+                <FileText className="w-10 h-10 text-accent mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-lg font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                  KUCCPS FAQ
+                </h3>
+                <p className="text-sm text-dim leading-relaxed">
+                  Get answers to <a href="/faq" className="text-accent hover:underline">frequently asked questions</a> about KUCCPS application, cluster points, and course selection.
+                </p>
+              </motion.a>
+
+              {/* News Link */}
+              <motion.a
+                href="/news"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                whileHover={{ y: -5 }}
+                className="group p-6 bg-surface border border-white/10 rounded-xl hover:border-accent/30 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all"
+              >
+                <ClipboardCheck className="w-10 h-10 text-accent mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-lg font-bold text-light mb-2 group-hover:text-accent transition-colors">
+                  Latest KUCCPS News
+                </h3>
+                <p className="text-sm text-dim leading-relaxed">
+                  Stay updated with the <a href="/news" className="text-accent hover:underline">latest KUCCPS news</a>, application deadlines, and important announcements for 2026.
+                </p>
+              </motion.a>
+
+              {/* Learn Skills Link */}
+              <motion.a
+                href="/learn-skills"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                whileHover={{ y: -5 }}
+                className="group p-6 bg-surface border border-white/10 rounded-xl hover:border-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.1)] transition-all"
+              >
+                <Award className="w-10 h-10 text-green-400 mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-lg font-bold text-light mb-2 group-hover:text-green-400 transition-colors">
+                  Learn Digital Skills
+                </h3>
+                <p className="text-sm text-dim leading-relaxed">
+                  <a href="/learn-skills" className="text-green-400 hover:underline">Learn high-income digital skills for free</a> while waiting for KUCCPS placement. Master web development, design, and more.
+                </p>
+              </motion.a>
+
+              {/* Buy Data Link */}
+              <motion.a
+                href="/buy-data"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+                whileHover={{ y: -5 }}
+                className="group p-6 bg-surface border border-white/10 rounded-xl hover:border-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.1)] transition-all"
+              >
+                <Database className="w-10 h-10 text-green-400 mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-lg font-bold text-light mb-2 group-hover:text-green-400 transition-colors">
+                  Affordable Data Bundles
+                </h3>
+                <p className="text-sm text-dim leading-relaxed">
+                  <a href="/buy-data" className="text-green-400 hover:underline">Get affordable student data bundles</a> to access KUCCPS portal and check your results anytime.
+                </p>
+              </motion.a>
             </div>
           </div>
         </section>

@@ -5,8 +5,9 @@ import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, MapPin, Building2, GraduationCap, TrendingUp, Award, Users } from "lucide-react"
- 
+
 import type { ArtisanCourse } from "@/lib/artisan-course-eligibility"
+import PaymentWarningModal from "@/components/payment-warning-modal"
 
 interface ArtisanResultsPreviewProps {
   courses: ArtisanCourse[]
@@ -15,6 +16,7 @@ interface ArtisanResultsPreviewProps {
 
 export default function ArtisanResultsPreview({ courses, onProceed }: ArtisanResultsPreviewProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
 
   // Get top locations by course count
   const locationStats = courses.reduce(
@@ -130,7 +132,7 @@ export default function ArtisanResultsPreview({ courses, onProceed }: ArtisanRes
               <Card className="bg-surface/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.25)]">
                 <CardContent className="p-6 text-center">
                   <div className="flex items-center justify-center mb-4">
-                      <div className="p-3 bg-accent/10 rounded-full">
+                    <div className="p-3 bg-accent/10 rounded-full">
                       <Award className="h-8 w-8 text-accent" />
                     </div>
                   </div>
@@ -177,11 +179,11 @@ export default function ArtisanResultsPreview({ courses, onProceed }: ArtisanRes
                     {/* CTA Section */}
                     <div className="text-center">
                       <Button
-                        onClick={() => (window.location.href = "/payment")}
+                        onClick={() => setShowPaymentModal(true)}
                         size="lg"
                         className="premium-btn px-8 py-4 text-lg font-semibold mb-6"
                       >
-                        View All Courses
+                        View Your {courses.length} Courses
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </Button>
 
@@ -231,6 +233,14 @@ export default function ArtisanResultsPreview({ courses, onProceed }: ArtisanRes
           )}
         </motion.div>
       </div>
+
+      {/* Payment Warning Modal */}
+      <PaymentWarningModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        onProceed={onProceed}
+        courseCount={courses.length}
+      />
     </div>
   )
 }

@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { supabase } from "@/lib/supabase"
+import PaymentWarningModal from "@/components/payment-warning-modal"
 
 interface DiplomaResultsPreviewProps {
   courses: any[]
@@ -73,6 +74,7 @@ export default function DiplomaResultsPreview({ courses, onProceed }: DiplomaRes
   // Count-up animation states
   const [actualCourses, setActualCourses] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const qualifyingCoursesCount = useCountUp(actualCourses.length, 2000, 500)
   const [uniqueCountiesCount, setUniqueCountiesCount] = useState(0)
   const countiesCount = useCountUp(uniqueCountiesCount, 1500, 800)
@@ -362,11 +364,11 @@ export default function DiplomaResultsPreview({ courses, onProceed }: DiplomaRes
           className="bg-emerald-700/30 backdrop-blur-sm rounded-2xl p-8 md:p-12 border border-emerald-600/30 text-center"
         >
           <Button
-            onClick={onProceed}
+            onClick={() => setShowPaymentModal(true)}
             size="lg"
             className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white w-full sm:w-auto max-w-full px-4 sm:px-8 md:px-12 py-3 sm:py-5 md:py-6 text-base sm:text-lg md:text-xl font-bold rounded-full shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/60 transition-all duration-300 hover:-translate-y-1 mb-8"
           >
-            View All {actualCourses.length} Qualified Courses
+            View Your {actualCourses.length} Courses
             <ArrowRight className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
 
@@ -395,6 +397,14 @@ export default function DiplomaResultsPreview({ courses, onProceed }: DiplomaRes
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Payment Warning Modal */}
+      <PaymentWarningModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        onProceed={onProceed}
+        courseCount={actualCourses.length}
+      />
     </div>
   )
 }

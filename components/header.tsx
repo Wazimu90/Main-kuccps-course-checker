@@ -16,7 +16,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Student Tools", href: "/student-tools", ariaLabel: "Access essential student resources" },
   { label: "Cluster Calculator", href: "/cluster-calculator", ariaLabel: "Calculate KUCCPS cluster points" },
   { label: "News", href: "/news", ariaLabel: "Read latest news" },
-  { label: "Buy Data", href: "https://bingwazone.co.ke/app/Bfasta", external: true, ariaLabel: "Open Buy Data in new tab" },
+  { label: "FAQ", href: "/faq", ariaLabel: "View frequently asked questions" },
+  { label: "Buy Data", href: "/buy-data", ariaLabel: "Get affordable student data bundles" },
   { label: "About", href: "/about", ariaLabel: "Learn about this site" },
 ]
 
