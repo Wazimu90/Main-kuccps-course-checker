@@ -40,7 +40,7 @@ export async function initiatePayment(data: {
 
       // Store payment initiation in database for tracking
       try {
-        await supabaseServer.from("payment_transactions").insert({
+        const { error: insertError } = await supabaseServer.from("payment_transactions").insert({
           reference,
           transaction_id: response.transaction_id,
           phone_number: data.phone,
@@ -52,18 +52,34 @@ export async function initiatePayment(data: {
           created_at: new Date().toISOString(),
         })
 
-        log("payment:db", "Transaction stored in database", "debug", {
+        if (insertError) {
+          log("payment:db", "❌ CRITICAL: Failed to store transaction record", "error", {
+            error: insertError.message,
+            reference,
+            hint: "Database connection may be broken - check SUPABASE_SERVICE_ROLE_KEY"
+          })
+
+          // CRITICAL FIX: Fail the payment if we can't record it
+          // Better to prevent payment than to take money without tracking
+          throw new Error(`Database recording failed: ${insertError.message}`)
+        }
+
+        log("payment:db", "✅ Transaction stored in database", "debug", {
           reference,
           transaction_id: response.transaction_id,
           course_category: data.courseCategory
         })
       } catch (dbError: any) {
-        // If table doesn't exist, log warning but continue (webhook will handle final recording)
-        log("payment:db", "Failed to store transaction - table may not exist yet", "warn", {
+        log("payment:db", "💥 Database error during payment initiation", "error", {
           error: dbError.message,
-          hint: "Run migration: supabase/migrations/2026-01-11_pesaflux_transactions.sql"
+          reference,
         })
-        // Don't fail the payment - webhook can still record it later
+
+        // Return error to user - don't proceed with payment
+        return {
+          success: false,
+          message: "Database error. Please contact support if your account was debited.",
+        }
       }
 
       return {

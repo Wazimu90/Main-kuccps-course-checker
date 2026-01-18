@@ -2,6 +2,9 @@ import { NextResponse } from "next/server"
 import { supabaseServer } from "@/lib/supabaseServer"
 import { log } from "@/lib/logger"
 
+// Force dynamic rendering to prevent caching of webhook endpoint
+export const dynamic = "force-dynamic"
+
 /**
  * PesaFlux Webhook Handler
  * 
@@ -72,12 +75,12 @@ export async function POST(request: Request) {
         })
 
         // Update payment transaction in database
-        const { data: transaction, error: updateError } = await supabaseServer
+        let { data: transaction, error: updateError } = await supabaseServer
             .from("payment_transactions")
             .update({
                 status: internalStatus,
                 mpesa_receipt_number: mpesaReceiptNumber,
-                transaction_id: transactionId || transaction?.transaction_id,
+                transaction_id: transactionId,
                 webhook_data: body, // Store full payload for debugging
                 amount: amount, // Update amount with actual paid amount
                 completed_at: internalStatus === "COMPLETED" ? new Date().toISOString() : null,
@@ -87,16 +90,75 @@ export async function POST(request: Request) {
             .single()
 
         if (updateError || !transaction) {
-            log("webhook:pesaflux", "Failed to update transaction", "error", {
+            log("webhook:pesaflux", "⚠️ Transaction not found, attempting recovery", "warn", {
                 reference,
                 error: updateError,
             })
 
-            // Return 200 anyway to prevent PesaFlux retries
-            return NextResponse.json({
-                received: true,
-                error: "Transaction not found"
-            })
+            // CRITICAL FIX: If transaction doesn't exist (initiation failed but payment succeeded),
+            // create a recovery record with available data from webhook
+            if (internalStatus === "COMPLETED") {
+                try {
+                    const { data: recoveryTransaction, error: insertError } = await supabaseServer
+                        .from("payment_transactions")
+                        .insert({
+                            reference,
+                            transaction_id: transactionId,
+                            phone_number: phone || "UNKNOWN",
+                            email: "recovery@kuccpschecker.com", // Placeholder - will be updated if user contacts support
+                            name: "Payment Recovery",
+                            amount: amount || 200,
+                            course_category: null,
+                            status: internalStatus,
+                            mpesa_receipt_number: mpesaReceiptNumber,
+                            webhook_data: body,
+                            completed_at: new Date().toISOString(),
+                            created_at: new Date().toISOString(),
+                        })
+                        .select()
+                        .single()
+
+                    if (insertError || !recoveryTransaction) {
+                        log("webhook:pesaflux", "❌ Recovery record creation failed", "error", {
+                            reference,
+                            error: insertError,
+                        })
+
+                        // Return 200 to prevent retries, but log critical error
+                        await supabaseServer.from("activity_logs").insert({
+                            event_type: "payment.webhook.critical_error",
+                            description: `CRITICAL: Payment succeeded but record creation failed: ${reference}`,
+                            actor_role: "system",
+                            metadata: { reference, amount, phone, mpesaReceiptNumber, error: String(insertError) },
+                        })
+
+                        return NextResponse.json({
+                            received: true,
+                            error: "Recovery failed - manual intervention required"
+                        })
+                    }
+
+                    log("webhook:pesaflux", "✅ Recovery record created successfully", "success", {
+                        reference,
+                        amount,
+                    })
+
+                    // Use recovery transaction for further processing
+                    transaction = recoveryTransaction
+                } catch (recoveryError) {
+                    log("webhook:pesaflux", "💥 Recovery process exception", "error", recoveryError)
+                    return NextResponse.json({
+                        received: true,
+                        error: "Recovery exception"
+                    })
+                }
+            } else {
+                // Not a completed payment, safe to ignore
+                return NextResponse.json({
+                    received: true,
+                    error: "Transaction not found (non-completed payment)"
+                })
+            }
         }
 
         log("webhook:pesaflux", "Transaction updated successfully", "success", {
