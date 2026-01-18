@@ -68,28 +68,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [.agent/HEADER-HIERARCHY-QUICK-REF.md](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/.agent/HEADER-HIERARCHY-QUICK-REF.md)
     - [.agent/SEO-EXECUTIVE-SUMMARY.md](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/.agent/SEO-EXECUTIVE-SUMMARY.md)
 
-### Performance - 2026-01-18 (Core Web Vitals Optimization)
-
-- **LCP & FCP Optimization**
-  - Enabled Next.js Image Optimization (removed `unoptimized: true` from config)
-  - Optimized Hero section text rendering (removed opacity fade-in animation) to show content immediately
-  - Implemented Server-Side Rendering (SSR) for the initial state of the "TextType" hero component
-  - Lazy-loaded `MobileTutorial` component to reduce initial JavaScript bundle size
-  - Moved Google Analytics scripts to `next/script` with `strategy="afterInteractive"` to prevent blocking the main thread
-
-- **CLS Optimization**
-  - ensured Hero text has reserved space to prevent layout shifts
-  - Optimized font loading with `next/font` (already present)
-
-- **INP Improvements**
-  - Reduced main thread blocking by deferring non-critical scripts (Google Analytics)
-  - Code splitting of heavy interactive components (`MobileTutorial`)
-
-- **Bundle Size Optimization**
-  - Removed `three.js` dependency (heavy 3D library) completely
-  - Replaced 3D `FloatingLines` background with lightweight CSS/Framer Motion alternative
-  - Significant reduction in main bundle size and parsing time
-
 ### Changed - 2026-01-18 (SEO Header Optimization)
 
 - **Student Tools Page Headers**
@@ -169,12 +147,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Heading centered on course entry pages for cleaner design
   - Removed unused ArrowLeft and Button imports
   - References: [components/GradeEntryPageContent.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/GradeEntryPageContent.tsx)
-
-- **Build Error: next/dynamic ssr: false in Server Component**
-  - Fixed "ssr: false is not allowed with next/dynamic in Server Components" error
-  - Created client-side wrapper `components/mobile-tutorial-wrapper.tsx` to handle the dynamic import
-  - Updated `app/layout.tsx` to use the wrapper component
-  - Ensures correct bundle splitting without violating Server Component rules
 
 ### Changed - 2026-01-18 (Content & Design Updates)
 

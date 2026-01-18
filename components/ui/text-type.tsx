@@ -48,17 +48,15 @@ const TextType = ({
   reverseMode = false,
   ...props
 }: TextTypeProps & React.HTMLAttributes<HTMLElement>) => {
-  const textArray = Array.isArray(text) ? text : [text]
-
-  const [displayedText, setDisplayedText] = useState(textArray[0] || "")
-  const [currentCharIndex, setCurrentCharIndex] = useState(textArray[0] ? textArray[0].length : 0)
+  const [displayedText, setDisplayedText] = useState("")
+  const [currentCharIndex, setCurrentCharIndex] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
   const [currentTextIndex, setCurrentTextIndex] = useState(0)
-  const [isVisible, setIsVisible] = useState(startOnVisible)
+  const [isVisible, setIsVisible] = useState(!startOnVisible)
   const cursorRef = useRef<HTMLSpanElement>(null)
   const containerRef = useRef<HTMLElement>(null)
 
-
+  const textArray = Array.isArray(text) ? text : [text]
 
   const getRandomSpeed = () => {
     if (!variableSpeed) return typingSpeed

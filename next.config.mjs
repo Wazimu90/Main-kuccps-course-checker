@@ -9,7 +9,7 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    // unoptimized: true, // Commented out to enable internal Next.js Image Optimization
+    unoptimized: true,
   },
 }
 

@@ -22,16 +22,10 @@ import {
 import MagicMenu from "@/components/MagicMenu"
 import { useToast } from "@/hooks/use-toast"
 import CourseCategoryCard from "@/components/course-category-card"
-import dynamic from "next/dynamic"
-import TextType from "@/components/ui/text-type"
+import TestimonialCarousel from "@/components/testimonial-carousel"
 import Footer from "@/components/footer"
-
-const HowItWorks = dynamic(() => import("@/components/how-it-works"), {
-  loading: () => <div className="h-96 w-full animate-pulse bg-surface/10 rounded-2xl" />,
-})
-const TestimonialCarousel = dynamic(() => import("@/components/testimonial-carousel"), {
-  loading: () => <div className="h-96 w-full animate-pulse bg-surface/10 rounded-2xl" />,
-})
+import TextType from "@/components/ui/text-type"
+import HowItWorks from "@/components/how-it-works"
 
 export default function Home() {
   const { toast } = useToast()
@@ -106,6 +100,9 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
             <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
               className="text-center"
             >
               <h1 className="mb-6 text-4xl md:text-6xl lg:text-7xl font-bold leading-tight min-h-[200px] md:min-h-[300px]">

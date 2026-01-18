@@ -40,7 +40,6 @@ import { supabase } from "@/lib/supabase"
 // import { jsPDF } from "jspdf" // Dynamically imported
 // import autoTable from "jspdf-autotable" // Dynamically imported
 import { deduplicateCourses } from "@/lib/utils"
-import { InternalLinksSection, resultsPageLinks } from "@/components/InternalLinksSection"
 
 export default function ResultsPage() {
   const router = useRouter()
@@ -816,13 +815,6 @@ export default function ResultsPage() {
 
           {/* Results Content */}
           <CourseTable courses={filteredCourses} category={selectedCategory} isLoading={isLoading} />
-
-          {/* Internal Links for SEO - What's Next Section */}
-          <InternalLinksSection
-            title="What's Next?"
-            links={resultsPageLinks}
-            className="mt-12"
-          />
         </div>
 
         {/* Floating Chat Button */}

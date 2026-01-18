@@ -163,7 +163,7 @@ export default function TestimonialCarousel() {
                     </div>
 
                     <div className="flex-grow">
-                      <h3 className="text-text-light font-bold text-lg">{item.name}</h3>
+                      <h4 className="text-text-light font-bold text-lg">{item.name}</h4>
                       <p className="text-accent-soft text-sm">{item.title}</p>
                     </div>
 
@@ -181,7 +181,6 @@ export default function TestimonialCarousel() {
 
           <button
             onClick={prevSlide}
-            aria-label="Previous testimonial"
             className="absolute top-1/2 -left-2 md:-left-16 -translate-y-1/2 p-3 rounded-full bg-surface border border-dim/30 text-dim hover:text-accent hover:border-accent/50 transition-all duration-300 z-30 group"
           >
             <ChevronLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
@@ -189,7 +188,6 @@ export default function TestimonialCarousel() {
 
           <button
             onClick={nextSlide}
-            aria-label="Next testimonial"
             className="absolute top-1/2 -right-2 md:-right-16 -translate-y-1/2 p-3 rounded-full bg-surface border border-dim/30 text-dim hover:text-accent hover:border-accent/50 transition-all duration-300 z-30 group"
           >
             <ChevronRight size={24} className="group-hover:translate-x-1 transition-transform" />
@@ -202,8 +200,8 @@ export default function TestimonialCarousel() {
               key={index}
               onClick={() => setCurrentIndex(index)}
               className={`h-1.5 rounded-full transition-all duration-300 ${index === currentIndex
-                ? "w-8 bg-accent shadow-[0_0_10px_rgba(34,211,238,0.5)]"
-                : "w-2 bg-dim/30 hover:bg-dim/60"
+                  ? "w-8 bg-accent shadow-[0_0_10px_rgba(34,211,238,0.5)]"
+                  : "w-2 bg-dim/30 hover:bg-dim/60"
                 }`}
               aria-label={`Go to slide ${index + 1}`}
             />
