@@ -126,8 +126,7 @@ _Sent from KUCCPS Course Checker_`
                                     Need Application Help?
                                 </h3>
                                 <p className="text-white/90 text-xs leading-relaxed">
-                                    Get expert assistance with your KUCCPS application process.<br />
-                                    Note that this is chargeable. (KES 200)
+                                    Get expert assistance with your KUCCPS application process.
                                 </p>
                             </div>
                         </div>
