@@ -34,7 +34,7 @@ export default function CourseDetailsModal({ course, isOpen, onClose }: CourseDe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-2xl max-h-[85vh] overflow-y-auto mx-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <GraduationCap className="h-6 w-6 text-primary" />

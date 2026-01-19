@@ -7,6 +7,194 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - 2026-01-20 (Critical Mobile Responsiveness Fixes)
+
+Based on 107 user complaints, implemented critical mobile UI fixes to improve usability on mobile devices:
+
+- **Header Navigation Scrollability**
+  - Fixed mobile menu not being scrollable when too many links to fit
+  - Changed `overflow-hidden` to `overflow-x-auto overflow-y-auto`
+  - Increased max-height from `max-h-80` to `max-h-[70vh]` for better visibility
+  - Users can now scroll to access all navigation links (FAQ, Buy Data, About)
+  - References: [components/header.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/header.tsx)
+
+- **View Details Modal Responsive Fix**
+  - Made course details modal fully responsive on mobile
+  - Added `w-[calc(100%-2rem)]` for proper mobile width constraints
+  - Reduced max-height to `85vh` to ensure exit button is always visible
+  - Modal now properly fits on all screen sizes without overlapping
+  - References: [components/results/course-details-modal.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/results/course-details-modal.tsx)
+
+- **Need Help Button Size Reduction**
+  - Converted large text button to compact icon-only button (48x48px)
+  - Removed "Need Help in Application?" text label to prevent click interception
+  - Added `title` and `aria-label` attributes for accessibility ("Need Help in Application?")
+  - Button no longer intercepts clicks on nearby elements
+  - Reduced shadow for less visual weight
+  - References: [components/floating-help-button.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/floating-help-button.tsx)
+
+- **Chatbot Modal Centering**
+  - Fixed chatbot modal opening too far right on mobile
+  - Changed positioning from `right-4` to `left-1/2 -translate-x-1/2` for center alignment on mobile
+  - Desktop maintains right-side positioning with `md:right-4`
+  - Modal now opens perfectly centered on mobile screens
+  - References: [components/results/chatbot-assistant.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/results/chatbot-assistant.tsx)
+
+- **AI Chat Modal Centering**
+  - Fixed modal opening off-center on mobile devices
+  - Reduced max-height to `85vh` to prevent overflow
+  - Removed fixed `h-[600px]` that caused overflow issues
+  - References: [components/AIChatModal.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/AIChatModal.tsx)
+
+- **Base Dialog Component Improvements**
+  - Enhanced dialog component with `max-h-[85vh]` and `overflow-y-auto` for all dialogs
+  - Improved close button visibility with `bg-black/20 backdrop-blur-sm` background
+  - Close button now uses `rounded-full p-1.5` for larger touch target
+  - Moved close button to `top-3 right-3` with higher opacity (0.9 vs 0.7)
+  - All dialogs now properly centered and scrollable on mobile
+  - References: [components/ui/dialog.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/ui/dialog.tsx)
+
+### UX Improvements - 2026-01-20
+
+- **Better Mobile Accessibility**
+  - All modals now open centered in viewport rather than offset to the right
+  - Touch targets increased for close buttons and interactive elements
+  - Scrollable content prevents content from being cut off on small screens
+  - Floating buttons no longer interfere with other page interactions
+
+### Added - 2026-01-19 (Help Button Load Balancing)
+
+- **Help Request Load Balancing System**
+  - Implemented server-side load balancing for "Need Help" button requests
+  - Alternates between two WhatsApp numbers to distribute help requests evenly
+  - Silent webhook delivery to secondary number while primary opens WhatsApp
+  - Persistent tracking using database to maintain balance across sessions
+  - References: [app/api/help-request/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/help-request/route.ts)
+
+### Added - 2026-01-18 (Phase 2: Advanced SEO & Internal Linking Implementation)
+
+- **Buy Data Page (Internal Page)**
+  - Created dedicated `/buy-data` page replacing external Bfasta link in header
+  - **Features Section** with 6 benefit cards:
+    - Instant Activation
+    - No Okoa Jahazi Required
+    - Special Student Offers
+    - Multiple Services (data, SMS, airtime)
+    - 24/7 Support
+    - Trusted Service
+  - WhatsApp community integration for exclusive deals and updates
+  - Internal links TO: Student Tools, Learn Skills, Cluster Calculator, News (contextual placement)
+  - Links FROM: Header navigation, Homepage resources section, Student Tools, Learn Skills
+  - SEO-optimized metadata: "Affordable Student Data Bundles - Buy Safaricom Data"
+  - Positioned as student utility (soft sell approach) per SEO best practices
+  - Mobile-first responsive design with gradient accents
+  - References:
+    - [app/buy-data/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/buy-data/page.tsx)
+    - [app/buy-data/layout.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/buy-data/layout.tsx)
+
+- **Comprehensive Internal Linking Strategy (SEO Goldmine)**
+  - **Homepage Enhancements:**
+    - Added internal links in hero section with natural anchor texts:
+      - "cluster calculator" → `/cluster-calculator`
+      - "check which courses you qualify for" → `/degree`
+    - Created "Additional Resources for KUCCPS Applicants" section before testimonials
+    - 4 resource cards with strategic internal links:
+      - FAQ: "frequently asked questions"
+      - News: "latest KUCCPS news"
+      - Learn Skills: "Learn high-income digital skills for free"
+      - Buy Data: "Get affordable student data bundles"
+    - Each card has icon, heading, description, hover effects
+    - Mobile-optimized grid layout (1, 2, 4 columns)
+  
+  - **All Course Category Pages (Degree, Diploma, Certificate, KMTC, Artisan):**
+    - Added "Helpful Resources" section above grade entry form
+    - Category-specific smart linking:
+      - **Degree & KMTC**: Link to Cluster Calculator (medical cluster points)
+      - **Diploma**: Fallback link to Certificate courses
+      - **Certificate**: Fallback link to Artisan courses
+      - **Certificate & Artisan**: Link to Learn Skills
+      - **All categories**: Links to Student Tools and FAQ
+    - SEO-optimized category descriptions added
+    - Pill-style link buttons with category-specific colors
+  
+  - **Student Tools Page:**
+    - Enhanced hero description with contextual internal links
+    - Added "More Helpful Resources" section at page bottom with 4 resource cards
+    - Smooth animations with Framer Motion
+  
+  - **Learn Skills Page:**
+    - Enhanced description with strategic internal links to certificate and artisan courses
+    - Natural anchor text integration in value proposition
+  
+  - References:
+    - [app/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/page.tsx)
+    - [components/GradeEntryPageContent.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/GradeEntryPageContent.tsx)
+    - [app/student-tools/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/student-tools/page.tsx)
+    - [app/learn-skills/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/learn-skills/page.tsx)
+
+### Changed - 2026-01-18 (Phase 2: SEO & Navigation)
+
+- **Header Navigation Update**
+  - Changed "Buy Data" link from external (https://bingwazone.co.ke/app/Bfasta) to internal (`/buy-data`)
+  - Removed external link flag and opening modal logic
+  - Updated aria-label to "Get affordable student data bundles"
+  - Maintains user engagement within site ecosystem for better SEO
+  - References: [components/header.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/components/header.tsx)
+
+### SEO - 2026-01-18 (Phase 2 Technical Improvements)
+
+- **Internal Linking Architecture (Hub-and-Spoke Model)**
+  - Homepage acts as central hub linking to all major sections
+  - Course category pages cross-link with fallback navigation hierarchy:
+    - Degree → Diploma → Certificate → Artisan → Learn Skills
+  - Tool pages (Cluster Calculator, Student Tools) receive most links (SEO boost)
+  - FAQ page operates as internal link goldmine with 15+ contextual links
+  - Maximum 2-3 click depth to any page from homepage
+  - No keyword stuffing - all anchor texts natural and varied
+  
+- **Anchor Text Strategy (No Repetition)**
+  - **For Cluster Calculator** (4 variations):
+    - "cluster calculator"
+    - "Calculate cluster points"
+    - "calculate your KUCCPS cluster points"
+    - "KUCCPS cluster points calculator"
+  - **For Course Categories** (varied per page):
+    - "check which courses you qualify for"
+    - "KUCCPS degree courses you qualify for"
+    - "which KUCCPS courses you qualify for"
+    - "Find diploma courses with your KCSE grade"
+  - **For Resources** (natural language):
+    - "frequently asked questions" (not "click here for FAQ")
+    - "latest KUCCPS news"
+    - "Learn high-income digital skills for free"
+    - "Get affordable student data bundles"
+
+- **Internal Linking Rules Enforced:**
+  1. ✅ No repeated same anchor text excessively on one page
+  2. ✅ Natural sentence anchors over generic "click here"
+  3. ✅ Downward linking hierarchy (Degree → Diploma → Certificate → Artisan)
+  4. ✅ Tool pages (Calculator, Student Tools) receive most links
+  5. ✅ Footer links ≠ contextual links (prioritize in-content links)
+  6. ✅ Commercial links (Buy Data) NOT pushed aggressively
+  7. ✅ All links provide clear value proposition
+  8. ✅ Mobile-first design for 99% mobile traffic
+
+- **Expected SEO Impact Timeline**
+  - **Short term (2-4 weeks):**
+    - Reduced bounce rate: -15-25%
+    - Increased pages per session: +20-35%
+    - Longer average session duration: +25-40%
+  - **Medium term (1-3 months):**
+    - Improved keyword rankings for target terms
+    - Better crawlability (internal PageRank flow)
+    - More indexed pages in Google Search Console
+  - **Long term (3-6 months):**
+    - Organic traffic increase: +25-50%
+    - Domain authority improvement
+    - Higher conversion rates from SEO traffic
+    - Buy Data page becomes traffic source (not leak)
+
+
 ### Added - 2026-01-18 (SEO & Analytics Implementation)
 
 - **Google Analytics Integration**

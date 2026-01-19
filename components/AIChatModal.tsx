@@ -142,14 +142,14 @@ export default function AIChatModal({ isOpen, onClose, contextData }: AIChatModa
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                    className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-4 bg-black/80 backdrop-blur-sm"
                     onClick={onClose}
                 >
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0, y: 20 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                        className="bg-surface border border-white/10 w-full max-w-lg h-[600px] max-h-[90vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl relative"
+                        className="bg-surface border border-white/10 w-full max-w-lg max-h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl relative"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}

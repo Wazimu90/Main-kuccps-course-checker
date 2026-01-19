@@ -151,17 +151,16 @@ _Sent from KUCCPS Course Checker_`
                 )}
             </AnimatePresence>
 
-            {/* Main floating button */}
+            {/* Main floating button - icon only for smaller footprint */}
             <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="group relative flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-full shadow-2xl transition-all duration-300 hover:shadow-green-500/50"
+                title="Need Help in Application?"
+                aria-label="Need Help in Application?"
+                className="group relative flex items-center justify-center w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-full shadow-lg transition-all duration-300 hover:shadow-green-500/40"
             >
                 <MessageCircle className="w-5 h-5" />
-                <span className="font-semibold text-sm whitespace-nowrap">
-                    Need Help in Application?
-                </span>
 
                 {/* Pulse effect */}
                 <span className="absolute inset-0 rounded-full bg-green-400 opacity-0 group-hover:opacity-20 animate-ping" />

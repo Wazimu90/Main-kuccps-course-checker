@@ -115,7 +115,7 @@ export default function ChatbotAssistant({ isOpen, onClose, selectedCategory, qu
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="fixed bottom-4 right-4 z-50 w-[95vw] md:w-[420px] max-w-[420px] max-h-[80vh]"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-4 z-50 w-[calc(100%-2rem)] md:w-[420px] max-w-[420px] max-h-[80vh]"
         >
           <Card className="shadow-2xl border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
             {/* Header */}

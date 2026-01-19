@@ -122,11 +122,11 @@ export const Header: React.FC = () => {
             className={`
               absolute top-full left-0 right-0 mt-3 p-3
               bg-base/95 border border-dim/20 rounded-2xl backdrop-blur-xl
-              flex flex-col gap-1 overflow-hidden
+              flex flex-col gap-1 overflow-x-auto overflow-y-auto
               origin-top transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
               shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-0
               ${isMobileMenuOpen
-                ? "opacity-100 scale-100 translate-y-0 max-h-80"
+                ? "opacity-100 scale-100 translate-y-0 max-h-[70vh]"
                 : "opacity-0 scale-95 -translate-y-4 max-h-0 pointer-events-none"
               }
               md:hidden
