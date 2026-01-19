@@ -67,83 +67,49 @@ export default function AdminLoginPage() {
       } else {
         toast({ title: "Login Successful", description: "Redirecting to admin dashboard", variant: "success" })
 
-        // Trigger session and activity logging without blocking
+        // Set session cookie FIRST before redirecting
         const at = data.session?.access_token || ""
         const rt = data.session?.refresh_token || ""
         if (at && rt) {
-          fetch("/api/auth/session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ access_token: at, refresh_token: rt }),
-          }).catch(() => { })
+          try {
+            const sessionRes = await fetch("/api/auth/session", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ access_token: at, refresh_token: rt }),
+            })
+
+            if (sessionRes.ok) {
+              // Set adminToken in localStorage for dashboard client
+              localStorage.setItem("adminToken", at)
+
+              // Now log the activity (after session is established)
+              fetch("/api/admin/activity", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  event_type: "admin_login",
+                  description: "Admin login",
+                  email: formData.email,
+                  actor_role: "admin",
+                }),
+              }).catch(() => { })
+
+              router.push("/admin/dashboard")
+            } else {
+              setError("Failed to establish session. Please try again.")
+            }
+          } catch {
+            setError("Failed to establish session. Please try again.")
+          }
+        } else {
+          setError("Session tokens not available. Please try again.")
         }
-
-        fetch("/api/admin/activity", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            event_type: "admin_login",
-            description: "Admin login",
-            email: formData.email,
-            actor_role: "admin",
-          }),
-        }).catch(() => { })
-
-        router.push("/admin/dashboard")
       }
     } catch {
       setError("Login failed. Please try again.")
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const handle2FA = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!twoFACode || twoFACode.length !== 6) {
-      setError("Please enter a valid 6-digit code")
-      return
-    }
-
-    setIs2FALoading(true)
-    setError("")
-
-    try {
-      const resp = await fetch("/api/admin/access-code/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-csrf-token": csrfToken },
-        body: JSON.stringify({ email: formData.email, access_code: twoFACode }),
-      })
-      if (resp.ok) {
-        toast({ title: "Authentication Successful", description: "Welcome to the admin dashboard", variant: "success" })
-        try {
-          await fetch("/api/admin/activity", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              event_type: "admin_login",
-              description: "Admin login",
-              email: formData.email,
-              actor_role: "admin",
-            }),
-          })
-        } catch { }
-        router.push("/admin/dashboard")
-      } else {
-        setError("Invalid access code. Please try again.")
-      }
-    } catch {
-      setError("2FA verification failed. Please try again.")
-    } finally {
-      setIs2FALoading(false)
-    }
-  }
-
-  const resend2FA = () => {
-    toast({
-      title: "2FA Code Sent",
-      description: "A new verification code has been sent to your email",
-    })
   }
 
   return (
