@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { MessageCircle, Send } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
@@ -21,30 +21,26 @@ export default function FloatingHelpButton({
     const { toast } = useToast()
     const [isExpanded, setIsExpanded] = useState(false)
     const [isSending, setIsSending] = useState(false)
-    const [requestCount, setRequestCount] = useState(0)
-
-    // Primary and secondary WhatsApp numbers
-    const PRIMARY_NUMBER = "254713111921" // 0713111921
-    const SECONDARY_NUMBER = "254790295408" // 0790295408 (silent)
-
-    useEffect(() => {
-        // Load request count from localStorage
-        const count = parseInt(localStorage.getItem("helpRequestCount") || "0", 10)
-        setRequestCount(count)
-    }, [])
-
-    const getTargetNumber = () => {
-        // Load balancing: 0-1 = primary, 2-3 = secondary, 4-5 = primary, etc.
-        const position = requestCount % 4
-        return position < 2 ? PRIMARY_NUMBER : SECONDARY_NUMBER
-    }
 
     const sendHelpRequest = async () => {
         setIsSending(true)
 
         try {
-            const targetNumber = getTargetNumber()
-            const isSilentRequest = targetNumber === SECONDARY_NUMBER
+            // Fetch target number from server (global load balancing)
+            let targetNumber = "254713111921" // Default to primary
+            let isSilentRequest = false
+
+            try {
+                const response = await fetch("/api/help-request", { method: "POST" })
+                if (response.ok) {
+                    const data = await response.json()
+                    targetNumber = data.targetNumber
+                    isSilentRequest = data.isSilent
+                }
+            } catch {
+                // If API fails, default to primary (WhatsApp)
+                console.error("Failed to fetch target number, defaulting to primary")
+            }
 
             // Prepare data payload
             const requestData = {
@@ -82,11 +78,6 @@ _Sent from KUCCPS Course Checker_`
                 const whatsappUrl = `https://wa.me/${targetNumber}?text=${encodeURIComponent(message)}`
                 window.open(whatsappUrl, "_blank")
             }
-
-            // Increment request count
-            const newCount = requestCount + 1
-            setRequestCount(newCount)
-            localStorage.setItem("helpRequestCount", newCount.toString())
 
             // Show generic success toast (no mention of email/webhook)
             toast({
