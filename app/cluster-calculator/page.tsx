@@ -762,7 +762,7 @@ export default function ClusterCalculatorPage() {
                         </motion.div>
 
                         <h1 className="mb-4 text-3xl md:text-5xl lg:text-6xl font-bold leading-tight text-light">
-                            KUCCPS Cluster Calculator + AI
+                            KUCCPS Cluster Calculator + AI Assistant
                         </h1>
 
                         <p className="mb-6 text-base md:text-lg text-dim max-w-2xl mx-auto leading-relaxed">
@@ -1041,7 +1041,7 @@ export default function ClusterCalculatorPage() {
                                             className="w-full py-3 md:py-4 px-4 md:px-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(147,51,234,0.4)] hover:shadow-[0_0_30px_rgba(147,51,234,0.6)] flex items-center justify-center gap-2 text-sm md:text-base"
                                         >
                                             <Brain className="w-4 h-4 md:w-5 md:h-5" />
-                                            <span className="hidden sm:inline">Chat with Bingwa AI</span>
+                                            <span className="hidden sm:inline">Chat with Cluster AI</span>
                                             <span className="sm:hidden">Chat AI</span>
                                         </motion.button>
 
@@ -1051,7 +1051,7 @@ export default function ClusterCalculatorPage() {
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: 0.2 }}
-                                            onClick={handleCheckCoursesClick}
+                                            onClick={() => window.location.href = "/#courses"}
                                             className="w-full py-3 md:py-4 px-4 md:px-6 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-dark font-bold rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(34,211,238,0.4)] hover:shadow-[0_0_30px_rgba(34,211,238,0.6)] flex items-center justify-center gap-2 text-sm md:text-base"
                                         >
                                             <BookOpen className="w-4 h-4 md:w-5 md:h-5" />

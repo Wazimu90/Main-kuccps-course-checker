@@ -244,7 +244,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Maintenance Mode</Label>
-              <p className="text-sm text-white">Put the site in maintenance mode</p>
+              <p className="text-sm text-white/70 italic">Put the site in maintenance mode (Active in Production only)</p>
             </div>
             <Switch
               checked={formData.maintenance_mode}

@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Phone, Mail, User, Shield } from "lucide-react"
+import { Phone, Mail, User, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -57,16 +57,16 @@ export default function PaymentPage() {
           } else {
             // Fallback if no setting exists
             setPaymentAmount(200)
-            log("payment:settings", "No payment_amount in settings, using fallback", "warn")
+            log("payment:settings", "No payment_amount in settings, using fallback of 200", "warn")
           }
         } else {
           // API error fallback
           setPaymentAmount(200)
-          log("payment:settings", "Failed to fetch settings, using fallback", "warn")
+          log("payment:settings", "Failed to fetch settings, using fallback of 200", "warn")
         }
       } catch (e) {
         setPaymentAmount(200)
-        log("payment:settings", "Exception loading payment amount, using fallback", "warn", e)
+        log("payment:settings", "Exception loading payment amount, using fallback of 200", "warn", e)
       } finally {
         setIsLoadingAmount(false)
       }
@@ -167,7 +167,11 @@ export default function PaymentPage() {
       return
     }
 
-    log("payment:submit", "Submitting payment form", "info", { adminMode: isAdminMode })
+    log("payment:submit", "Submitting payment form", "info", {
+      adminMode: isAdminMode,
+      email: formData.email,
+      courseCategory
+    })
     if (isAdminMode) {
       if (!adminKey.trim()) {
         toast({ title: "Admin Key Required", description: "Please enter the admin access key.", variant: "destructive" })
@@ -242,10 +246,14 @@ export default function PaymentPage() {
       setPaymentState(PaymentState.PROCESSING)
 
       // Use paymentAmount from settings, fallback to 200 if not loaded
-      const amountToCharge = paymentAmount || 200
+      const amountToCharge = paymentAmount || 1
       setCurrentChargeAmount(amountToCharge) // Store in state for use in polling
 
-      // Initiate payment with dynamic amount from settings
+      log("payment:init", "Calling initiatePayment action", "debug", {
+        amount: amountToCharge,
+        category: courseCategory
+      })
+
       const response = await initiatePayment({
         phone: formData.phone,
         email: formData.email,
@@ -310,11 +318,13 @@ export default function PaymentPage() {
 
   const pollPaymentStatus = async (id: string) => {
     try {
+      log("payment:poll", "Polling for status", "debug", { paymentId: id })
       const statusResponse = await checkPaymentStatus(id)
 
       if (statusResponse.status === "COMPLETED") {
         setPaymentState(PaymentState.SUCCESS)
         log("payment:status", "Payment completed", "success", { paymentId: id })
+
         try {
           await fetch("/api/activity", {
             method: "POST",
@@ -344,7 +354,20 @@ export default function PaymentPage() {
         )
 
         try {
-          await fetch("/api/payments", {
+          log("payment:record", "Recording finished transaction to /api/payments", "info", {
+            email: formData.email,
+            reference: id,
+            courseCategory: courseCategory || "degree"
+          })
+
+          // CRITICAL: course_category must be a valid value for payments table constraint
+          // If null/empty, default to 'degree' to ensure payment is recorded
+          const validCategory = courseCategory &&
+            ['degree', 'diploma', 'certificate', 'artisan', 'kmtc'].includes(courseCategory.toLowerCase())
+            ? courseCategory.toLowerCase()
+            : 'degree'
+
+          const recordResponse = await fetch("/api/payments", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -352,10 +375,23 @@ export default function PaymentPage() {
               email: formData.email,
               phone_number: formData.phone,
               amount: currentChargeAmount,
-              course_category: courseCategory,
+              course_category: validCategory,
             }),
           })
-          // After successful recording, clear referral tracking
+
+          if (!recordResponse.ok) {
+            const errorData = await recordResponse.json()
+            log("payment:record", "Failed to record payment to payments table", "error", {
+              status: recordResponse.status,
+              error: errorData,
+              category: validCategory
+            })
+          } else {
+            log("payment:record", "✅ Payment successfully recorded to payments table", "success", {
+              category: validCategory
+            })
+          }
+
           try {
             sessionStorage.setItem("referral_cleared", "true")
             sessionStorage.removeItem("referral_code")
@@ -372,6 +408,7 @@ export default function PaymentPage() {
         setTimeout(() => {
           router.push("/results")
         }, 2000)
+
       } else if (statusResponse.status === "FAILED") {
         setPaymentState(PaymentState.FAILED)
         log("payment:status", "Payment failed", "warn", { paymentId: id })
@@ -417,20 +454,9 @@ export default function PaymentPage() {
     }
   }
 
-  const handleBack = () => {
-    router.back()
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       <div className="container mx-auto px-4 py-8 flex-1">
-        <div className="mb-8 flex items-center">
-          <Button variant="ghost" className="flex items-center gap-2" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </div>
-
         <div className="mx-auto max-w-2xl">
           <div className="">
             <Card className="rounded-2xl border border-border shadow-sm overflow-hidden">

@@ -83,23 +83,47 @@ export default function AdminDashboard() {
 
     loadDashboardData()
 
-    // Subscribe to realtime updates for metrics tables
+    // Subscribe to realtime updates for ALL metrics tables
     const channel = supabase
       .channel('admin_dashboard_metrics')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'payment_transactions' },
-        () => fetchMetrics()
+        { event: '*', schema: 'public', table: 'payments' }, // Main revenue source
+        () => {
+          console.log('Payments table changed - refreshing metrics')
+          fetchMetrics()
+        }
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'news' },
-        () => fetchMetrics()
+        { event: '*', schema: 'public', table: 'users' }, // User counts
+        () => {
+          console.log('Users table changed - refreshing metrics')
+          fetchMetrics()
+        }
       )
-      .subscribe()
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'referrals' }, // Referral agents
+        () => {
+          console.log('Referrals table changed - refreshing metrics')
+          fetchMetrics()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'news' }, // News metrics
+        () => {
+          console.log('News table changed - refreshing metrics')
+          fetchMetrics()
+        }
+      )
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status)
+      })
 
-    // Keep a slower polling interval as fallback and for non-subscribed data (like auth users)
-    const id = setInterval(fetchMetrics, 30000)
+    // Reduced polling interval since we have realtime now
+    const id = setInterval(fetchMetrics, 60000) // Every 60s as backup
 
     return () => {
       supabase.removeChannel(channel)

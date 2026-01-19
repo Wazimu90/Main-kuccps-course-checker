@@ -111,7 +111,7 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
       icon: Clock,
       mainStatus: "Preparing Your Application Data...",
       miniProcesses: ["Reading submitted results...", "Parsing data for analysis...", "Structuring student profile..."],
-      duration: 9000,
+      duration: 10000,
     },
     {
       label: "KUCCPS Connection",
@@ -129,21 +129,21 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
         "Checking cutoff requirements...",
         "Filtering qualified programmes...",
       ],
-      duration: 10000,
+      duration: 20000,
     },
     {
       label: "Subject Requirements",
       icon: BookOpen,
       mainStatus: "Verifying Subject Requirements...",
       miniProcesses: ["Cross-referencing minimum grades...", "Validating essential subjects..."],
-      duration: 5000,
+      duration: 10000,
     },
     {
       label: "Results Compilation",
       icon: FileText,
       mainStatus: "Compiling Final Course Matches...",
       miniProcesses: ["Arranging qualified programs...", "Generating personalized report..."],
-      duration: 15000,
+      duration: 20000,
     },
   ]
 

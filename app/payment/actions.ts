@@ -18,6 +18,14 @@ export async function initiatePayment(data: {
     // Generate a unique reference for this transaction
     const reference = `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`
 
+    log("payment:init", "Starting initiatePayment action", "info", {
+      email: data.email,
+      amount: data.amount,
+      courseCategory: data.courseCategory,
+      reference,
+      maskedPhone: data.phone.substring(0, 4) + "****" // Mask phone for logs
+    })
+
     log("payment:init", "Initiating PesaFlux payment", "info", {
       ...data,
       reference,
@@ -108,12 +116,12 @@ export async function initiatePayment(data: {
  */
 export async function checkPaymentStatus(paymentId: string) {
   try {
-    log("payment:status", "🔍 Starting status check", "info", { paymentId })
+    log("payment:status", "🔍 Checking status in database", "debug", { paymentId })
 
     // Query database for payment status (updated by webhook)
     const { data: transaction, error } = await supabaseServer
       .from("payment_transactions")
-      .select("status, updated_at, webhook_data, mpesa_receipt_number")
+      .select("status, updated_at, webhook_data, mpesa_receipt_number, email, phone_number")
       .eq("reference", paymentId)
       .single()
 

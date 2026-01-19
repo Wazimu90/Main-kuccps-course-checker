@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { getInitials, isValidCommentPayload } from "@/lib/comment-utils"
 import { sanitizeHtml } from "@/lib/news-service"
 import { fetchNewsBySlug, type NewsRow } from "@/lib/news-service"
- 
+
 import Footer from "@/components/footer"
 import ChatbotPlaceholder from "@/components/chatbot/ChatbotPlaceholder"
 
@@ -39,23 +39,23 @@ export default function NewsArticlePage() {
 
   useEffect(() => {
     let active = true
-    ;(async () => {
-      try {
-        const a = await fetchNewsBySlug(slug)
-        if (!active) return
-        if (a) {
-          setArticle(a)
-          setLikes(a.likes_count ?? 0)
-          const res = await fetch(`/api/news/${a.id}/comments`, { cache: "no-store" })
-          const list = await res.json()
-          if (active) setComments(list)
-        } else {
+      ; (async () => {
+        try {
+          const a = await fetchNewsBySlug(slug)
+          if (!active) return
+          if (a) {
+            setArticle(a)
+            setLikes(a.likes_count ?? 0)
+            const res = await fetch(`/api/news/${a.id}/comments`, { cache: "no-store" })
+            const list = await res.json()
+            if (active) setComments(list)
+          } else {
+            setArticle(null)
+          }
+        } catch {
           setArticle(null)
         }
-      } catch {
-        setArticle(null)
-      }
-    })()
+      })()
     return () => {
       active = false
     }
@@ -63,7 +63,7 @@ export default function NewsArticlePage() {
 
   const handleLike = async () => {
     if (!article || isLiked) return
-    
+
     // Optimistic update
     setIsLiked(true)
     setLikes((prev) => prev + 1)
@@ -74,14 +74,14 @@ export default function NewsArticlePage() {
         // Already liked, keep optimistic state
         return
       }
-      
+
       if (!res.ok) {
         // Revert on error
         setIsLiked(false)
         setLikes((prev) => prev - 1)
         return
       }
-      
+
       const json = await res.json()
       setLikes(Number(json?.likes_count ?? likes))
     } catch {
@@ -105,7 +105,7 @@ export default function NewsArticlePage() {
         if (inserted) setComments((prev) => [inserted, ...prev])
         setNewComment("")
         setAuthorName("")
-      } catch {}
+      } catch { }
     }
   }
 
@@ -146,18 +146,6 @@ export default function NewsArticlePage() {
     <div className="min-h-screen relative">
 
       <div className="relative z-10">
-        {/* Back Button */}
-        <section className="py-8 px-4 lg:hidden">
-          <div className="container mx-auto">
-            <Link href="/news">
-              <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 bg-transparent">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to News
-              </Button>
-            </Link>
-          </div>
-        </section>
-
 
         {/* Article Header */}
         <section className="py-8 px-4">
@@ -230,11 +218,10 @@ export default function NewsArticlePage() {
                     <Button
                       onClick={handleLike}
                       variant={isLiked ? "default" : "outline"}
-                      className={`${
-                        isLiked
+                      className={`${isLiked
                           ? "bg-red-500 hover:bg-red-600 text-white border-red-500 scale-105"
                           : "border-white/20 text-light hover:bg-white/10"
-                      } transition-all duration-300 active:scale-95`}
+                        } transition-all duration-300 active:scale-95`}
                     >
                       <Heart className={`h-4 w-4 mr-2 ${isLiked ? "fill-current animate-bounce" : ""}`} />
                       {likes} Likes

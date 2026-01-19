@@ -141,7 +141,7 @@ export default function BuyDataPage() {
                         <motion.a
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            href="https://chat.whatsapp.com/eiryuwehtugdsufieruoutouwou"
+                            href="https://chat.whatsapp.com/JOe71dS1RgxAGLWNEfKxPI"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-lg shadow-lg transition-colors"

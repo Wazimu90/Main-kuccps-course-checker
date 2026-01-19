@@ -320,7 +320,7 @@ export default function Home() {
                   KUCCPS FAQ
                 </h3>
                 <p className="text-sm text-dim leading-relaxed">
-                  Get answers to <a href="/faq" className="text-accent hover:underline">frequently asked questions</a> about KUCCPS application, cluster points, and course selection.
+                  Get answers to <span className="text-accent hover:underline">frequently asked questions</span> about KUCCPS application, cluster points, and course selection.
                 </p>
               </motion.a>
 
@@ -339,7 +339,7 @@ export default function Home() {
                   Latest KUCCPS News
                 </h3>
                 <p className="text-sm text-dim leading-relaxed">
-                  Stay updated with the <a href="/news" className="text-accent hover:underline">latest KUCCPS news</a>, application deadlines, and important announcements for 2026.
+                  Stay updated with the <span className="text-accent hover:underline">latest KUCCPS news</span>, application deadlines, and important announcements for 2026.
                 </p>
               </motion.a>
 
@@ -358,7 +358,7 @@ export default function Home() {
                   Learn Digital Skills
                 </h3>
                 <p className="text-sm text-dim leading-relaxed">
-                  <a href="/learn-skills" className="text-green-400 hover:underline">Learn high-income digital skills for free</a> while waiting for KUCCPS placement. Master web development, design, and more.
+                  <span className="text-green-400 hover:underline">Learn high-income digital skills for free</span> while waiting for KUCCPS placement. Master web development, design, and more.
                 </p>
               </motion.a>
 
@@ -377,7 +377,7 @@ export default function Home() {
                   Affordable Data Bundles
                 </h3>
                 <p className="text-sm text-dim leading-relaxed">
-                  <a href="/buy-data" className="text-green-400 hover:underline">Get affordable student data bundles</a> to access KUCCPS portal and check your results anytime.
+                  <span className="text-green-400 hover:underline">Get affordable student data bundles</span> to access KUCCPS portal and check your results anytime.
                 </p>
               </motion.a>
             </div>

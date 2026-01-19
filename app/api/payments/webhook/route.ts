@@ -170,13 +170,21 @@ export async function POST(request: Request) {
         if (internalStatus === "COMPLETED") {
             try {
                 // Get course category from the payment transaction
-                const courseCategory = transaction.course_category || null
+                // CRITICAL: Ensure valid category for payments table constraint
+                const rawCategory = transaction.course_category || null
+                const validCategories = ['degree', 'diploma', 'certificate', 'artisan', 'kmtc']
+                const courseCategory = rawCategory && validCategories.includes(rawCategory.toLowerCase())
+                    ? rawCategory.toLowerCase()
+                    : 'degree' // Default to degree if missing/invalid
 
                 log("webhook:pesaflux", "Recording payment to payments table", "info", {
                     reference,
                     email: transaction.email,
                     amount: transaction.amount,
+                    amountType: typeof transaction.amount,
+                    amountNumber: Number(transaction.amount),
                     courseCategory,
+                    rawCategory: transaction.course_category,
                 })
 
                 // Get IP address from request headers
@@ -185,14 +193,26 @@ export async function POST(request: Request) {
                     request.headers.get("x-real-ip") ||
                     "0.0.0.0"
 
+                // CRITICAL: Ensure we're using the actual paid amount from transaction
+                const actualAmount = Number(transaction.amount)
+
+                log("webhook:pesaflux", "Calling RPC function with parameters", "debug", {
+                    p_name: transaction.name,
+                    p_email: transaction.email,
+                    p_phone: transaction.phone_number,
+                    p_amount: actualAmount,
+                    p_ip: ipAddress,
+                    p_course_category: courseCategory,
+                })
+
                 // Record payment using the existing RPC function
                 const { error: rpcError } = await supabaseServer.rpc("fn_record_payment_and_update_user", {
                     p_name: transaction.name,
                     p_email: transaction.email,
                     p_phone: transaction.phone_number,
-                    p_amount: Number(transaction.amount),
+                    p_amount: actualAmount, // Use the actual paid amount
                     p_ip: ipAddress,
-                    p_course_category: courseCategory,
+                    p_course_category: courseCategory, // Now guaranteed to be valid
                     p_agent_id: null, // Could be extracted from transaction metadata if stored
                     p_paid_at: transaction.completed_at || new Date().toISOString(),
                     p_metadata: {
@@ -206,6 +226,7 @@ export async function POST(request: Request) {
                     log("webhook:pesaflux", "RPC error recording payment", "error", {
                         reference,
                         error: rpcError,
+                        attemptedAmount: actualAmount,
                     })
                     throw rpcError
                 }

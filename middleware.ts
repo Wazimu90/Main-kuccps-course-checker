@@ -7,6 +7,7 @@ export async function middleware(req: NextRequest) {
   // --- Maintenance Mode Check ---
   // Skip static assets, admin routes, and the maintenance page itself
   if (
+    process.env.NODE_ENV === "production" &&
     !pathname.startsWith("/_next") &&
     !pathname.startsWith("/static") &&
     !pathname.startsWith("/admin") &&
@@ -46,7 +47,7 @@ export async function middleware(req: NextRequest) {
           break
         }
       }
-    } catch {}
+    } catch { }
   }
   if (rcParam && /^ref_\d{2,}$/.test(rcParam)) {
     const validateUrl = new URL("/api/referral/validate", req.url)
@@ -77,7 +78,7 @@ export async function middleware(req: NextRequest) {
           return res
         }
       }
-    } catch {}
+    } catch { }
     const res = NextResponse.redirect(new URL("/", req.url))
     res.cookies.set("referral_code", "", { path: "/", maxAge: 0 })
     res.cookies.set("referral_sticky", "", { path: "/", maxAge: 0 })
@@ -113,7 +114,7 @@ export async function middleware(req: NextRequest) {
           return res
         }
       }
-    } catch {}
+    } catch { }
     const res = NextResponse.redirect(new URL("/", req.url))
     res.cookies.set("referral_code", "", { path: "/", maxAge: 0 })
     res.cookies.set("referral_sticky", "", { path: "/", maxAge: 0 })
@@ -151,7 +152,7 @@ export async function middleware(req: NextRequest) {
             return res
           }
         }
-      } catch {}
+      } catch { }
     }
     const res = NextResponse.redirect(new URL("/", req.url))
     res.cookies.set("referral_code", "", { path: "/", maxAge: 0 })
@@ -181,7 +182,7 @@ export async function middleware(req: NextRequest) {
       url.searchParams.set("rc", cookieCode)
       return NextResponse.redirect(url)
     }
-  } catch {}
+  } catch { }
 
   // --- User Ban Check ---
   const email = req.cookies.get("user_email")?.value
@@ -196,7 +197,7 @@ export async function middleware(req: NextRequest) {
           return NextResponse.redirect(new URL("/banned", req.url))
         }
       }
-    } catch {}
+    } catch { }
   }
 
   // --- Admin Guard ---
@@ -217,7 +218,7 @@ export async function middleware(req: NextRequest) {
         })
         return res
       }
-    } catch {}
+    } catch { }
     const token = req.cookies.get("sb-access-token")?.value || ""
     if (!token) {
       return NextResponse.redirect(new URL("/admin/login", req.url))
@@ -239,7 +240,7 @@ export async function middleware(req: NextRequest) {
               actor_role: "admin",
             }),
           })
-        } catch {}
+        } catch { }
         return NextResponse.redirect(new URL("/admin/login", req.url))
       }
       const userEmail = data.user.email
@@ -255,7 +256,7 @@ export async function middleware(req: NextRequest) {
               actor_role: "admin",
             }),
           })
-        } catch {}
+        } catch { }
         return NextResponse.redirect(new URL("/admin/login", req.url))
       }
     } catch {
@@ -269,7 +270,7 @@ export async function middleware(req: NextRequest) {
             actor_role: "admin",
           }),
         })
-      } catch {}
+      } catch { }
       return NextResponse.redirect(new URL("/admin/login", req.url))
     }
   }

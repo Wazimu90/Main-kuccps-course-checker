@@ -37,9 +37,19 @@ export default function Footer({ showOnHomepage = false }: FooterProps) {
           const contentType = res.headers.get("content-type")
           if (contentType && contentType.includes("application/json")) {
             const { settings } = await res.json()
+
+            // Helper to format numeric phone to string with +
+            const formatPhone = (value: any): string => {
+              if (!value) return "+254 700 000 000"
+              const numStr = String(value).replace(/\D/g, "") // Remove non-digits
+              if (numStr.startsWith("254")) return `+${numStr}`
+              if (numStr.startsWith("0")) return `+254${numStr.substring(1)}`
+              return `+${numStr}`
+            }
+
             setContacts({
-              phone: String(settings.contact_phone || "+254 700 000 000"),
-              whatsapp: String(settings.whatsapp_number || settings.contact_phone || "+254 700 000 000"),
+              phone: formatPhone(settings.contact_phone),
+              whatsapp: formatPhone(settings.whatsapp_number || settings.contact_phone),
               email: String(settings.contact_email || "info@kuccpschecker.com")
             })
           } else {
