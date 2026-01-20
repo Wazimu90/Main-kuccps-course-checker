@@ -341,14 +341,19 @@ export async function POST(request: Request) {
                     request.headers.get("x-real-ip") ||
                     "0.0.0.0"
 
-                // CRITICAL: Ensure we're using the actual paid amount from transaction
-                const actualAmount = Number(transaction.amount)
+                // CRITICAL: Use the actual paid amount from webhook (TransactionAmount)
+                // This is the source of truth - it's what PesaFlux confirms was actually charged
+                // Fall back to transaction.amount only if webhook amount is missing
+                const webhookAmount = amount ? Number(amount) : null
+                const actualAmount = webhookAmount || Number(transaction.amount) || 200
 
                 log("webhook:pesaflux", "Calling RPC function with parameters", "debug", {
                     p_name: transaction.name,
                     p_email: transaction.email,
                     p_phone: transaction.phone_number,
                     p_amount: actualAmount,
+                    webhookAmount: webhookAmount,
+                    transactionAmount: transaction.amount,
                     p_ip: ipAddress,
                     p_course_category: courseCategory,
                 })

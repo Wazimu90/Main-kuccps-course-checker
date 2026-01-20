@@ -34,6 +34,27 @@ This fix resolves a **CRITICAL** issue affecting 50+ users where payments were n
   - Frontend polling will detect payment success and proceed to results page
   - Payment records will be properly stored in database
 
+### Fixed - 2026-01-20 (Payment Webhook Transaction Lookup)
+
+The webhook was failing to find existing transactions because PesaFlux sends its own `TransactionReference` (like `8803416`) instead of our reference format (`PAY-xxx`).
+
+- **Fix Applied:**
+  - Implemented 3-tier lookup strategy:
+    1. First try: Match by `transaction_id` from STK init response
+    2. Second try: Match by phone number + recent PENDING status (with phone normalization `254xxx` ↔ `07xxx`)
+    3. Third try: Match by reference as fallback
+  - Added phone number normalization to handle format differences between webhook (`254768xxx`) and database (`0768xxx`)
+
+- **References:** [app/api/payments/webhook/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/payments/webhook/route.ts)
+
+### Fixed - 2026-01-20 (Payment Amount Recording)
+
+Fixed issue where payments were being recorded with incorrect amounts.
+
+- **Root Cause:** The payment recording was using `transaction.amount` from the database instead of the actual `TransactionAmount` from the webhook payload
+- **Fix Applied:** Now uses webhook's `TransactionAmount` as the source of truth (the amount PesaFlux confirms was actually charged), falling back to transaction.amount only if webhook amount is missing
+- **Impact:** Payments table now correctly reflects the actual amount charged by M-Pesa
+
 ### Fixed - 2026-01-20 (Critical Mobile Responsiveness Fixes)
 
 Based on 107 user complaints, implemented critical mobile UI fixes to improve usability on mobile devices:
