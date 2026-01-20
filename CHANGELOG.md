@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - 2026-01-20 (CRITICAL: Payment Webhook Field Name Mismatch)
+
+This fix resolves a **CRITICAL** issue affecting 50+ users where payments were not being recorded despite successful M-Pesa transactions. The webhook was not correctly parsing PesaFlux response data.
+
+- **Root Cause: PesaFlux Field Name Mismatch**
+  - PesaFlux sends `ResultCode` but webhook handler expected `ResponseCode`
+  - This caused `responseCode` to always be `undefined` 
+  - All payments remained stuck as `PENDING` since success check never matched
+  - Users paid successfully but website never proceeded to results page
+
+- **Fix Applied:**
+  - Changed from `body.ResponseCode` to `body.ResultCode || body.ResponseCode`
+  - Added support for additional success indicators:
+    - `TransactionStatus === "Completed"` (most reliable)
+    - `TransactionCode === "0"` (alternative success indicator)
+    - `ResultCode === "200"` (success response code)
+  - Added proper logging for success detection
+  - Updated status reason to use `ResultDesc` instead of `ResponseDescription`
+
+- **Affected File:**
+  - References: [app/api/payments/webhook/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/payments/webhook/route.ts)
+
+- **Impact:**
+  - All new payments will now correctly transition from PENDING → COMPLETED
+  - Frontend polling will detect payment success and proceed to results page
+  - Payment records will be properly stored in database
+
 ### Fixed - 2026-01-20 (Critical Mobile Responsiveness Fixes)
 
 Based on 107 user complaints, implemented critical mobile UI fixes to improve usability on mobile devices:

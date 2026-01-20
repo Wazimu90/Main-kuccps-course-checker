@@ -28,10 +28,25 @@ export async function POST(request: Request) {
 
         log("webhook:pesaflux", "📥 Received PesaFlux webhook - RAW PAYLOAD", "info", body)
 
-        // PesaFlux sends: ResponseCode, TransactionReference, TransactionID, TransactionReceipt, etc.
-        // Our reference is stored in TransactionReference
+        // PesaFlux ACTUAL payload format (confirmed from real webhook data):
+        // {
+        //   "ResultCode": "200",
+        //   "ResultDesc": "Success. Request accepted for processing",
+        //   "TransactionID": "SOFTPID...",
+        //   "TransactionStatus": "Completed",
+        //   "TransactionCode": "0",
+        //   "TransactionReceipt": "SIS...",
+        //   "TransactionAmount": "10",
+        //   "Msisdn": "254...",
+        //   "TransactionDate": "...",
+        //   "TransactionReference": "..."
+        // }
+
         const reference = body.TransactionReference || body.reference
-        const responseCode = body.ResponseCode
+        // CRITICAL FIX: PesaFlux sends "ResultCode" NOT "ResponseCode"
+        const resultCode = body.ResultCode || body.ResponseCode
+        const transactionCode = body.TransactionCode
+        const transactionStatus = body.TransactionStatus
         const transactionId = body.TransactionID
         const mpesaReceiptNumber = body.TransactionReceipt
         const amount = body.TransactionAmount
@@ -47,19 +62,46 @@ export async function POST(request: Request) {
             })
         }
 
-        // Map PesaFlux ResponseCode to our internal status
-        // ResponseCode: 0 = Success, 1032 = Cancelled, 1037 = Timeout, etc.
+        // Map PesaFlux response to our internal status
+        // CRITICAL FIX: Support multiple ways to detect success:
+        // 1. TransactionStatus === "Completed" (most reliable)
+        // 2. TransactionCode === "0" (also indicates success)
+        // 3. ResultCode === "200" (success response code)
         let internalStatus = "PENDING"
-        let statusReason = body.ResponseDescription || "Unknown"
+        let statusReason = body.ResultDesc || body.ResponseDescription || "Unknown"
 
-        if (responseCode === 0 || responseCode === "0") {
+        // Check for SUCCESS - multiple indicators
+        const isSuccess =
+            transactionStatus === "Completed" ||
+            transactionCode === "0" || transactionCode === 0 ||
+            resultCode === "200" || resultCode === 200 ||
+            resultCode === "0" || resultCode === 0
+
+        // Check for CANCELLED
+        const isCancelled =
+            transactionStatus === "Cancelled" ||
+            resultCode === "1032" || resultCode === 1032
+
+        // Check for TIMEOUT/FAILED
+        const isTimeout =
+            transactionStatus === "Timeout" ||
+            resultCode === "1037" || resultCode === 1037 ||
+            resultCode === "1019" || resultCode === 1019
+
+        if (isSuccess) {
             internalStatus = "COMPLETED"
-        } else if (responseCode === 1032 || responseCode === "1032") {
+            log("webhook:pesaflux", "✅ Payment SUCCESS detected", "info", {
+                transactionStatus,
+                transactionCode,
+                resultCode,
+            })
+        } else if (isCancelled) {
             internalStatus = "CANCELLED"
-        } else if (responseCode === 1037 || responseCode === "1037" || responseCode === 1019 || responseCode === "1019") {
+        } else if (isTimeout) {
             internalStatus = "FAILED"
             statusReason = "Timeout or expired"
-        } else if (responseCode) {
+        } else if (resultCode && resultCode !== "200") {
+            // Any other non-success code
             internalStatus = "FAILED"
         }
 
