@@ -96,7 +96,12 @@ export async function initiatePayment(data: {
         message: response.message || "STK Push sent to your phone",
       }
     } else {
-      log("payment:init", "PesaFlux STK Push failed", "error", response)
+      log("payment:init", "PesaFlux STK Push failed", "error", {
+        success: response.success,
+        message: response.message,
+        error: response.error,
+        fullResponse: JSON.stringify(response)
+      })
       return {
         success: false,
         message: response.message || "Failed to initiate payment",
