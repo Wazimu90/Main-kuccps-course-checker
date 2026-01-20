@@ -107,7 +107,9 @@ export async function POST(request: Request) {
 
         log("webhook:pesaflux", "📊 Processing webhook", "info", {
             reference,
-            responseCode,
+            resultCode,
+            transactionCode,
+            transactionStatus,
             internalStatus,
             statusReason,
             mpesaReceiptNumber,
@@ -116,24 +118,128 @@ export async function POST(request: Request) {
             phone
         })
 
-        // Update payment transaction in database
-        let { data: transaction, error: updateError } = await supabaseServer
-            .from("payment_transactions")
-            .update({
-                status: internalStatus,
-                mpesa_receipt_number: mpesaReceiptNumber,
-                transaction_id: transactionId,
-                webhook_data: body, // Store full payload for debugging
-                amount: amount, // Update amount with actual paid amount
-                completed_at: internalStatus === "COMPLETED" ? new Date().toISOString() : null,
-            })
-            .eq("reference", reference)
-            .select()
-            .single()
+        // CRITICAL FIX: PesaFlux sends its own TransactionReference (like "8803416")
+        // but our database stores our own reference format (like "PAY-xxx").
+        // We need to find the transaction by:
+        // 1. First try: Match by transaction_id (stored during STK init)
+        // 2. Second try: Match by phone number + recent PENDING status
+        // 3. Third try: Match by reference (in case they match)
 
-        if (updateError || !transaction) {
-            log("webhook:pesaflux", "⚠️ Transaction not found, attempting recovery", "warn", {
+        let transaction: any = null
+        let updateError: any = null
+
+        // Strategy 1: Try to find by transaction_id (most reliable if stored)
+        if (transactionId) {
+            log("webhook:pesaflux", "🔍 Looking up by transaction_id", "debug", { transactionId })
+            const result = await supabaseServer
+                .from("payment_transactions")
+                .update({
+                    status: internalStatus,
+                    mpesa_receipt_number: mpesaReceiptNumber,
+                    webhook_data: body,
+                    amount: amount,
+                    completed_at: internalStatus === "COMPLETED" ? new Date().toISOString() : null,
+                })
+                .eq("transaction_id", transactionId)
+                .eq("status", "PENDING")
+                .select()
+                .single()
+
+            transaction = result.data
+            updateError = result.error
+
+            if (transaction) {
+                log("webhook:pesaflux", "✅ Found transaction by transaction_id", "success", {
+                    foundReference: transaction.reference,
+                    transactionId
+                })
+            }
+        }
+
+        // Strategy 2: Find by phone number + recent PENDING transaction (within last 10 minutes)
+        // CRITICAL: Normalize phone numbers - PesaFlux sends 254xxx, but DB might store 07xxx or 254xxx
+        if (!transaction && phone) {
+            log("webhook:pesaflux", "🔍 Looking up by phone number", "debug", { phone })
+            const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+
+            // Generate both phone formats to try
+            let phoneVariants: string[] = [phone]
+
+            // If phone is 254xxx format, also try 0xxx format
+            if (phone.startsWith("254") && phone.length === 12) {
+                phoneVariants.push("0" + phone.substring(3)) // 254768xxx -> 0768xxx
+            }
+            // If phone is 0xxx format, also try 254xxx format
+            if (phone.startsWith("0") && phone.length === 10) {
+                phoneVariants.push("254" + phone.substring(1)) // 0768xxx -> 254768xxx
+            }
+
+            log("webhook:pesaflux", "🔍 Trying phone variants", "debug", { phoneVariants })
+
+            // Try each phone format
+            for (const phoneVariant of phoneVariants) {
+                if (transaction) break // Already found
+
+                const result = await supabaseServer
+                    .from("payment_transactions")
+                    .update({
+                        status: internalStatus,
+                        mpesa_receipt_number: mpesaReceiptNumber,
+                        transaction_id: transactionId,
+                        webhook_data: body,
+                        amount: amount,
+                        completed_at: internalStatus === "COMPLETED" ? new Date().toISOString() : null,
+                    })
+                    .eq("phone_number", phoneVariant)
+                    .eq("status", "PENDING")
+                    .gte("created_at", tenMinutesAgo)
+                    .order("created_at", { ascending: false })
+                    .limit(1)
+                    .select()
+                    .single()
+
+                transaction = result.data
+                updateError = result.error
+
+                if (transaction) {
+                    log("webhook:pesaflux", "✅ Found transaction by phone number", "success", {
+                        foundReference: transaction.reference,
+                        phone
+                    })
+                }
+            }
+        }
+
+        // Strategy 3: Try by reference as fallback (in case PesaFlux sends our reference back)
+        if (!transaction && reference) {
+            log("webhook:pesaflux", "🔍 Looking up by reference (fallback)", "debug", { reference })
+            const result = await supabaseServer
+                .from("payment_transactions")
+                .update({
+                    status: internalStatus,
+                    mpesa_receipt_number: mpesaReceiptNumber,
+                    transaction_id: transactionId,
+                    webhook_data: body,
+                    amount: amount,
+                    completed_at: internalStatus === "COMPLETED" ? new Date().toISOString() : null,
+                })
+                .eq("reference", reference)
+                .select()
+                .single()
+
+            transaction = result.data
+            updateError = result.error
+
+            if (transaction) {
+                log("webhook:pesaflux", "✅ Found transaction by reference", "success", { reference })
+            }
+        }
+
+        if (!transaction) {
+            log("webhook:pesaflux", "⚠️ Transaction not found with any lookup strategy, attempting recovery", "warn", {
                 reference,
+                transactionId,
+                phone,
                 error: updateError,
             })
 
