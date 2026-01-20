@@ -1,7 +1,7 @@
 "use server"
 
 import { log } from "@/lib/logger"
-import { initiateStkPush } from "@/lib/pesaflux"
+import { initiateStkPush, normalizePhoneNumber } from "@/lib/pesaflux"
 import { supabaseServer } from "@/lib/supabaseServer"
 
 /**
@@ -47,11 +47,13 @@ export async function initiatePayment(data: {
       })
 
       // Store payment initiation in database for tracking
+      // CRITICAL: Normalize phone to 254xxx format to match webhook Msisdn format
+      const normalizedPhone = normalizePhoneNumber(data.phone)
       try {
         const { error: insertError } = await supabaseServer.from("payment_transactions").insert({
           reference,
           transaction_id: response.transaction_id,
-          phone_number: data.phone,
+          phone_number: normalizedPhone, // Store in 254xxx format for webhook matching
           email: data.email,
           name: data.name,
           amount: data.amount,

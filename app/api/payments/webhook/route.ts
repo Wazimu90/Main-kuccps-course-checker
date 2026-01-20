@@ -156,11 +156,11 @@ export async function POST(request: Request) {
             }
         }
 
-        // Strategy 2: Find by phone number + recent PENDING transaction (within last 10 minutes)
+        // Strategy 2: Find by phone number + recent PENDING transaction (within last 30 minutes)
         // CRITICAL: Normalize phone numbers - PesaFlux sends 254xxx, but DB might store 07xxx or 254xxx
         if (!transaction && phone) {
             log("webhook:pesaflux", "🔍 Looking up by phone number", "debug", { phone })
-            const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+            const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
 
             // Generate both phone formats to try
             let phoneVariants: string[] = [phone]
@@ -192,7 +192,7 @@ export async function POST(request: Request) {
                     })
                     .eq("phone_number", phoneVariant)
                     .eq("status", "PENDING")
-                    .gte("created_at", tenMinutesAgo)
+                    .gte("created_at", thirtyMinutesAgo)
                     .order("created_at", { ascending: false })
                     .limit(1)
                     .select()
