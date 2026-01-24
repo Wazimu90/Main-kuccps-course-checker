@@ -33,7 +33,7 @@ export default function BackButton() {
       localStorage.removeItem("selectedCategory")
       localStorage.removeItem("clusterWeights")
       localStorage.removeItem("paymentInfo")
-    } catch {}
+    } catch { }
     setConfirmOpen(false)
     router.back()
   }

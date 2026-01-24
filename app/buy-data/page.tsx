@@ -1,161 +1,192 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Smartphone, ExternalLink, MessageSquare, Gift, Zap, Shield, Users } from "lucide-react"
+import { Smartphone, ExternalLink, MessageSquare, Zap, Shield, Gift, Sparkles } from "lucide-react"
 import Link from "next/link"
 import Footer from "@/components/footer"
 
 export default function BuyDataPage() {
     return (
-        <div className="min-h-screen flex flex-col bg-base">
-            {/* Hero Section */}
-            <section className="relative py-16 md:py-24 overflow-hidden">
+        <div className="min-h-screen flex flex-col bg-base relative overflow-hidden">
+            {/* Simple Background Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-green-500/5 to-emerald-500/5 rounded-full blur-3xl" />
+                <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-cyan-500/5 to-blue-500/5 rounded-full blur-3xl" />
+            </div>
+
+            {/* Hero Section with Primary CTAs */}
+            <section className="relative pt-24 md:pt-32 pb-12 md:pb-20">
                 <div className="container mx-auto px-4">
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
+                        initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                        className="text-center max-w-4xl mx-auto"
+                        transition={{ duration: 0.6 }}
+                        className="text-center max-w-5xl mx-auto"
                     >
+                        {/* Animated Badge */}
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.6, delay: 0.2 }}
-                            className="mb-6 mt-20 md:mt-8 inline-flex items-center px-4 py-2 rounded-full bg-green-500/10 backdrop-blur-sm border border-green-500/20"
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="mb-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-green-500/20 via-emerald-500/20 to-green-500/20 backdrop-blur-lg border border-green-400/30 shadow-lg shadow-green-500/20"
                         >
-                            <Smartphone className="h-4 w-4 text-green-400 mr-2" />
-                            <span className="text-sm font-medium text-green-400">Affordable Student Data Bundles</span>
+                            <Sparkles className="h-4 w-4 text-green-400 animate-pulse" />
+                            <span className="text-sm font-bold text-green-300 tracking-wide">Affordable Data for Students</span>
                         </motion.div>
 
-                        <h1 className="mb-6 text-4xl md:text-6xl font-bold leading-tight text-light">
-                            Get Affordable Data Bundles for Students
-                        </h1>
-
-                        <p className="mb-8 text-lg md:text-xl text-dim max-w-3xl mx-auto leading-relaxed">
-                            Buy Safaricom data bundles even if you have unpaid Okoa Jahazi debt. Perfect for checking KUCCPS results, using our tools, and staying connected.
-                        </p>
-
-                        <motion.a
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            href="https://bingwazone.co.ke/app/bfasta"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500 via-green-600 to-emerald-600 hover:from-green-600 hover:via-green-700 hover:to-emerald-700 text-white font-bold text-lg rounded-xl shadow-[0_0_25px_rgba(34,197,94,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.7)] transition-all"
+                        {/* Headline */}
+                        <motion.h1
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.2 }}
+                            className="mb-6 text-5xl md:text-7xl font-black leading-tight"
                         >
-                            <Smartphone className="w-6 h-6" />
-                            <span>Buy Data Now</span>
-                            <ExternalLink className="w-5 h-5" />
-                        </motion.a>
-                    </motion.div>
-                </div>
-            </section>
+                            <span className="bg-gradient-to-r from-white via-green-100 to-white bg-clip-text text-transparent">
+                                Stay Connected,
+                            </span>
+                            <br />
+                            <span className="bg-gradient-to-r from-green-400 via-emerald-400 to-green-400 bg-clip-text text-transparent">
+                                Stay Ahead
+                            </span>
+                        </motion.h1>
 
-            {/* Features Section */}
-            <section className="py-12 bg-surface/50">
-                <div className="container mx-auto px-4">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6 }}
-                        className="text-center mb-12"
-                    >
-                        <h2 className="text-3xl md:text-4xl font-bold text-light mb-4">
-                            Why Choose Our Data Service?
-                        </h2>
-                        <p className="text-dim max-w-2xl mx-auto">
-                            Specially designed to help students stay connected affordably
-                        </p>
-                    </motion.div>
+                        {/* Subtitle */}
+                        <motion.p
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.3 }}
+                            className="mb-12 text-lg md:text-xl text-dim/90 max-w-2xl mx-auto leading-relaxed"
+                        >
+                            Buy data bundles even with unpaid Okoa Jahazi debt. No limits, no delays.
+                        </motion.p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                        {[
-                            {
-                                icon: <Zap className="w-6 h-6 text-amber-400" />,
-                                title: "Instant Activation",
-                                description: "Get your data bundles activated immediately after purchase. No delays, no waiting."
-                            },
-                            {
-                                icon: <Shield className="w-6 h-6 text-green-400" />,
-                                title: "No Okoa Jahazi Required",
-                                description: "Buy data even if you have unpaid Okoa Jahazi debt. We've got you covered!"
-                            },
-                            {
-                                icon: <Gift className="w-6 h-6 text-purple-400" />,
-                                title: "Special Offers",
-                                description: "Join our WhatsApp group for exclusive deals, free data giveaways, and student discounts."
-                            },
-                            {
-                                icon: <Smartphone className="w-6 h-6 text-blue-400" />,
-                                title: "Multiple Services",
-                                description: "Get data, SMS bundles, and airtime minutes - all in one place at affordable rates."
-                            },
-                            {
-                                icon: <Users className="w-6 h-6 text-cyan-400" />,
-                                title: "24/7 Support",
-                                description: "Our team is always available to assist you with any issues or questions."
-                            },
-                            {
-                                icon: <ExternalLink className="w-6 h-6 text-pink-400" />,
-                                title: "Trusted Service",
-                                description: "Thousands of students trust us for their data needs. Join the community today!"
-                            }
-                        ].map((feature, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
-                                className="p-6 bg-surface border border-white/10 rounded-xl hover:border-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.1)] transition-all"
+                        {/* Primary CTA Buttons - Hero Focus */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.4 }}
+                            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
+                        >
+                            {/* Buy Data Button - Primary CTA */}
+                            <motion.a
+                                whileHover={{ scale: 1.05, y: -2 }}
+                                whileTap={{ scale: 0.98 }}
+                                href="https://bingwazone.co.ke/app/bfasta"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative w-full sm:w-auto"
                             >
-                                <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-4">
-                                    {feature.icon}
+                                <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-green-500 rounded-2xl blur-xl opacity-60 group-hover:opacity-100 transition-opacity" />
+                                <div className="relative flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 text-white font-bold text-lg rounded-2xl shadow-2xl border border-green-400/50">
+                                    <Smartphone className="w-6 h-6 animate-pulse" />
+                                    <span>Buy Data Now</span>
+                                    <ExternalLink className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </div>
-                                <h3 className="text-xl font-bold text-light mb-2">{feature.title}</h3>
-                                <p className="text-sm text-dim leading-relaxed">{feature.description}</p>
-                            </motion.div>
-                        ))}
-                    </div>
+                            </motion.a>
+
+                            {/* Join Group Button - Secondary CTA */}
+                            <motion.a
+                                whileHover={{ scale: 1.05, y: -2 }}
+                                whileTap={{ scale: 0.98 }}
+                                href="https://chat.whatsapp.com/JOe71dS1RgxAGLWNEfKxPI"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative w-full sm:w-auto"
+                            >
+                                <div className="absolute inset-0 bg-[#25D366] rounded-2xl blur-xl opacity-50 group-hover:opacity-80 transition-opacity" />
+                                <div className="relative flex items-center justify-center gap-3 px-10 py-5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-lg rounded-2xl shadow-2xl border border-green-300/30 transition-colors">
+                                    <MessageSquare className="w-6 h-6 animate-pulse" />
+                                    <span>Join Community</span>
+                                    <ExternalLink className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            </motion.a>
+                        </motion.div>
+
+                        {/* Trust Indicator */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.6, delay: 0.6 }}
+                            className="flex items-center justify-center gap-6 text-sm text-dim/60"
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                                <span>Instant Activation</span>
+                            </div>
+                            <div className="w-1 h-1 bg-dim/20 rounded-full" />
+                            <div className="flex items-center gap-2">
+                                <Shield className="w-4 h-4 text-green-400" />
+                                <span>Trusted by 10,000+ students</span>
+                            </div>
+                        </motion.div>
+                    </motion.div>
                 </div>
             </section>
 
-            {/* WhatsApp Group Section */}
-            <section className="py-16">
+            {/* Quick Benefits - Minimal Cards */}
+            <section className="relative py-16 md:py-24">
                 <div className="container mx-auto px-4">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6 }}
-                        className="max-w-3xl mx-auto bg-gradient-to-br from-green-500/10 to-green-600/5 border-2 border-green-500/30 rounded-2xl p-8 text-center"
+                        className="max-w-6xl mx-auto"
                     >
-                        <MessageSquare className="w-16 h-16 text-green-400 mx-auto mb-4" />
-                        <h2 className="text-2xl md:text-3xl font-bold text-light mb-4">
-                            Join Our WhatsApp Community
-                        </h2>
-                        <p className="text-dim mb-6 leading-relaxed">
-                            Get instant updates on special offers, free data giveaways, KUCCPS news, and exclusive student discounts. Stay connected with thousands of other students!
-                        </p>
-                        <motion.a
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            href="https://chat.whatsapp.com/JOe71dS1RgxAGLWNEfKxPI"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-lg shadow-lg transition-colors"
-                        >
-                            <MessageSquare className="w-5 h-5" />
-                            <span>Join WhatsApp Group</span>
-                            <ExternalLink className="w-4 h-4" />
-                        </motion.a>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {[
+                                {
+                                    icon: <Zap className="w-8 h-8 text-amber-400" />,
+                                    title: "Instant Delivery",
+                                    description: "Get your bundles activated in seconds",
+                                    gradient: "from-amber-500/10 to-orange-500/10",
+                                    borderColor: "border-amber-500/30"
+                                },
+                                {
+                                    icon: <Shield className="w-8 h-8 text-green-400" />,
+                                    title: "Available even with Okoa Jahazi",
+                                    description: "Buy even with unpaid Okoa Jahazi",
+                                    gradient: "from-green-500/10 to-emerald-500/10",
+                                    borderColor: "border-green-500/30"
+                                },
+                                {
+                                    icon: <Gift className="w-8 h-8 text-purple-400" />,
+                                    title: "Exclusive Deals",
+                                    description: "Free giveaways & student discounts",
+                                    gradient: "from-purple-500/10 to-pink-500/10",
+                                    borderColor: "border-purple-500/30"
+                                }
+                            ].map((benefit, index) => (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                                    whileHover={{ y: -8, scale: 1.02 }}
+                                    className={`group relative p-8 bg-gradient-to-br ${benefit.gradient} backdrop-blur-sm border ${benefit.borderColor} rounded-2xl hover:shadow-2xl transition-all duration-300`}
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="relative">
+                                        <motion.div
+                                            whileHover={{ rotate: 360, scale: 1.2 }}
+                                            transition={{ duration: 0.6 }}
+                                            className="mb-4 w-14 h-14 rounded-xl bg-surface/50 border border-white/10 flex items-center justify-center"
+                                        >
+                                            {benefit.icon}
+                                        </motion.div>
+                                        <h3 className="text-xl font-bold text-light mb-2">{benefit.title}</h3>
+                                        <p className="text-sm text-dim/80">{benefit.description}</p>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
                     </motion.div>
                 </div>
             </section>
 
-            {/* CTA Section */}
-            <section className="py-16 bg-surface/50">
+            {/* Quick Links - Minimal */}
+            <section className="relative py-12 pb-20">
                 <div className="container mx-auto px-4">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -164,60 +195,24 @@ export default function BuyDataPage() {
                         transition={{ duration: 0.6 }}
                         className="max-w-4xl mx-auto text-center"
                     >
-                        <h2 className="text-3xl md:text-4xl font-bold text-light mb-4">
-                            Ready to Get Connected?
+                        <h2 className="text-2xl md:text-3xl font-bold text-light mb-8">
+                            Perfect for accessing
                         </h2>
-                        <p className="text-dim mb-8 leading-relaxed">
-                            Click the button below to visit Bfasta and purchase your data bundles instantly. Perfect for accessing <Link href="/student-tools" className="text-accent hover:underline font-semibold">student tools</Link>, checking your <Link href="/cluster-calculator" className="text-accent hover:underline font-semibold">KUCCPS cluster points</Link>, and staying updated with the latest <Link href="/news" className="text-accent hover:underline font-semibold">KUCCPS news</Link>.
-                        </p>
-                        <motion.a
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            href="https://bingwazone.co.ke/app/bfasta"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500 via-green-600 to-emerald-600 hover:from-green-600 hover:via-green-700 hover:to-emerald-700 text-white font-bold text-lg rounded-xl shadow-[0_0_25px_rgba(34,197,94,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.7)] transition-all"
-                        >
-                            <Smartphone className="w-6 h-6" />
-                            <span>Visit Bfasta Now</span>
-                            <ExternalLink className="w-5 h-5" />
-                        </motion.a>
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* Internal Links Section */}
-            <section className="py-12">
-                <div className="container mx-auto px-4">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6 }}
-                        className="max-w-4xl mx-auto"
-                    >
-                        <h2 className="text-2xl md:text-3xl font-bold text-light mb-6 text-center">
-                            Explore More Tools & Resources
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Link
-                                href="/student-tools"
-                                className="p-4 bg-surface border border-white/10 rounded-xl hover:border-accent/30 hover:bg-accent/5 transition-all group"
-                            >
-                                <h3 className="text-light font-semibold mb-2 group-hover:text-accent transition-colors">
-                                    Student Tools & Resources
-                                </h3>
-                                <p className="text-sm text-dim">Access KUCCPS portal, HELB, and other essential student services</p>
-                            </Link>
-                            <Link
-                                href="/learn-skills"
-                                className="p-4 bg-surface border border-white/10 rounded-xl hover:border-accent/30 hover:bg-accent/5 transition-all group"
-                            >
-                                <h3 className="text-light font-semibold mb-2 group-hover:text-accent transition-colors">
-                                    Learn Digital Skills
-                                </h3>
-                                <p className="text-sm text-dim">Master high-income digital skills for free while waiting for placement</p>
-                            </Link>
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                            {[
+                                { label: "Student Tools", href: "/student-tools" },
+                                { label: "Cluster Calculator", href: "/cluster-calculator" },
+                                { label: "KUCCPS News", href: "/news" },
+                                { label: "Learn Skills", href: "/learn-skills" }
+                            ].map((link, index) => (
+                                <Link
+                                    key={index}
+                                    href={link.href}
+                                    className="inline-block px-6 py-3 bg-surface/50 backdrop-blur-sm border border-white/10 hover:border-accent/40 rounded-xl text-light hover:text-accent font-medium transition-all"
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
                         </div>
                     </motion.div>
                 </div>

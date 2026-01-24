@@ -219,8 +219,8 @@ export default function NewsArticlePage() {
                       onClick={handleLike}
                       variant={isLiked ? "default" : "outline"}
                       className={`${isLiked
-                          ? "bg-red-500 hover:bg-red-600 text-white border-red-500 scale-105"
-                          : "border-white/20 text-light hover:bg-white/10"
+                        ? "bg-red-500 hover:bg-red-600 text-white border-red-500 scale-105"
+                        : "border-white/20 text-light hover:bg-white/10"
                         } transition-all duration-300 active:scale-95`}
                     >
                       <Heart className={`h-4 w-4 mr-2 ${isLiked ? "fill-current animate-bounce" : ""}`} />

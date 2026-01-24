@@ -7,6 +7,96 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed - 2026-01-24 (Buy Data Page Complete Redesign)
+
+**Objective:** Redesigned the buy data page to be minimal, highly animated, and smart with CTA buttons prominently displayed as the first elements users see.
+
+- **Hero Section with Primary CTAs Front and Center**
+  - Moved "Buy Data Now" and "Join Community" buttons to hero section (top of page)
+  - Both CTAs are the first interactive elements users encounter
+  - Large, animated buttons with glow effects and hover animations
+  - "Buy Data Now" button: Green gradient with blur glow effect
+  - "Join Community" button: WhatsApp green with similar styling
+  - Both buttons include animated pulse icons and smooth transitions
+  - Full-width on mobile for better touch targets
+
+- **Minimal, Animated Design**
+  - Removed scroll-based animations for simplicity
+  - Added subtle background gradient animations (rotating blurs)
+  - Simplified heading with gradient text effects:
+    - "Stay Connected, Stay Ahead" split into two gradient lines
+    - White to green gradient transitions
+  - Animated badge with Sparkles icon and pulse effect
+  - Trust indicators below CTAs (Instant Activation, 10,000+ students)
+
+- **Streamlined Content Sections**
+  - Reduced from 6 feature cards to 3 benefit cards for minimal approach
+  - Benefits: Instant Delivery, No Debt Required, Exclusive Deals
+  - Each card has color-coded gradients and animated icons
+  - Icon rotation animation on hover (360° spin)
+  - Card lift animation on hover (-8px translation)
+  - Removed redundant "Why Choose?" and "Ready to Get Connected?" sections
+
+- **Quick Links Section**
+  - Replaced large internal links section with minimal pill-style links
+  - "Perfect for accessing" heading with 4 quick links
+  - Links to: Student Tools, Cluster Calculator, KUCCPS News, Learn Skills
+  - Subtle scale and lift animations on hover
+  - Compact, centered design
+
+- **Key Features Retained**
+  - All core information preserved (Okoa Jahazi freedom, instant activation, etc.)
+  - WhatsApp community information integrated in Join Community CTA
+  - Internal linking maintained for SEO
+  - Mobile-first responsive design
+  - Glassmorphism and backdrop blur effects
+
+- **Animation Improvements**
+  - Removed scroll-based animations (useScroll, useTransform hooks)
+  - Removed complex rotating background gradient animations
+  - Removed 360° icon rotation animations on hover
+  - Simplified card hover effects from -8px lift + scale to just -4px lift
+  - Removed scale/position animations from quick links
+  - All animations now use simple fade-in effects only
+  - Static gradient backgrounds instead of animated ones
+  - Pure CSS transitions for hover effects
+  - Minimal motion for better performance and cleaner UX
+  - No scroll-triggered animations for cleaner experience
+
+- **Impact**
+  - Users immediately see both primary CTAs upon landing
+  - Cleaner, more focused page reduces cognitive load
+  - Faster load perception with simpler animations
+  - Better conversion potential with prominent button placement
+  - Maintains all essential information in condensed format
+
+- **References:** 
+  - [app/buy-data/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/buy-data/page.tsx)
+
+### Fixed - 2026-01-24 (CRITICAL: Production Payment Webhook Not Receiving Callbacks)
+
+**Problem:** After users paid successfully, the website did not proceed to the results page in production. Payments were stuck as PENDING despite M-Pesa transactions completing.
+
+**Root Cause:** Vercel's firewall was blocking PesaFlux webhook callbacks with **429 Too Many Requests** error. The firewall rate limiting was triggered, preventing legitimate payment callbacks from reaching the webhook endpoint.
+
+**Fix Applied:**
+- Disabled/adjusted Vercel firewall rules that were blocking PesaFlux API requests
+- Verified webhook endpoint is now accessible from PesaFlux servers
+- Payments now transition correctly from PENDING → COMPLETED
+
+**Additional Code Improvements Made During Investigation:**
+- Simplified webhook handler to use `ResponseCode` (per official PesaFlux docs)
+- Improved transaction lookup using `transaction_id` with phone fallback
+- Added orphan webhook logging for unmatched transactions
+
+**Impact:**
+- All production payments now receive webhook callbacks correctly
+- Payment flow completes and users are redirected to results page
+- No more stuck payments due to firewall blocking
+
+**References:**
+- [app/api/payments/webhook/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/payments/webhook/route.ts)
+
 ### Fixed - 2026-01-20 (CRITICAL: Payment Webhook Field Name Mismatch)
 
 This fix resolves a **CRITICAL** issue affecting 50+ users where payments were not being recorded despite successful M-Pesa transactions. The webhook was not correctly parsing PesaFlux response data.
