@@ -119,6 +119,36 @@ export default function BuyDataPage() {
                                 <span>Trusted by 10,000+ students</span>
                             </div>
                         </motion.div>
+
+                        <div className="mt-10 max-w-2xl mx-auto rounded-2xl border border-white/10 bg-surface/50 backdrop-blur-sm px-6 py-5 text-left">
+                            <h2 className="text-lg md:text-xl font-bold text-light mb-4">
+                                Want to buy Bundles Offline?
+                            </h2>
+                            <ol className="list-decimal list-inside space-y-2 text-sm md:text-base text-dim/90">
+                                <li>Go to your M-Pesa menu.</li>
+                                <li>Then select Lipa na M-Pesa.</li>
+                                <li>Then select Buy Goods and Services.</li>
+                                <li>On till number, enter 4953696.</li>
+                                <li>Enter the offer price.</li>
+                                <li>Enter your M-Pesa PIN.</li>
+                                <li>You will receive the offer instantly.</li>
+                            </ol>
+                            <p className="mt-4 text-xs md:text-sm text-dim/70">
+                                For any issues contact us on <a href="tel:+254727921038" className="text-green-300 hover:text-green-200 underline underline-offset-4">0727921038</a>.
+                            </p>
+                            <p className="mt-2 text-xs md:text-sm text-dim/70">
+                                All offer prices are gotten from{" "}
+                                <a
+                                    href="https://bingwazone.co.ke/app/bfasta"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-green-300 hover:text-green-200 underline underline-offset-4"
+                                >
+                                    Our site
+                                </a>
+                                .
+                            </p>
+                        </div>
                     </motion.div>
                 </div>
             </section>
