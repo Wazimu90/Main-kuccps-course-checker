@@ -10,11 +10,19 @@ export default function PaymentSummary() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch("/api/admin/settings")
+        // Use the dedicated public settings endpoint with cache-busting
+        const res = await fetch(`/api/settings?t=${Date.now()}`, {
+          cache: "no-store",
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+          }
+        })
         if (res.ok) {
-          const { settings } = await res.json()
-          if (settings?.payment_amount) {
-            setAmount(settings.payment_amount)
+          const data = await res.json()
+          // payment_amount is returned directly, not nested in settings
+          if (data?.payment_amount !== undefined && data?.payment_amount !== null) {
+            setAmount(Number(data.payment_amount))
           }
         }
       } catch (e) {

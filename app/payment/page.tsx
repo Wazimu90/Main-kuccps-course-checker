@@ -48,21 +48,29 @@ export default function PaymentPage() {
     const fetchPaymentAmount = async () => {
       try {
         setIsLoadingAmount(true)
-        const res = await fetch("/api/admin/settings", { cache: "no-store", next: { revalidate: 0 } })
+        // Use the dedicated public settings endpoint with cache-busting
+        const res = await fetch(`/api/settings?t=${Date.now()}`, {
+          cache: "no-store",
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+          }
+        })
         if (res.ok) {
-          const { settings } = await res.json()
-          if (settings?.payment_amount) {
-            setPaymentAmount(settings.payment_amount)
-            log("payment:settings", "Payment amount loaded from database", "debug", { amount: settings.payment_amount })
+          const data = await res.json()
+          // payment_amount is returned directly, not nested in settings
+          if (data?.payment_amount !== undefined && data?.payment_amount !== null) {
+            setPaymentAmount(Number(data.payment_amount))
+            log("payment:settings", "Payment amount loaded from database", "debug", { amount: data.payment_amount })
           } else {
             // Fallback if no setting exists
             setPaymentAmount(200)
-            log("payment:settings", "No payment_amount in settings, using fallback of 200", "warn")
+            log("payment:settings", "No payment_amount in response, using fallback of 200", "warn", data)
           }
         } else {
           // API error fallback
           setPaymentAmount(200)
-          log("payment:settings", "Failed to fetch settings, using fallback of 200", "warn")
+          log("payment:settings", "Failed to fetch settings, using fallback of 200", "warn", { status: res.status })
         }
       } catch (e) {
         setPaymentAmount(200)
