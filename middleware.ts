@@ -12,6 +12,7 @@ export async function middleware(req: NextRequest) {
     !pathname.startsWith("/static") &&
     !pathname.startsWith("/admin") &&
     !pathname.startsWith("/api/admin") && // Allow admin API
+    !pathname.startsWith("/api/auth") && // Allow auth API for admin login
     pathname !== "/maintenance" &&
     pathname !== "/favicon.ico"
   ) {
