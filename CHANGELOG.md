@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed - 2026-01-25 (PDF Download Modal UX Improvement)
+
+**Objective:** Users were confused by the browser's download confirmation prompt and canceling it, thinking the download was already complete. The modal now provides clear instructions on how to complete the download.
+
+- **Redesigned PDF Download Modal**
+  - Changed title from "Download Results PDF" to "📄 Download your course results"
+  - Removed the "What's included" list (not the issue)
+  - Added clear, large instruction text explaining the browser popup behavior:
+    - "A popup will appear"
+    - "Tap Download / Yes" (green, emphasized)
+    - "If you tap Cancel, the PDF will NOT download" (red, warning)
+  - Changed button from "Download PDF" to "➡️ Start Download"
+  - Removed the Cancel button (unnecessary friction)
+  - Centered button in footer for better mobile UX
+  - Retained mobile responsiveness and existing styling
+  
+- **Impact:**
+  - Users now understand that the browser will ask for confirmation
+  - Clear visual cues (green for action, red for warning)
+  - Reduced confusion about what action to take when browser prompts
+  - Better completion rate for PDF downloads
+
+- **References:**
+  - [app/results/page.tsx](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/results/page.tsx) (lines 848-880)
+
 ### Changed - 2026-01-24 (Buy Data Page Complete Redesign)
 
 **Objective:** Redesigned the buy data page to be minimal, highly animated, and smart with CTA buttons prominently displayed as the first elements users see.

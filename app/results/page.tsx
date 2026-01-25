@@ -485,8 +485,8 @@ export default function ResultsPage() {
       doc.save(`KUCCPS_${selectedCategory}_Results.pdf`)
 
       toast({
-        title: "Download Complete",
-        description: "Your results PDF has been downloaded successfully.",
+        title: "Your browser will now ask to download the PDF",
+        description: "Tap Download or Yes. Do NOT tap Cancel.",
         variant: "success",
       })
       try {
@@ -849,43 +849,32 @@ export default function ResultsPage() {
         <Dialog open={showPdfDialog} onOpenChange={setShowPdfDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Download Results PDF</DialogTitle>
-              <DialogDescription>
-                Get a comprehensive report of all courses you qualify for using your browser's built-in PDF feature
-              </DialogDescription>
+              <DialogTitle className="text-xl flex items-center gap-2">
+                <span>📄</span> Download your course results
+              </DialogTitle>
             </DialogHeader>
 
-            <div className="grid gap-4 py-4">
-              <Card>
-                <CardContent className="p-4">
-                  <h3 className="mb-2 font-semibold">Your PDF Report Includes:</h3>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
-                      <span>Complete list of all qualifying courses</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
-                      <span>Institution details and locations</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
-                      <span>Cluster point analysis and cutoffs</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
-                      <span>KUCCPS portal QR code for easy access</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
+            <div className="py-6 space-y-6">
+              <div className="space-y-4 text-center">
+                <p className="text-lg md:text-xl font-medium text-slate-700 dark:text-slate-200">
+                  A popup will appear
+                </p>
+                <p className="text-lg md:text-xl font-medium text-emerald-600 dark:text-emerald-400">
+                  Tap <span className="font-bold">Download</span> / <span className="font-bold">Yes</span>
+                </p>
+                <p className="text-lg md:text-xl font-medium text-red-500 dark:text-red-400">
+                  If you tap <span className="font-bold">Cancel</span>, the PDF will <span className="font-bold">NOT</span> download
+                </p>
+              </div>
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowPdfDialog(false)}>
-                Cancel
+            <DialogFooter className="sm:justify-center">
+              <Button
+                onClick={handleDownloadPDF}
+                className="w-full sm:w-auto px-8 py-3 text-base font-semibold"
+              >
+                ➡️ Start Download
               </Button>
-              <Button onClick={handleDownloadPDF}>Download PDF</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
