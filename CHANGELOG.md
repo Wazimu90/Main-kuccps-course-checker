@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - 2026-01-27 (CRITICAL: Dashboard Timezone Mismatch)
+
+**Problem:** After midnight Kenya time (00:00 EAT), dashboard metrics showed incorrect "today" counts. Revenue, users, and referral counts were not resetting properly from the user's perspective.
+
+**Root Cause:** The API was using JavaScript's `new Date().setHours(0,0,0,0)` which runs on the server (UTC timezone). Kenya is UTC+3, so "today" was calculated incorrectly.
+
+**Evidence:**
+- Server (UTC): 2026-01-26 21:34
+- Kenya (EAT): 2026-01-27 00:34
+- API was counting from 2026-01-26 00:00 UTC instead of Kenya midnight
+
+**Fixes Applied:**
+
+1. **Created timezone utility** (`lib/timezone.ts`):
+   - `getKenyaTodayStart()` - Returns midnight Kenya time as UTC Date
+   - `getKenyaTodayStartISO()` - Returns as ISO string for Supabase queries
+
+2. **Fixed Metrics API** (`app/api/admin/metrics/route.ts`):
+   - Uses Kenya-aware "today" calculation for all queries
+   - Replaced news metrics with video tutorials count
+
+3. **Fixed Referrals API** (`app/api/admin/referrals/route.ts`):
+   - Uses Kenya-aware "today" calculation
+
+4. **Replaced News card with Video Tutorials** (`app/admin/dashboard/page.tsx`):
+   - Changed last KPI card from News to Video Tutorials
+   - Updated styling from orange to purple
+   - Added "Manage Videos →" link
+   - Updated realtime subscription from `news` to `video_tutorials` table
+
+**Impact:**
+- Dashboard now shows correct "today" counts based on Kenya midnight
+- Revenue, users, and referral counts reset at midnight Kenya time
+- News card replaced with Video Tutorials card
+
+**References:**
+- [lib/timezone.ts](lib/timezone.ts) (new)
+- [app/api/admin/metrics/route.ts](app/api/admin/metrics/route.ts)
+- [app/api/admin/referrals/route.ts](app/api/admin/referrals/route.ts)
+- [app/admin/dashboard/page.tsx](app/admin/dashboard/page.tsx)
+
 ### Removed - 2026-01-26 (News Feature Complete Removal)
 
 **Objective:** Remove the news feature entirely from the website and replace with video tutorials management in admin panel.

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, TrendingUp, CreditCard, Info } from "lucide-react"
+import { Users, Video, CreditCard, Info } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import RevenueChart from "@/components/admin/revenue-chart"
@@ -17,12 +17,12 @@ export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<{
     revenue: { today: number; total: number }
     users: { today: number; total: number }
-    news: { total: number; likes: number }
+    videoTutorials: { total: number }
     referrals: { agents: Array<{ id: string; name: string; code: string; today: number; total: number }> }
   }>({
     revenue: { today: 0, total: 0 },
     users: { today: 0, total: 0 },
-    news: { total: 0, likes: 0 },
+    videoTutorials: { total: 0 },
     referrals: { agents: [] },
   })
   const [dashboardData, setDashboardData] = useState({
@@ -112,9 +112,9 @@ export default function AdminDashboard() {
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'news' }, // News metrics
+        { event: '*', schema: 'public', table: 'video_tutorials' }, // Video tutorials
         () => {
-          console.log('News table changed - refreshing metrics')
+          console.log('Video tutorials table changed - refreshing metrics')
           fetchMetrics()
         }
       )
@@ -252,37 +252,33 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-orange-800">News</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-orange-200 flex items-center justify-center">
-                <TrendingUp className="h-4 w-4 text-orange-600" />
+              <CardTitle className="text-sm font-medium text-purple-800">Video Tutorials</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-purple-200 flex items-center justify-center">
+                <Video className="h-4 w-4 text-purple-600" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <div className="text-xs text-orange-700">Total Posts</div>
-                  <div className="text-xl font-bold text-orange-900">{metrics.news.total}</div>
+                  <div className="text-xs text-purple-700">Total Videos</div>
+                  <div className="text-xl font-bold text-purple-900">{metrics.videoTutorials.total}</div>
                 </div>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Info className="h-4 w-4 text-orange-700" />
+                    <Info className="h-4 w-4 text-purple-700" />
                   </TooltipTrigger>
-                  <TooltipContent>Total news posts</TooltipContent>
+                  <TooltipContent>Total video tutorials uploaded</TooltipContent>
                 </Tooltip>
               </div>
-              <div className="mt-3 flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="text-xs text-orange-700">Total Likes</div>
-                  <div className="text-xl font-bold text-orange-900">{metrics.news.likes}</div>
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-4 w-4 text-orange-700" />
-                  </TooltipTrigger>
-                  <TooltipContent>Aggregate likes across news</TooltipContent>
-                </Tooltip>
+              <div className="mt-3">
+                <a
+                  href="/admin/video-tutorials"
+                  className="text-xs text-purple-600 hover:text-purple-800 underline"
+                >
+                  Manage Videos →
+                </a>
               </div>
             </CardContent>
           </Card>

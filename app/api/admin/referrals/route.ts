@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { supabaseServer } from "@/lib/supabaseServer"
 import { cookies, headers } from "next/headers"
+import { getKenyaTodayStartISO } from "@/lib/timezone"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -19,14 +20,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // calculate users_today from payments
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
+  // calculate users_today from payments using Kenya timezone
+  const todayStartISO = getKenyaTodayStartISO()
 
   const { data: todayPayments } = await supabaseServer
     .from("payments")
     .select("agent_id")
-    .gte("paid_at", todayStart.toISOString())
+    .gte("paid_at", todayStartISO)
     .not("agent_id", "is", null)
 
   const todayMap = new Map<string, number>()
