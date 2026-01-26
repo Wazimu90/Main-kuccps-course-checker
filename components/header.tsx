@@ -15,7 +15,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Courses", href: "/#courses", ariaLabel: "Go to course categories" },
   { label: "Student Tools", href: "/student-tools", ariaLabel: "Access essential student resources" },
   { label: "Cluster Calculator", href: "/cluster-calculator", ariaLabel: "Calculate KUCCPS cluster points" },
-  { label: "News", href: "/news", ariaLabel: "Read latest news" },
   { label: "FAQ", href: "/faq", ariaLabel: "View frequently asked questions" },
   { label: "Buy Data", href: "/buy-data", ariaLabel: "Get affordable student data bundles" },
   { label: "About", href: "/about", ariaLabel: "Learn about this site" },
@@ -26,9 +25,6 @@ export const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isOpeningBuyData, setIsOpeningBuyData] = useState(false)
-
-  // Static badge count - set to 3 for demonstration (change to 0 to hide)
-  const newsBadgeCount = 3
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20)
@@ -77,7 +73,6 @@ export const Header: React.FC = () => {
           <nav className="hidden md:flex items-center gap-1 z-10">
             {NAV_ITEMS.map((item) => {
               const isBuyData = item.label === "Buy Data"
-              const isNews = item.label === "News"
               return (
                 <a
                   key={item.label}
@@ -99,11 +94,6 @@ export const Header: React.FC = () => {
                     }`} aria-hidden="true">
                     {isBuyData && isOpeningBuyData ? "Opening…" : item.label}
                   </span>
-                  {isNews && newsBadgeCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 z-50 flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-red-500 text-white text-[11px] font-bold rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">
-                      {newsBadgeCount > 9 ? "9+" : newsBadgeCount}
-                    </span>
-                  )}
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[2px] bg-accent group-hover:w-1/2 transition-all duration-300 ease-out opacity-0 group-hover:opacity-100 shadow-glow"></div>
                 </a>
               )
@@ -133,7 +123,6 @@ export const Header: React.FC = () => {
             `}
           >
             {NAV_ITEMS.map((item) => {
-              const isNews = item.label === "News"
               const isBuyData = item.label === "Buy Data"
               return (
                 <a
@@ -153,11 +142,6 @@ export const Header: React.FC = () => {
                     }`}
                 >
                   {item.label === "Buy Data" && isOpeningBuyData ? "Opening…" : item.label}
-                  {isNews && newsBadgeCount > 0 && (
-                    <span className="absolute top-1 right-1 z-50 flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-red-500 text-white text-[11px] font-bold rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)] border-2 border-background">
-                      {newsBadgeCount > 9 ? "9+" : newsBadgeCount}
-                    </span>
-                  )}
                 </a>
               )
             })}

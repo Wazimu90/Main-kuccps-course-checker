@@ -324,9 +324,9 @@ export default function Home() {
                 </p>
               </motion.a>
 
-              {/* News Link */}
+              {/* Video Tutorials Link */}
               <motion.a
-                href="/news"
+                href="/student-tools"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -336,10 +336,10 @@ export default function Home() {
               >
                 <ClipboardCheck className="w-10 h-10 text-accent mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-light mb-2 group-hover:text-accent transition-colors">
-                  Latest KUCCPS News
+                  Video Tutorials
                 </h3>
                 <p className="text-sm text-dim leading-relaxed">
-                  Stay updated with the <span className="text-accent hover:underline">latest KUCCPS news</span>, application deadlines, and important announcements for 2026.
+                  Watch <span className="text-accent hover:underline">step-by-step video guides</span> on how to apply for KUCCPS, check results, and navigate student services.
                 </p>
               </motion.a>
 

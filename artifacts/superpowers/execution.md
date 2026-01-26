@@ -1,133 +1,135 @@
-# Execution Log: Fix Referrals Display Issue
+# Execution Log: Remove News Feature & Add Sitemap
+
+## Execution Summary
+- **Date**: 2026-01-26
+- **Plan**: Remove News Feature & Replace with Video Tutorials in Admin
+- **Status**: ✅ COMPLETED
 
 ---
 
-## Step 1: Update Metrics API to Calculate Referral Counts from Payments
-**Status:** ✅ COMPLETE
+## Step-by-Step Execution
 
-**Files Changed:**
-- `app/api/admin/metrics/route.ts`
+### Step 1: Update Admin Navigation ✅
+- **File**: `components/admin/admin-nav-items.ts`
+- **Changes**:
+  - Changed `Newspaper` import to `Video`
+  - Changed nav item from `{ title: "News", href: "/admin/news", icon: Newspaper }` to `{ title: "Video Tutorials", href: "/admin/video-tutorials", icon: Video }`
+- **Verification**: File updated, no errors
 
-**Changes Made:**
-- Replaced static `users_today` and `total_users` column reads with dynamic calculation from payments table
-- Added `todayReferralPayments` query to count payments with agent_id from today
-- Added `allReferralPayments` query to count all payments with agent_id
-- Built `todayMap` and `totalMap` to aggregate counts per agent
-- Updated agents mapping to use dynamic counts instead of stale column values
+### Step 2: Remove Admin News Page ✅
+- **Command**: `Remove-Item -Path "app/admin/news" -Recurse -Force`
+- **Changes**: Deleted entire `app/admin/news/` directory
+- **Verification**: Exit code 0
 
-**Verification:**
-- Command: `npx tsc --noEmit --skipLibCheck`
-- Result: ✅ PASS - No new TypeScript errors introduced (pre-existing errors in other files are unrelated)
+### Step 3: Remove Public News Pages ✅
+- **Command**: `Remove-Item -Path "app/news" -Recurse -Force`
+- **Changes**: Deleted entire `app/news/` directory
+- **Verification**: Exit code 0
+
+### Step 4: Remove News API Routes ✅
+- **Commands**:
+  - `Remove-Item -Path "app/api/news" -Recurse -Force`
+  - `Remove-Item -Path "app/api/news-assistant" -Recurse -Force`
+  - `Remove-Item -Path "app/api/admin/news" -Recurse -Force`
+- **Changes**: Deleted all news API directories
+- **Verification**: Exit code 0
+
+### Step 5: Remove News Library Files ✅
+- **Commands**:
+  - `Remove-Item -Path "lib/news-service.ts" -Force`
+  - `Remove-Item -Path "lib/news-badge-indicator.ts" -Force`
+- **Changes**: Deleted news service utilities
+- **Verification**: Exit code 0
+
+### Step 6: Remove News Component ✅
+- **Command**: `Remove-Item -Path "components/NewsChatModal.tsx" -Force`
+- **Changes**: Deleted NewsChatModal component
+- **Verification**: Exit code 0
+
+### Step 7: Update Header Navigation ✅
+- **File**: `components/header.tsx`
+- **Changes**:
+  - Removed News from NAV_ITEMS array
+  - Removed `newsBadgeCount` variable
+  - Removed `isNews` variable declarations
+  - Removed news badge rendering in both desktop and mobile menus
+- **Verification**: File updated, no errors
+
+### Step 8: Update Homepage Internal Links ✅
+- **File**: `app/page.tsx`
+- **Changes**:
+  - Changed "Latest KUCCPS News" card to "Video Tutorials" card
+  - Updated href from `/news` to `/student-tools`
+  - Updated description text
+- **Verification**: File updated, no errors
+
+### Step 9: Update Student Tools Page ✅
+- **File**: `app/student-tools/page.tsx`
+- **Changes**:
+  - Replaced "Latest Updates" (news) card with "Contact Support" card
+  - Updated href from `/news` to `/contact`
+  - Updated description text
+- **Verification**: File updated, no errors
+
+### Step 10: Update FAQ Page ✅
+- **File**: `app/faq/page.tsx`
+- **Changes**:
+  - Removed `Newspaper` from import
+  - Removed "Latest News & Updates" from relatedResources array
+- **Verification**: File updated, no errors
+
+### Step 11: Remove News CSS Styles ✅
+- **File**: `styles/globals.css`
+- **Changes**: Removed 113 lines of `.news-content` CSS styles
+- **Verification**: File updated, no errors
+
+### Step 12: Update README Documentation ✅
+- **File**: `README.md`
+- **Changes**:
+  - Updated admin features to show video tutorials instead of news
+  - Updated project structure to remove news references
+  - Updated key pages section
+- **Verification**: File updated, no errors
+
+### Step 13: Update CHANGELOG ✅
+- **File**: `CHANGELOG.md`
+- **Changes**: Added comprehensive entry documenting all news removal changes
+- **Verification**: File updated, no errors
+
+### Step 14: Final Build & Create Sitemap ✅
+- **Files Created**:
+  - `app/sitemap.ts` - Next.js sitemap configuration
+  - `app/robots.ts` - Next.js robots.txt configuration
+- **Verification**: `npm run build` succeeded with exit code 0
+- **Build Output**:
+  - 54 static pages generated
+  - `/sitemap.xml` route present
+  - `/robots.txt` route present
+  - `/admin/video-tutorials` route present
+  - No `/news` or `/admin/news` routes
 
 ---
 
-## Step 2: Sync Referral Counts in Database
-**Status:** ✅ COMPLETE
+## Files Deleted
+- `app/admin/news/` (entire directory)
+- `app/news/` (entire directory)
+- `app/api/news/` (entire directory)
+- `app/api/news-assistant/` (entire directory)
+- `app/api/admin/news/` (entire directory)
+- `lib/news-service.ts`
+- `lib/news-badge-indicator.ts`
+- `components/NewsChatModal.tsx`
 
-**Actions Performed:**
-1. Synced `total_users` from actual payment counts
-2. Reset agents with no payments to 0
-3. Reset all `users_today` to 0 (now calculated dynamically)
-
-**Verification Results:**
-| Agent | stored_total | actual_total | Status |
-|-------|--------------|--------------|--------|
-| Stephen | 3 | 3 | ✅ OK |
-| Gwiji Fleva | 0 | 0 | ✅ OK |
-| Eliab | 6 | 6 | ✅ OK |
-| Mr Paul | 8 | 8 | ✅ OK |
-| Vicky Calaster | 24 | 24 | ✅ OK |
-| Benteke | 0 | 0 | ✅ OK |
-
-**Previous discrepancies fixed:**
-- Vicky Calaster: 30 → 24 (removed 6 phantom referrals)
-- Benteke: 3 → 0 (removed 3 phantom referrals)
-
----
-
-## Step 3: Fix Gwiji Fleva's Code with TAB Character
-**Status:** ✅ COMPLETE
-
-**SQL Executed:**
-```sql
-UPDATE referrals 
-SET code = 'ref_04', link = '/rc=ref_04'
-WHERE name = 'Gwiji Fleva';
-```
-
-**Verification:**
-- Before: code = `\tref_04` (7 chars with TAB)
-- After: code = `ref_04` (6 chars, clean)
-- Result: ✅ PASS
-
----
-
-## Step 4: Create Daily Reset Cron Job
-**Status:** ✅ COMPLETE
-
-**Actions Performed:**
-1. Enabled `pg_cron` extension (version 1.6)
-2. Created scheduled job `reset_referrals_daily`
-
-**SQL Executed:**
-```sql
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-
-SELECT cron.schedule(
-  'reset_referrals_daily',
-  '0 21 * * *',  -- 21:00 UTC = 00:00 EAT (midnight Kenya time)
-  'UPDATE public.referrals SET users_today = 0, updated_at = NOW()'
-);
-```
-
-**Verification:**
-| Field | Value |
-|-------|-------|
-| Job ID | 1 |
-| Job Name | reset_referrals_daily |
-| Schedule | `0 21 * * *` (daily at midnight EAT) |
-| Command | `UPDATE public.referrals SET users_today = 0, updated_at = NOW()` |
-| Active | true |
-
-- Result: ✅ PASS - Cron job created and active
-
----
-
-## Step 5: Update CHANGELOG.md
-**Status:** ✅ COMPLETE
-
-**Files Changed:**
+## Files Modified
+- `components/admin/admin-nav-items.ts`
+- `components/header.tsx`
+- `app/page.tsx`
+- `app/student-tools/page.tsx`
+- `app/faq/page.tsx`
+- `styles/globals.css`
+- `README.md`
 - `CHANGELOG.md`
 
-**Changes Made:**
-- Added comprehensive changelog entry documenting:
-  - Problem description
-  - All 4 root causes identified
-  - All 3 fixes applied
-  - Impact summary
-  - File references
-
-**Verification:**
-- Result: ✅ PASS - Entry added at top of Unreleased section
-
----
-
-## Step 6: Final Verification
-**Status:** ✅ COMPLETE
-
-**Database State After Fix:**
-All referral agents now have accurate counts matching actual payment records.
-
-**API Verification:**
-The `/api/admin/metrics` endpoint now calculates:
-- `today`: Count of payments with agent_id from today
-- `total`: Count of all payments with agent_id
-
-Both values are computed from the payments table, not stale column values.
-
-**Consistency Check:**
-- `/api/admin/metrics` and `/api/admin/referrals` now use identical logic
-- Both pages will show consistent referral counts
-
----
-
+## Files Created
+- `app/sitemap.ts`
+- `app/robots.ts`

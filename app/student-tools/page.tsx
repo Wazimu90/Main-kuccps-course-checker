@@ -581,9 +581,9 @@ export default function StudentToolsPage() {
                             </p>
                         </motion.a>
 
-                        {/* News */}
+                        {/* Contact */}
                         <motion.a
-                            href="/news"
+                            href="/contact"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
@@ -593,10 +593,10 @@ export default function StudentToolsPage() {
                         >
                             <ExternalLink className="w-10 h-10 text-accent mb-4 group-hover:scale-110 transition-transform" />
                             <h3 className="text-lg font-bold text-light mb-2 group-hover:text-accent transition-colors">
-                                Latest Updates
+                                Contact Support
                             </h3>
                             <p className="text-sm text-dim leading-relaxed">
-                                Stay informed with <a href="/news" className="text-accent hover:underline">latest KUCCPS news</a> and important application deadlines.
+                                Need help? <a href="/contact" className="text-accent hover:underline">Get personalized assistance</a> with your KUCCPS application via WhatsApp or email.
                             </p>
                         </motion.a>
                     </div>

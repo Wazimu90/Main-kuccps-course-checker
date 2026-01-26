@@ -7,6 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed - 2026-01-26 (News Feature Complete Removal)
+
+**Objective:** Remove the news feature entirely from the website and replace with video tutorials management in admin panel.
+
+**Changes Made:**
+
+1. **Admin Navigation Updated**
+   - Changed "News" tab to "Video Tutorials" tab in admin sidebar
+   - Now points to `/admin/video-tutorials` page
+   - Updated icon from Newspaper to Video
+
+2. **Deleted News-Related Files**
+   - Removed `app/admin/news/` directory (admin news management)
+   - Removed `app/news/` directory (public news pages)
+   - Removed `app/api/news/` directory (news API routes)
+   - Removed `app/api/news-assistant/` directory (AI news assistant)
+   - Removed `app/api/admin/news/` directory (admin news APIs)
+   - Removed `lib/news-service.ts` and `lib/news-badge-indicator.ts`
+   - Removed `components/NewsChatModal.tsx`
+
+3. **Header Navigation Updated**
+   - Removed "News" from main navigation
+   - Removed news badge count and related rendering logic
+
+4. **Page Link Replacements**
+   - Homepage: Replaced "Latest KUCCPS News" card with "Video Tutorials" card
+   - Student Tools: Replaced "Latest Updates" news card with "Contact Support" card
+   - FAQ: Removed "Latest News & Updates" from related resources
+
+5. **CSS Cleanup**
+   - Removed `.news-content` styles from `globals.css` (113 lines)
+
+6. **README Updated**
+   - Updated project structure to remove news references
+   - Updated admin features to show video tutorials instead of news
+   - Updated key pages section
+
+**Impact:**
+- No more `/news` route (will 404)
+- Admin panel now shows Video Tutorials tab instead of News
+- Cleaner codebase without unused news code
+- Video tutorials remain accessible via Student Tools page and admin
+
+7. **SEO: Sitemap & Robots.txt Created**
+   - Created `app/sitemap.ts` with 15 pages prioritized by importance
+   - Created `app/robots.ts` blocking admin, API, and payment routes
+   - Both files auto-generate at `/sitemap.xml` and `/robots.txt`
+
+**References:**
+- [components/admin/admin-nav-items.ts](components/admin/admin-nav-items.ts)
+- [components/header.tsx](components/header.tsx)
+- [app/page.tsx](app/page.tsx)
+- [app/student-tools/page.tsx](app/student-tools/page.tsx)
+- [app/faq/page.tsx](app/faq/page.tsx)
+- [styles/globals.css](styles/globals.css)
+- [README.md](README.md)
+- [app/sitemap.ts](app/sitemap.ts)
+- [app/robots.ts](app/robots.ts)
+
 ### Fixed - 2026-01-26 (CRITICAL: Referrals Not Showing on Admin Dashboard)
 
 **Problem:** Older agents' referral counts were not showing correctly on the admin dashboard and referral sections. New agent (Stephen/ref_06) worked correctly, but older agents like "Vicky Calaster" and "Benteke" had incorrect or phantom counts.

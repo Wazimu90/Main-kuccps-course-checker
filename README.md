@@ -25,9 +25,8 @@ KUCCPS Course Checker simplifies the process of finding eligible courses for Ken
 ### For Administrators
 - **Dashboard Analytics**: Real-time statistics on user activity and course queries
 - **User Management**: Monitor and manage registered users
-- **Blog Management**: Create and publish educational content
 - **News Management**: Post education news with engagement tracking (likes/comments)
-- **Chatbot Training**: Upload training data and configure AI assistant
+- **Video Tutorials**: Manage video tutorials for the Student Tools page
 - **Payment Settings**: Enable/disable payment features
 
 ## Tech Stack
@@ -50,14 +49,13 @@ KUCCPS Course Checker simplifies the process of finding eligible courses for Ken
 │   │   ├── chatbot/        # Chatbot configuration
 │   │   ├── dashboard/      # Admin overview
 │   │   ├── login/          # Admin authentication
-│   │   ├── news/           # News analytics
+│   │   ├── video-tutorials/# Video tutorial management
 │   │   ├── settings/       # Site settings
 │   │   └── users/          # User management
 │   ├── contact/            # Contact form
 │   ├── faq/                # Frequently asked questions
 │   ├── input/[category]/   # Grade entry by course type
-│   ├── news/               # Education news
-│   │   └── [slug]/         # Individual news article
+│   ├── student-tools/      # Student resources & video tutorials
 │   ├── payment/            # Payment processing
 │   ├── privacy-policy/     # Privacy policy
 │   ├── results/            # Course matching results
@@ -68,7 +66,6 @@ KUCCPS Course Checker simplifies the process of finding eligible courses for Ken
 │   └── ...                 # Feature components
 ├── lib/                    # Utility functions and data
 │   ├── courses-data.ts     # Course database
-│   ├── news-data.ts        # News articles
 │   ├── supabase.ts         # Database client
 │   └── utils.ts            # Helper functions
 ├── hooks/                  # Custom React hooks
@@ -128,7 +125,7 @@ npm run dev
 - **Home** (`/`): Landing page with animated background and feature highlights
 - **Input** (`/input/[category]`): Grade entry form for selected course category
 - **Results** (`/results`): Matched courses display with filtering and PDF export
-- **News** (`/news`): Education news with categories, search, likes, and comments
+- **Student Tools** (`/student-tools`): Essential resources and video tutorials
 - **About** (`/about`): Information about the platform
 - **Contact** (`/contact`): Contact form for inquiries
 - **FAQ** (`/faq`): Common questions and answers
@@ -138,7 +135,7 @@ npm run dev
 Navigate to `/admin/login` to access the admin dashboard. Admin features include:
 - Dashboard with user statistics
 - Blog post management
-- News engagement analytics
+- Video tutorial management
 - Chatbot configuration
 - User management
 - Site settings

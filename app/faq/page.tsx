@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { ChevronDown, Search, Calculator, Newspaper, BookOpen, Mail, ExternalLink } from "lucide-react"
+import { ChevronDown, Search, Calculator, BookOpen, Mail, ExternalLink } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface FAQ {
@@ -259,12 +259,6 @@ const relatedResources = [
         description: "Access official KUCCPS, HELB, and KNEC portals. Find video tutorials and application guides.",
         href: "/student-tools",
         icon: BookOpen,
-    },
-    {
-        title: "Latest News & Updates",
-        description: "Stay updated with KUCCPS application deadlines, cutoff points, and important announcements.",
-        href: "/news",
-        icon: Newspaper,
     },
     {
         title: "Contact Support",
