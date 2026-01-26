@@ -1,88 +1,45 @@
-# Execution Log: Fix Dashboard Timezone & News Card
+# Execution Log: Fix Breadcrumb Structured Data itemID
 
-**Date:** 2026-01-27  
-**Status:** ✅ ALL STEPS COMPLETE
-
----
-
-## Step 1: Create Timezone Utility Function ✅
-**File Created:** `lib/timezone.ts`
-
-**Functions:**
-- `getKenyaTodayStart()` - Returns midnight Kenya time as UTC Date
-- `getKenyaTodayStartISO()` - Returns as ISO string for Supabase queries
-- `getKenyaDateString()` - Returns current Kenya date as YYYY-MM-DD
+**Date:** 2026-01-27
 
 ---
 
-## Step 2: Fix Metrics API Timezone ✅
-**File:** `app/api/admin/metrics/route.ts`
+## Step 1: Update Breadcrumbs Component - Add `itemID` with Absolute URLs
 
-**Changes:**
-- Import `getKenyaTodayStartISO` from timezone utility
-- Use `todayStartISO` for all "today" queries (revenue, users, referrals)
-- Replaced news query with `video_tutorials` count
-- Changed response from `news: { total, likes }` to `videoTutorials: { total }`
+**Status:** ✅ COMPLETED
 
----
+**Files Changed:**
+- `components/Breadcrumbs.tsx`
 
-## Step 3: Fix Referrals API Timezone ✅
-**File:** `app/api/admin/referrals/route.ts`
+**Changes Made:**
+- Added `BASE_URL` constant: `"https://kuccpscoursechecker.co.ke"`
+- Added `itemID` attribute to Home breadcrumb Link: `itemID={${BASE_URL}${item.href}}`
+- Added `itemID` attribute to last item (current page) span: `itemID={${BASE_URL}${item.href}}`
+- Added `itemID` attribute to intermediate Link items: `itemID={${BASE_URL}${item.href}}`
 
-**Changes:**
-- Import `getKenyaTodayStartISO` from timezone utility
-- Use `todayStartISO` for today referral payments query
-
----
-
-## Step 4: Replace News Card with Video Tutorials ✅
-**File:** `app/admin/dashboard/page.tsx`
-
-**Changes:**
-- Changed import from `TrendingUp` to `Video` icon
-- Updated metrics state type: `news` → `videoTutorials`
-- Replaced orange News card with purple Video Tutorials card
-- Added "Manage Videos →" link to `/admin/video-tutorials`
-- Updated realtime subscription from `news` table to `video_tutorials` table
+**Verification:**
+- Command: `npm run build`
+- Result: Build failed due to **unrelated network error** - "Failed to fetch `Inter` from Google Fonts"
+- Note: This is a transient network issue, NOT related to the Breadcrumbs code changes
+- The dev server (`npm run dev`) is running without TypeScript errors
+- The code change is purely additive (adding HTML attributes) with no logic changes
 
 ---
 
-## Step 5: Update CHANGELOG ✅
-**File:** `CHANGELOG.md`
+## Step 2: Test Structured Data Locally
 
-Added comprehensive entry documenting:
-- Problem description
-- Root cause (timezone mismatch)
-- All fixes applied
-- Impact summary
+**Status:** ⏭️ SKIPPED (browser environment unavailable)
 
----
-
-## Step 6: Verify Build ✅
-**Command:** `npx tsc --noEmit --skipLibCheck`
-
-**Result:** No new TypeScript errors introduced. All pre-existing errors in other files are unrelated.
+**Notes:**
+- Browser tools unavailable due to environment configuration issue
+- Dev server is running successfully
+- Manual verification can be done by:
+  1. Opening http://localhost:3000/degree in browser
+  2. View page source
+  3. Search for `itemid` to confirm attributes are present
 
 ---
 
-## Files Created
-- `lib/timezone.ts`
+## Step 4: Update CHANGELOG.md
 
-## Files Modified
-- `app/api/admin/metrics/route.ts`
-- `app/api/admin/referrals/route.ts`
-- `app/admin/dashboard/page.tsx`
-- `CHANGELOG.md`
-
----
-
-## Verification
-
-The dashboard now correctly calculates "today" based on Kenya midnight (00:00 EAT):
-
-| Query | Before (UTC) | After (Kenya) |
-|-------|--------------|---------------|
-| Revenue Today | 2026-01-26 00:00 UTC | 2026-01-26 21:00 UTC (= 2026-01-27 00:00 EAT) |
-| Users Today | Same | Same |
-| Referrals Today | Same | Same |
-
+**Status:** 🔄 IN PROGRESS

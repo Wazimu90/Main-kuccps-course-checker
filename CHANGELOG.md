@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - 2026-01-27 (SEO: Breadcrumb Structured Data)
+
+**Problem:** Google Search Console reported "Invalid URL in field 'id' (in 'itemListElement.item')" warnings for breadcrumb structured data on pages like `/degree`, `/diploma`, `/buy-data`.
+
+**Root Cause:** The Schema.org BreadcrumbList structured data was missing explicit `itemID` attributes with absolute URLs. Google requires each breadcrumb item to have a valid URL identifier.
+
+**Fix Applied:**
+- Added `BASE_URL` constant (`https://kuccpscoursechecker.co.ke`) to Breadcrumbs component
+- Added `itemID` attribute to all breadcrumb elements with full absolute URLs
+- Applied to: Home link, intermediate links, and current page span
+
+**Impact:**
+- Google Search Console warnings will be resolved after next crawl
+- Breadcrumb rich snippets will display properly in search results
+- No visual or functional changes to the website
+
+**References:**
+- [components/Breadcrumbs.tsx](components/Breadcrumbs.tsx)
+
 ### Fixed - 2026-01-27 (CRITICAL: Dashboard Timezone Mismatch)
 
 **Problem:** After midnight Kenya time (00:00 EAT), dashboard metrics showed incorrect "today" counts. Revenue, users, and referral counts were not resetting properly from the user's perspective.

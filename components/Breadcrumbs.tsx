@@ -4,6 +4,9 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ChevronRight, Home } from "lucide-react"
 
+// Base URL for absolute URLs in structured data (SEO)
+const BASE_URL = "https://kuccpscoursechecker.co.ke"
+
 interface BreadcrumbItem {
     label: string
     href: string
@@ -64,6 +67,7 @@ export default function Breadcrumbs() {
                                     href={item.href}
                                     className="flex items-center gap-1.5 text-dim hover:text-accent transition-colors"
                                     itemProp="item"
+                                    itemID={`${BASE_URL}${item.href}`}
                                 >
                                     <Home className="w-4 h-4" />
                                     <span itemProp="name" className="sr-only md:not-sr-only">{item.label}</span>
@@ -73,6 +77,7 @@ export default function Breadcrumbs() {
                                 <span
                                     className="text-light font-medium"
                                     itemProp="item"
+                                    itemID={`${BASE_URL}${item.href}`}
                                 >
                                     <span itemProp="name">{item.label}</span>
                                     <meta itemProp="position" content={String(index + 1)} />
@@ -82,6 +87,7 @@ export default function Breadcrumbs() {
                                     href={item.href}
                                     className="text-dim hover:text-accent transition-colors"
                                     itemProp="item"
+                                    itemID={`${BASE_URL}${item.href}`}
                                 >
                                     <span itemProp="name">{item.label}</span>
                                     <meta itemProp="position" content={String(index + 1)} />
