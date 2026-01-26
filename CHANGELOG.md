@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - 2026-01-26 (CRITICAL: Referrals Not Showing on Admin Dashboard)
+
+**Problem:** Older agents' referral counts were not showing correctly on the admin dashboard and referral sections. New agent (Stephen/ref_06) worked correctly, but older agents like "Vicky Calaster" and "Benteke" had incorrect or phantom counts.
+
+**Root Causes Identified:**
+1. **Dashboard used stale column values**: `/api/admin/metrics` read from `referrals.users_today` and `referrals.total_users` columns which were never updated properly
+2. **No daily reset mechanism**: `users_today` column was never reset at midnight
+3. **Data discrepancies**: Several agents had inflated counts (phantom referrals):
+   - Vicky Calaster: stored 30, actual 24 (6 phantom)
+   - Benteke: stored 3, actual 0 (all phantom)
+4. **Corrupted referral code**: "Gwiji Fleva" had a TAB character in code (`\tref_04`)
+
+**Fixes Applied:**
+1. **Updated Metrics API** (`app/api/admin/metrics/route.ts`):
+   - Now calculates `users_today` and `total_users` dynamically from payments table
+   - Uses same logic as `/api/admin/referrals` which was already correct
+   - Removed dependency on stale column values
+   
+2. **Synced Database Counts**:
+   - Updated `total_users` to match actual payment counts
+   - Reset `users_today` to 0 (now calculated dynamically)
+   - Fixed phantom referral counts
+
+3. **Fixed Corrupted Code**:
+   - Updated "Gwiji Fleva" code from `\tref_04` to `ref_04`
+
+4. **Enabled Daily Reset Cron Job**:
+   - Installed `pg_cron` extension (v1.6)
+   - Created `reset_referrals_daily` job running at midnight EAT (21:00 UTC)
+   - Automatically resets `users_today` to 0 each day
+
+**Impact:**
+- Admin dashboard now shows accurate referral counts in real-time
+- Referrals page shows consistent data with dashboard
+- No more stale or phantom referral counts
+- Both `users_today` and `total_users` are now calculated from actual payment records
+- Daily reset now automated via pg_cron
+
+**References:**
+- [app/api/admin/metrics/route.ts](file:///c:/Users/ADMIN/OneDrive/Desktop/kuccps_course_checker_advanced/v0-kuccps-course-checker/app/api/admin/metrics/route.ts)
+
 ### Changed - 2026-01-25 (PDF Download Modal UX Improvement)
 
 **Objective:** Users were confused by the browser's download confirmation prompt and canceling it, thinking the download was already complete. The modal now provides clear instructions on how to complete the download.

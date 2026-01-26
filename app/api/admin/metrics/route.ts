@@ -25,18 +25,48 @@ export async function GET() {
       supabaseServer.from("users").select("id", { count: "exact", head: true }).gte("created_at", todayStart.toISOString()),
     ])
 
-    // Referrals: agents with today and total users
+    // Referrals: agents with today and total users calculated from payments
     const { data: refRows, error: refErr } = await supabaseServer
       .from("referrals")
-      .select("id,name,code,users_today,total_users")
+      .select("id,name,code,status")
       .order("created_at", { ascending: false })
     if (refErr) return NextResponse.json({ error: refErr.message }, { status: 500 })
+
+    // Calculate users_today from payments (same logic as /api/admin/referrals)
+    const { data: todayReferralPayments } = await supabaseServer
+      .from("payments")
+      .select("agent_id")
+      .gte("paid_at", todayStart.toISOString())
+      .not("agent_id", "is", null)
+
+    const todayMap = new Map<string, number>()
+    if (todayReferralPayments) {
+      for (const p of todayReferralPayments) {
+        const aid = String(p.agent_id)
+        todayMap.set(aid, (todayMap.get(aid) || 0) + 1)
+      }
+    }
+
+    // Calculate total_users from all payments
+    const { data: allReferralPayments } = await supabaseServer
+      .from("payments")
+      .select("agent_id")
+      .not("agent_id", "is", null)
+
+    const totalMap = new Map<string, number>()
+    if (allReferralPayments) {
+      for (const p of allReferralPayments) {
+        const aid = String(p.agent_id)
+        totalMap.set(aid, (totalMap.get(aid) || 0) + 1)
+      }
+    }
+
     const agents = (refRows || []).map((r: any) => ({
       id: r.id,
       name: r.name,
       code: r.code,
-      today: Number(r.users_today || 0),
-      total: Number(r.total_users || 0),
+      today: todayMap.get(r.id) || 0,
+      total: totalMap.get(r.id) || 0,
     }))
 
     // News: total posts and total likes
