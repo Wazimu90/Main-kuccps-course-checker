@@ -855,6 +855,40 @@ export default function ResultsPage() {
             </DialogHeader>
 
             <div className="py-6 space-y-6">
+              {/* Result ID Section */}
+              <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 space-y-2">
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Your Result ID:</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-white dark:bg-slate-900 px-3 py-2 rounded border text-sm font-mono truncate">
+                    {paymentInfo?.reference || localStorage.getItem("resultId") || "N/A"}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const resultId = paymentInfo?.reference || localStorage.getItem("resultId") || ""
+                      navigator.clipboard.writeText(resultId).then(() => {
+                        toast({
+                          title: "Copied!",
+                          description: "Result ID copied to clipboard",
+                        })
+                      }).catch(() => {
+                        toast({
+                          title: "Copy failed",
+                          description: "Please copy manually",
+                          variant: "destructive",
+                        })
+                      })
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                  ⚠️ Copy this Result ID. If your Results PDF download fails, send it to your agent for help.
+                </p>
+              </div>
+
               <div className="space-y-4 text-center">
                 <p className="text-lg md:text-xl font-medium text-slate-700 dark:text-slate-200">
                   A popup will appear
@@ -871,7 +905,7 @@ export default function ResultsPage() {
             <DialogFooter className="sm:justify-center">
               <Button
                 onClick={handleDownloadPDF}
-                className="w-full sm:w-auto px-8 py-3 text-base font-semibold"
+                className="w-full sm:w-auto px-8 py-3 text-base font-semibold animate-glow-pulse"
               >
                 ➡️ Start Download
               </Button>

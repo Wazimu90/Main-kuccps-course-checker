@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { MoreHorizontal, Eye, Edit, RotateCcw } from "lucide-react"
+import { MoreHorizontal, Eye, Edit, RotateCcw, Key, Copy, Trash2, Clock, CheckCircle2, XCircle } from "lucide-react"
 
 type Agent = {
   id: string
@@ -20,6 +20,15 @@ type Agent = {
   link?: string
   phone_number?: string
   status?: "active" | "disabled"
+}
+
+type TokenInfo = {
+  id: string
+  token_prefix: string
+  expires_at: string
+  is_active: boolean
+  created_at: string
+  is_expired?: boolean
 }
 
 export default function ReferralsPage() {
@@ -42,6 +51,14 @@ export default function ReferralsPage() {
   // View Details modal state
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [viewingAgent, setViewingAgent] = useState<Agent | null>(null)
+
+  // Token management modal state
+  const [tokenModalOpen, setTokenModalOpen] = useState(false)
+  const [tokenGeneratingAgent, setTokenGeneratingAgent] = useState<Agent | null>(null)
+  const [generatedToken, setGeneratedToken] = useState<string | null>(null)
+  const [existingTokens, setExistingTokens] = useState<TokenInfo[]>([])
+  const [tokenLoading, setTokenLoading] = useState(false)
+  const [expiryDays, setExpiryDays] = useState(7)
 
   useEffect(() => {
     const m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)
@@ -246,6 +263,112 @@ export default function ReferralsPage() {
     }
   }
 
+  // Fetch existing tokens for an agent
+  const fetchAgentTokens = async (agentId: string) => {
+    try {
+      setTokenLoading(true)
+      const res = await fetch(`/api/admin/agent-tokens?agent_id=${agentId}`)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Failed to fetch tokens")
+      setExistingTokens(json.tokens || [])
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to fetch tokens", variant: "destructive" })
+      setExistingTokens([])
+    } finally {
+      setTokenLoading(false)
+    }
+  }
+
+  // Open token modal
+  const openTokenModal = async (agent: Agent) => {
+    setTokenGeneratingAgent(agent)
+    setGeneratedToken(null)
+    setExpiryDays(7)
+    setTokenModalOpen(true)
+    await fetchAgentTokens(agent.id)
+  }
+
+  // Generate a new token
+  const generateToken = async () => {
+    if (!tokenGeneratingAgent) return
+    try {
+      setTokenLoading(true)
+      const cookieMatch = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)
+      const csrfToken = cookieMatch ? decodeURIComponent(cookieMatch[1]) : ""
+
+      if (!csrfToken) {
+        throw new Error("Missing CSRF token. Please reload the page.")
+      }
+
+      const res = await fetch("/api/admin/agent-tokens", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": csrfToken
+        },
+        body: JSON.stringify({
+          agent_id: tokenGeneratingAgent.id,
+          expires_in_days: expiryDays
+        })
+      })
+
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Failed to generate token")
+
+      setGeneratedToken(json.token)
+      await fetchAgentTokens(tokenGeneratingAgent.id)
+      toast({
+        title: "✅ Token Generated",
+        description: `ART token created for ${tokenGeneratingAgent.name}. Copy it now - it won't be shown again!`
+      })
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to generate token", variant: "destructive" })
+    } finally {
+      setTokenLoading(false)
+    }
+  }
+
+  // Revoke a token
+  const revokeToken = async (tokenId: string) => {
+    if (!tokenGeneratingAgent) return
+    try {
+      setTokenLoading(true)
+      const cookieMatch = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)
+      const csrfToken = cookieMatch ? decodeURIComponent(cookieMatch[1]) : ""
+
+      if (!csrfToken) {
+        throw new Error("Missing CSRF token. Please reload the page.")
+      }
+
+      const res = await fetch(`/api/admin/agent-tokens?token_id=${tokenId}`, {
+        method: "DELETE",
+        headers: {
+          "x-csrf-token": csrfToken
+        }
+      })
+
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Failed to revoke token")
+
+      await fetchAgentTokens(tokenGeneratingAgent.id)
+      toast({ title: "✅ Token Revoked", description: "The token has been revoked successfully" })
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to revoke token", variant: "destructive" })
+    } finally {
+      setTokenLoading(false)
+    }
+  }
+
+  // Copy to clipboard helper
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      toast({ title: "✅ Copied!", description: "Token copied to clipboard" })
+    } catch {
+      toast({ title: "Error", description: "Failed to copy to clipboard", variant: "destructive" })
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -308,6 +431,10 @@ export default function ReferralsPage() {
                         <DropdownMenuItem onClick={() => resetCount(a)}>
                           <RotateCcw className="mr-2 h-4 w-4" />
                           Reset Count
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openTokenModal(a)}>
+                          <Key className="mr-2 h-4 w-4" />
+                          Generate ART Token
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onToggleSuspend(a)}>
                           {a.status === "disabled" ? "Unsuspend" : "Suspend"}
@@ -497,6 +624,150 @@ export default function ReferralsPage() {
           </div>
           <DialogFooter className="flex-shrink-0">
             <Button onClick={() => setViewModalOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Token Management Modal */}
+      <Dialog open={tokenModalOpen} onOpenChange={setTokenModalOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5 text-primary" />
+              Generate ART Token
+            </DialogTitle>
+            <DialogDescription>
+              {tokenGeneratingAgent && (
+                <>Agent Regeneration Token for <strong>{tokenGeneratingAgent.name}</strong>. Allows re-downloading PDF results for their students.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1 px-1 space-y-6 py-4">
+            {/* Token Generation Section */}
+            <div className="rounded-lg border bg-muted/50 p-4">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                🔑 Generate New Token
+              </h3>
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <Label htmlFor="expiry-days" className="text-sm text-muted-foreground mb-2 block">
+                    Token Expiry (days)
+                  </Label>
+                  <Input
+                    id="expiry-days"
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={expiryDays}
+                    onChange={(e) => setExpiryDays(Math.min(30, Math.max(1, parseInt(e.target.value) || 7)))}
+                    className="w-full"
+                  />
+                </div>
+                <Button
+                  onClick={generateToken}
+                  disabled={tokenLoading}
+                  className="mt-6"
+                >
+                  {tokenLoading ? "Generating..." : "Generate Token"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Generated Token Display */}
+            {generatedToken && (
+              <div className="rounded-lg border-2 border-green-500 bg-green-50 p-4 animate-pulse">
+                <h3 className="font-semibold mb-3 text-green-800 flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5" />
+                  Token Generated Successfully!
+                </h3>
+                <div className="bg-white rounded-md p-3 font-mono text-sm break-all border border-green-200">
+                  {generatedToken}
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(generatedToken)}
+                    className="flex items-center gap-2"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Copy Token
+                  </Button>
+                  <span className="text-xs text-orange-600 font-medium">
+                    ⚠️ Copy now - this token will not be shown again!
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Existing Tokens Section */}
+            <div className="rounded-lg border bg-muted/50 p-4">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                📋 Existing Tokens
+              </h3>
+              {tokenLoading && !generatedToken ? (
+                <div className="text-center py-4 text-muted-foreground">Loading tokens...</div>
+              ) : existingTokens.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  No tokens generated yet for this agent.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {existingTokens.map((token) => {
+                    const isExpired = token.is_expired || new Date(token.expires_at) < new Date()
+                    const isActive = token.is_active && !isExpired
+
+                    return (
+                      <div
+                        key={token.id}
+                        className={`flex items-center justify-between p-3 rounded-md border ${isActive ? 'bg-white' : 'bg-gray-100 opacity-60'
+                          }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm">{token.token_prefix}...</span>
+                            {isActive ? (
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Active
+                              </span>
+                            ) : token.is_active ? (
+                              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Expired
+                              </span>
+                            ) : (
+                              <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <XCircle className="h-3 w-3" />
+                                Revoked
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1 flex items-center gap-3">
+                            <span>Created: {new Date(token.created_at).toLocaleDateString()}</span>
+                            <span>Expires: {new Date(token.expires_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        {isActive && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => revokeToken(token.id)}
+                            disabled={tokenLoading}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter className="flex-shrink-0">
+            <Button variant="outline" onClick={() => setTokenModalOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

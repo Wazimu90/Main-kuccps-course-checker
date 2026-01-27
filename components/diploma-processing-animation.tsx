@@ -121,6 +121,13 @@ export default function DiplomaProcessingAnimation({ userData, onComplete }: Dip
         const resultId = uuidv4()
         const paymentInfo = JSON.parse(localStorage.getItem("paymentInfo") || "{}")
 
+        // Get agent_code from referral cookie for ART feature
+        let agentCode: string | null = null
+        try {
+          const cookieMatch = document.cookie.match(/(?:^|; )referral_code=([^;]+)/)
+          agentCode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null
+        } catch { }
+
         const { error: insertError } = await supabase.from("results_cache").insert({
           result_id: resultId,
           phone_number: paymentInfo.phone || "",
@@ -128,6 +135,7 @@ export default function DiplomaProcessingAnimation({ userData, onComplete }: Dip
           name: paymentInfo.name || "",
           category: "diploma",
           eligible_courses: courses,
+          agent_code: agentCode,
         })
 
         if (insertError) {
@@ -148,7 +156,7 @@ export default function DiplomaProcessingAnimation({ userData, onComplete }: Dip
                 metadata: { category: "diploma", resultId, count: courses.length },
               }),
             })
-          } catch {}
+          } catch { }
         }
 
         setIsProcessing(false)

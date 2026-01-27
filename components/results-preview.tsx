@@ -234,12 +234,20 @@ export default function ResultsPreview({ category, userData, onProceed }: Result
         const resultId = uuidv4()
         const paymentInfo = JSON.parse(localStorage.getItem("paymentInfo") || "{}")
 
+        // Get agent_code from referral cookie for ART feature
+        let agentCode: string | null = null
+        try {
+          const cookieMatch = document.cookie.match(/(?:^|; )referral_code=([^;]+)/)
+          agentCode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null
+        } catch { }
+
         const { error: insertError } = await supabase.from("results_cache").insert({
           result_id: resultId,
           phone_number: paymentInfo.phone || "",
           email: paymentInfo.email || "",
           category: category,
           eligible_courses: courses,
+          agent_code: agentCode,
         })
 
         if (insertError) {

@@ -97,10 +97,18 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
             metadata: { category: "certificate", count: finalCourses.length },
           }),
         })
-      } catch {}
+      } catch { }
       try {
         const resultId = uuidv4()
         const paymentInfo = JSON.parse(localStorage.getItem("paymentInfo") || "{}")
+
+        // Get agent_code from referral cookie for ART feature
+        let agentCode: string | null = null
+        try {
+          const cookieMatch = document.cookie.match(/(?:^|; )referral_code=([^;]+)/)
+          agentCode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null
+        } catch { }
+
         const { error: insertError } = await supabase.from("results_cache").insert({
           result_id: resultId,
           phone_number: paymentInfo.phone || "",
@@ -108,6 +116,7 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
           name: paymentInfo.name || "",
           category: "certificate",
           eligible_courses: finalCourses,
+          agent_code: agentCode,
         })
         if (!insertError) {
           localStorage.setItem("resultId", resultId)
@@ -124,7 +133,7 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
                 metadata: { category: "certificate", resultId, count: finalCourses.length },
               }),
             })
-          } catch {}
+          } catch { }
         } else {
           log("certificate:cache", "Error storing results in cache", "error", insertError)
         }
@@ -170,22 +179,20 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 p-4 rounded-xl border transition-all duration-300 ${
-                    isActive
+                  className={`flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 p-4 rounded-xl border transition-all duration-300 ${isActive
                       ? "bg-primary/10 border-primary shadow-md"
                       : isCompleted
                         ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
                         : "bg-muted/50 border-border"
-                  }`}
+                    }`}
                 >
                   <div
-                    className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                      isActive
+                    className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${isActive
                         ? "bg-primary text-primary-foreground animate-pulse"
                         : isCompleted
                           ? "bg-green-500 text-white"
                           : "bg-muted text-white"
-                    }`}
+                      }`}
                   >
                     <AnimatePresence mode="wait">
                       {isActive ? (

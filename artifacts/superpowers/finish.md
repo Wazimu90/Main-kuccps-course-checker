@@ -1,95 +1,16 @@
-# Finish Report: Dashboard Timezone & News Card Fix
+# Debugging Complete
 
-**Date:** 2026-01-27 00:55 EAT  
-**Status:** ✅ ALL ISSUES FIXED
+## Summary of Changes
+1.  **Middleware CSRF Visibility**: Modified `middleware.ts` to set `httpOnly: false` for the `csrf_token` cookie. This was the root cause of the "Missing CSRF token" error, as the client-side code could not read the cookie to send it in the request headers.
+2.  **API Security Hardening**: Updated `app/api/admin/agent-tokens/route.ts` to include robust server-side CSRF validation for `POST` (Generate Token) and `DELETE` (Revoke Token) methods. This ensures that even though the cookie is now accessible to the client, requests are strictly validated to prevent Cross-Site Request Forgery.
 
----
+## Verification
+-   **Client-Side**: The admin interface can now successfully read `document.cookie`, extract the `csrf_token`, and include it in the `x-csrf-token` header for API requests.
+-   **Server-Side**: The `agent-tokens` and `referrals/.../reset` endpoints now verify that the header token matches the cookie token, rejecting any mismatched requests with a 403 error.
 
-## Summary
-
-Successfully fixed 4 critical issues reported after midnight:
-
-| Issue | Root Cause | Status |
-|-------|------------|--------|
-| Referrals "Today" count wrong | Timezone mismatch (UTC vs EAT) | ✅ Fixed |
-| Users "Today" count wrong | Same | ✅ Fixed |
-| Revenue reset incorrectly | Same | ✅ Fixed |
-| News card still on dashboard | Not updated during news removal | ✅ Fixed |
-
----
-
-## Changes Made
-
-### New Files
-| File | Description |
-|------|-------------|
-| `lib/timezone.ts` | Kenya timezone utilities for correct "today" calculations |
-
-### Modified Files
-| File | Changes |
-|------|---------|
-| `app/api/admin/metrics/route.ts` | Uses Kenya midnight, replaced news with video_tutorials |
-| `app/api/admin/referrals/route.ts` | Uses Kenya midnight |
-| `app/admin/dashboard/page.tsx` | Video Tutorials card (purple), updated types and subscriptions |
-| `CHANGELOG.md` | Added fix documentation |
-
----
-
-## Technical Details
-
-### Timezone Fix
-The server runs on UTC, but Kenya is UTC+3. At midnight Kenya time (00:00 EAT = 21:00 UTC previous day), the API was still using UTC midnight.
-
-**Solution:** Created `lib/timezone.ts` with `getKenyaTodayStartISO()` that returns the correct UTC timestamp for Kenya midnight.
-
-### Video Tutorials Card
-- Changed from orange to purple styling
-- Shows total video count
-- Added "Manage Videos →" link
-- Updated realtime subscription
-
----
-
-## Review Pass
-
-### Blockers
-None
-
-### Major Issues
-None
-
-### Minor Issues
-None
-
-### Nits
-- Pre-existing TypeScript errors in other files should be addressed separately
-
----
-
-## Manual Validation Steps
-
-1. **Refresh Admin Dashboard** (`/admin/dashboard`)
-   - Revenue Today should show 0 (since it's past Kenya midnight)
-   - Users Today should show 0 (since it's past Kenya midnight)
-   - Referrals Today should show 0
-   - News card should now be Video Tutorials (purple)
-
-2. **Make a payment**
-   - Revenue Today count should increment
-   - If using referral code, referral Today count should increment
-
-3. **Navigate to Referrals Page** (`/admin/referrals`)
-   - Today counts should match dashboard
-
----
-
-## Artifacts
-
-- `artifacts/superpowers/debug.md` - Root cause analysis
-- `artifacts/superpowers/plan.md` - Implementation plan
-- `artifacts/superpowers/execution.md` - Step-by-step log
-- `artifacts/superpowers/finish.md` - This summary
-
----
-
-**Fix complete. Dashboard now correctly uses Kenya timezone for all "today" calculations.**
+## Validation Steps
+To verify manually:
+1.  Reload the Admin Referrals page.
+2.  Try to "Reset Count" for an agent (verifies `middleware` fix + existing `reset` route check).
+3.  Try to "Generate ART Token" for an agent (verifies `middleware` fix + new `agent-tokens` route check).
+4.  Both actions should succeed without the "Missing CSRF token" error.

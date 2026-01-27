@@ -52,6 +52,13 @@ export default function LoadingAnimation({ userData, onComplete }: LoadingAnimat
         // Store results in Supabase
         const resultId = `result_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
+        // Get agent_code from referral cookie for ART feature
+        let agentCode: string | null = null
+        try {
+          const cookieMatch = document.cookie.match(/(?:^|; )referral_code=([^;]+)/)
+          agentCode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null
+        } catch { }
+
         const { error: insertError } = await supabase.from("results_cache").insert({
           result_id: resultId,
           category: userData.category,
@@ -59,6 +66,7 @@ export default function LoadingAnimation({ userData, onComplete }: LoadingAnimat
           name: userData.name,
           email: userData.email,
           phone_number: userData.phone,
+          agent_code: agentCode,
         })
 
         if (insertError) {

@@ -21,6 +21,7 @@ export async function POST(request: Request) {
       : 'degree' // Default to 'degree' if missing/invalid
 
     const admin_access_code = body.admin_access_code ? String(body.admin_access_code) : ""
+    const result_id = body.result_id ? String(body.result_id).trim() : null
     const paid_at = new Date().toISOString()
 
     log("api:payments", "Received payment recording request", "info", {
@@ -265,6 +266,7 @@ export async function POST(request: Request) {
               agent_name: referral_code || "default",
               paid_at,
               agent_id: agent_id,
+              result_id: result_id,
             })
         } catch { }
       }
@@ -344,6 +346,7 @@ export async function POST(request: Request) {
             agent_name: referral_code || "default",
             paid_at,
             agent_id: agent_id,
+            result_id: result_id,
           })
       } catch { }
     }

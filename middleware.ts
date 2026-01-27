@@ -212,7 +212,7 @@ export async function middleware(req: NextRequest) {
         const token = Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("")
         res.cookies.set("csrf_token", token, {
           path: "/",
-          httpOnly: true,
+          httpOnly: false,
           sameSite: "lax",
           secure: true,
           maxAge: 60 * 60,

@@ -384,6 +384,7 @@ export default function PaymentPage() {
               phone_number: formData.phone,
               amount: currentChargeAmount,
               course_category: validCategory,
+              result_id: localStorage.getItem("resultId") || null,
             }),
           })
 

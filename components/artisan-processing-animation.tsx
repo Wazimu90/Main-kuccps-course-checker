@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle2, Loader2, Database, Search, Filter, Award, Users } from "lucide-react"
 import { fetchArtisanCourses, type ArtisanCourse } from "@/lib/artisan-course-eligibility"
 import { supabase } from "@/lib/supabase"
- 
+
 
 interface ArtisanProcessingAnimationProps {
   userData: {
@@ -100,6 +100,13 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
             const userEmail = localStorage.getItem("userEmail") || ""
             const userName = localStorage.getItem("userName") || ""
 
+            // Get agent_code from referral cookie for ART feature
+            let agentCode: string | null = null
+            try {
+              const cookieMatch = document.cookie.match(/(?:^|; )referral_code=([^;]+)/)
+              agentCode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null
+            } catch { }
+
             // Store results in Supabase results_cache table
             const { error: insertError } = await supabase.from("results_cache").insert({
               result_id: resultId,
@@ -108,6 +115,7 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
               phone_number: userPhone,
               email: userEmail,
               name: userName,
+              agent_code: agentCode,
             })
 
             if (insertError) {
@@ -127,7 +135,7 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
                     metadata: { category: "artisan", resultId, count: qualifiedCourses.length },
                   }),
                 })
-              } catch {}
+              } catch { }
             }
 
             setIsProcessing(false)
@@ -172,20 +180,18 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
                   transition={{ delay: index * 0.1 }}
                 >
                   <Card
-                    className={`backdrop-blur-sm border transition-all duration-500 ${
-                      isCompleted
+                    className={`backdrop-blur-sm border transition-all duration-500 ${isCompleted
                         ? "bg-green-500/20 border-green-400/50"
                         : isActive
                           ? "bg-orange-500/20 border-orange-400/50"
                           : "bg-card/40 border-border/50"
-                    }`}
+                      }`}
                   >
                     <CardContent className="p-6">
                       <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 max-w-full overflow-hidden">
                         <div
-                          className={`p-3 rounded-full transition-all duration-500 ${
-                            isCompleted ? "bg-green-500/30" : isActive ? "bg-orange-500/30" : "bg-muted/30"
-                          }`}
+                          className={`p-3 rounded-full transition-all duration-500 ${isCompleted ? "bg-green-500/30" : isActive ? "bg-orange-500/30" : "bg-muted/30"
+                            }`}
                         >
                           {isCompleted ? (
                             <CheckCircle2 className="h-6 w-6 text-green-400" />
@@ -199,22 +205,20 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
                         <div className="flex-1">
                           <p className="text-sm text-light hidden sm:block">{step.title}</p>
                           <p
-                            className={`text-sm transition-colors duration-500 ${
-                              isCompleted
+                            className={`text-sm transition-colors duration-500 ${isCompleted
                                 ? "text-green-300/80"
                                 : isActive
                                   ? "text-orange-300/80"
                                   : "text-light"
-                            }`}
+                              }`}
                           >
                             {step.description}
                           </p>
                         </div>
 
                         <div
-                          className={`text-sm font-medium transition-colors duration-500 ${
-                            isCompleted ? "text-green-400" : isActive ? "text-orange-400" : "text-white"
-                          }`}
+                          className={`text-sm font-medium transition-colors duration-500 ${isCompleted ? "text-green-400" : isActive ? "text-orange-400" : "text-white"
+                            }`}
                         >
                           {isCompleted ? "Complete" : isActive ? "Processing..." : "Pending"}
                         </div>

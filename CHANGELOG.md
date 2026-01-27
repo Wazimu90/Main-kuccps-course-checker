@@ -7,6 +7,136 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - 2026-01-27 (Admin CSRF Token & Security Fix)
+
+**Problem:** Administrators encountered persistent "Missing CSRF token" errors when attempting to generate ART tokens or reset referral counts, requiring frequent page reloads.
+
+**Root Cause:**
+- The `csrf_token` cookie was set to `httpOnly: true` in middleware, preventing the client-side application from reading it to send in the `x-csrf-token` header (Double Submit Cookie pattern).
+- Additionally, the `agent-tokens` API endpoint was missing server-side validation to enforce the token check.
+
+**Fix Applied:**
+- **Middleware Update:** Changed `csrf_token` cookie to `httpOnly: false` (while keeping `secure: true` and `sameSite: "lax"`), allowing legitimate client-side access for header submission.
+- **API Security Hardening:** Added explicit server-side validation to `app/api/admin/agent-tokens/route.ts` ensuring `x-csrf-token` header matches the cookie for `POST` and `DELETE` requests.
+
+**Impact:**
+- Admin actions (Token Generation, Count Reset) now work reliably without errors.
+- Improved security posture for Agent Token management APIs.
+
+### Added - 2026-01-27 (Admin Token Management UI)
+
+**Objective:** Add a user-friendly interface for administrators to generate, view, and revoke Agent Regeneration Tokens (ART) directly from the referrals page.
+
+**Admin Referrals Page Updates:**
+- **New "Generate ART Token" Menu Item** - Added to agent dropdown actions
+- **Token Management Modal** with:
+  - Token generation form with configurable expiry (1-30 days, default 7)
+  - One-time token display with copy-to-clipboard button
+  - Warning message about token visibility
+  - Existing tokens list showing:
+    - Token prefix (first 12 characters)
+    - Status badges (Active/Expired/Revoked)
+    - Created and expiry dates
+  - Revoke button for active tokens
+- **TokenInfo Type** - New TypeScript type for token data
+- **New State Variables** - Token modal state, loading, expiry days
+- **API Integration Functions:**
+  - `openTokenModal()` - Opens modal and fetches existing tokens
+  - `fetchAgentTokens()` - Retrieves tokens for an agent
+  - `generateToken()` - Creates new ART token via API
+  - `revokeToken()` - Deactivates a token via API
+  - `copyToClipboard()` - Copies generated token to clipboard
+
+### Added - 2026-01-27 (Agent Re-Download Feature - ART System)
+
+**Objective:** Implement a secure Agent Regeneration Token (ART) system that allows agents to help students re-download PDF results for already-paid transactions, without bypassing payments or generating new results.
+
+**Database Migrations (6 new tables/columns):**
+1. **`results_cache.agent_code`** - New column to track which agent referred each user
+2. **`payments.result_id`** - New column to link payments to result cache entries
+3. **`agent_tokens`** - New table for secure ART storage with bcrypt hashing
+4. **`agent_download_logs`** - Audit table for all agent download attempts
+5. **`agent_download_counters`** - Daily download limit tracking per agent
+6. **`result_download_counts`** - Per-result download limit tracking (max 3)
+
+**Backend APIs Created:**
+- **`/api/admin/agent-tokens`** (POST/GET/DELETE) - Admin token management
+  - Generate new ART tokens with 7-day expiry
+  - List tokens for an agent
+  - Deactivate tokens
+- **`/api/agent-portal/verify-token`** (POST) - Token verification
+  - Rate limited: 5 attempts/minute per IP
+  - Returns agent info and remaining quota
+- **`/api/agent-portal/verify-payment`** (POST) - Payment verification
+  - Validates result_id, phone, mpesa_receipt
+  - Checks agent ownership via agent_code
+  - Enforces per-result limit (3 downloads)
+- **`/api/agent-portal/download-pdf`** (POST) - PDF generation
+  - Full verification flow
+  - Server-side PDF generation matching client format
+  - Atomic counter increments
+  - Complete audit logging
+
+**Frontend Updates:**
+- **Results Page PDF Modal** - Added:
+  - Copyable Result ID display
+  - Instruction text: "Copy this Result ID. If your Results PDF download fails, send it to your agent for help."
+  - Copy-to-clipboard button with toast feedback
+  - Subtle glow animation on Download button
+- **Agent Portal Page** (`/agent-portal`) - New page:
+  - Token entry form with password field
+  - Agent info card with daily quota display
+  - Payment verification form (Result ID, phone, M-Pesa receipt)
+  - Download flow with progress states
+  - Error handling for all edge cases
+
+**Security & Infrastructure:**
+- **Rate Limiting** (`lib/rate-limit.ts`) - In-memory sliding window rate limiter
+- **PDF Generator** (`lib/pdf-generator.ts`) - Server-side PDF generation
+- **Glow Animation** (`app/globals.css`) - CSS keyframes for button glow
+
+**Data Flow Changes:**
+- All processing animations now read `referral_code` from cookie and include `agent_code` in `results_cache` insert
+- Payment page now sends `result_id` to `/api/payments`
+- Payments API now stores `result_id` in payments table
+
+**Limits Enforced:**
+- 20 downloads/day per agent (resets at 00:00 Africa/Nairobi)
+- 3 downloads/lifetime per result_id
+- Token expiry: 7 days from creation
+- API rate limits per IP
+
+**Files Created:**
+- `app/api/admin/agent-tokens/route.ts`
+- `app/api/agent-portal/verify-token/route.ts`
+- `app/api/agent-portal/verify-payment/route.ts`
+- `app/api/agent-portal/download-pdf/route.ts`
+- `app/agent-portal/page.tsx`
+- `lib/rate-limit.ts`
+- `lib/pdf-generator.ts`
+
+**Files Modified:**
+- `app/globals.css` (glow animation)
+- `app/results/page.tsx` (Result ID display)
+- `app/payment/page.tsx` (send result_id)
+- `app/api/payments/route.ts` (store result_id)
+- `components/results-preview.tsx` (agent_code)
+- `components/loading-animation.tsx` (agent_code)
+- `components/diploma-processing-animation.tsx` (agent_code)
+- `components/certificate-processing-animation.tsx` (agent_code)
+- `components/artisan-processing-animation.tsx` (agent_code)
+- `components/kmtc-processing-animation.tsx` (agent_code)
+
+**Impact:**
+- Agents can now regenerate PDFs for students who lost their downloads
+- Complete audit trail of all agent activities
+- Strong security with bcrypt token hashing and rate limiting
+- No bypass of payment requirement possible
+- Students see their Result ID prominently with copy button
+
+**References:**
+- [artifacts/superpowers/plan.md](artifacts/superpowers/plan.md)
+
 ### Fixed - 2026-01-27 (SEO: Breadcrumb Structured Data)
 
 **Problem:** Google Search Console reported "Invalid URL in field 'id' (in 'itemListElement.item')" warnings for breadcrumb structured data on pages like `/degree`, `/diploma`, `/buy-data`.

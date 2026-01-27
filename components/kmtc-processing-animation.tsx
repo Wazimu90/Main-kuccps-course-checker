@@ -154,6 +154,13 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
         }
       }
 
+      // Get agent_code from referral cookie for ART feature
+      let agentCode: string | null = null
+      try {
+        const cookieMatch = document.cookie.match(/(?:^|; )referral_code=([^;]+)/)
+        agentCode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null
+      } catch { }
+
       const { error: cacheError } = await supabase.from("results_cache").insert({
         result_id: resultId,
         name: userInfo.name,
@@ -161,6 +168,7 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
         phone_number: userInfo.phone,
         category: "kmtc",
         eligible_courses: qualifiedCourses,
+        agent_code: agentCode,
       })
 
       if (cacheError) {
@@ -182,7 +190,7 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
             metadata: { category: "kmtc", resultId, count: qualifiedCourses.length },
           }),
         })
-      } catch {}
+      } catch { }
 
       for (let i = 0; i <= 100; i += 20) {
         updateStepStatus(4, "processing", i)
@@ -227,15 +235,14 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left space-x-4 p-4 rounded-lg transition-all duration-300 ${
-                    isActive
+                  className={`flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left space-x-4 p-4 rounded-lg transition-all duration-300 ${isActive
                       ? "bg-primary/10 border border-primary/20"
                       : isCompleted
                         ? "bg-green-50 dark:bg-green-900/20"
                         : isError
                           ? "bg-red-50 dark:bg-red-900/20"
                           : "bg-muted/50"
-                  }`}
+                    }`}
                 >
                   <div className="flex-shrink-0">
                     <AnimatePresence mode="wait">

@@ -1,120 +1,27 @@
-# Plan: Fix Invalid URL in Breadcrumb Structured Data
+### Goal
+Fix persistent "Missing CSRF token" error on admin side when generating ART tokens and resetting counts. Ensure the CSRF protection mechanism functions correctly by allowing the client to read the CSRF token.
 
-**Date:** 2026-01-27  
-**Task:** Fix Google Search Console warning "Invalid URL in field 'id' (in 'itemListElement.item')" for breadcrumbs
+### Assumptions
+- The error "Missing CSRF token" is thrown client-side in `app/admin/referrals/page.tsx` because `document.cookie` cannot read the `csrf_token` cookie.
+- The root cause is `middleware.ts` setting `httpOnly: true` for the `csrf_token`.
+- The application intends to use the Double Submit Cookie pattern (Client reads cookie -> sends in Header -> Server compares), which requires the cookie to be readable by the client (`httpOnly: false`).
+- The `agent-tokens` API route is currently missing server-side validation, which should be added for a complete fix.
 
----
+### Plan
+1. **Enable Client-Side Access to CSRF Token**
+   - Files: `middleware.ts`
+   - Change: Update the `csrf_token` cookie options to set `httpOnly: false`. This allows `document.cookie` to read the token.
+   - Verify: Review `middleware.ts` to ensure `httpOnly` is false while `secure` and `sameSite` remain set.
 
-## Goal
+2. **Add Server-Side CSRF Validation to ART Token Generation**
+   - Files: `app/api/admin/agent-tokens/route.ts`
+   - Change: Add validation logic to compare the `x-csrf-token` header with the `csrf_token` cookie, ensuring they match. This closes the security loop.
+   - Verify: Review code to ensure it correctly extracts and compares the tokens, returning 403 on mismatch.
 
-Fix the Schema.org BreadcrumbList structured data so that each breadcrumb item has a valid, absolute URL in its `id` property. This will resolve the Google Search Console warnings for:
-- https://kuccpscoursechecker.co.ke/degree-courses
-- https://kuccpscoursechecker.co.ke/buy-data
-- https://kuccpscoursechecker.co.ke/degree
-- https://kuccpscoursechecker.co.ke/diploma
+### Risks & mitigations
+- **Risk**: `httpOnly: false` makes the CSRF token accessible to XSS attacks.
+  - **Mitigation**: This is inherent to the Double Submit Cookie pattern without a separate specialized token endpoint. Given the existing architecture, this is the intended design. Ensure `secure: true` is kept to prevent leakage over HTTP.
 
----
-
-## Assumptions
-
-1. The issue is in `components/Breadcrumbs.tsx` which renders Schema.org BreadcrumbList structured data
-2. The root cause is that `itemProp="item"` on `<Link>` and `<span>` elements doesn't provide an explicit `id` attribute with an absolute URL
-3. Schema.org requires `item.id` to be a full absolute URL (e.g., `https://kuccpscoursechecker.co.ke/degree`)
-4. The `/degree-courses` URL in Google's report is likely from a cached/old page visit; our current routes are `/degree`, `/diploma`, `/buy-data`, etc.
-5. The site's base URL is `https://kuccpscoursechecker.co.ke`
-
----
-
-## Plan
-
-### Step 1: Update Breadcrumbs Component - Add `itemID` with Absolute URLs
-**Files:** `components/Breadcrumbs.tsx`  
-**Change:**
-- Add `itemID` attribute to each breadcrumb element with the full absolute URL
-- For the Home item: `itemID="https://kuccpscoursechecker.co.ke/"`
-- For other items: `itemID="https://kuccpscoursechecker.co.ke{currentPath}"`
-- Use a constant for the base URL to ensure consistency
-
-**Verify:**
-```bash
-npm run build
-```
-Expected: Build succeeds with no errors
-
----
-
-### Step 2: Test Structured Data Locally
-**Files:** None (verification step)  
-**Change:** None  
-**Verify:**
-1. Run the dev server: `npm run dev`
-2. Visit pages like `/degree`, `/diploma`, `/buy-data` in browser
-3. Inspect the HTML source and verify breadcrumb `<li>` elements have `itemid` attributes with full absolute URLs
-
----
-
-### Step 3: Validate with Google Rich Results Test
-**Files:** None (verification step)  
-**Change:** None  
-**Verify:**
-1. After deployment, use Google's Rich Results Test: https://search.google.com/test/rich-results
-2. Test URLs: `/degree`, `/diploma`, `/buy-data`
-3. Confirm no "Invalid URL in field 'id'" warnings appear for BreadcrumbList
-
----
-
-### Step 4: Update CHANGELOG.md
-**Files:** `CHANGELOG.md`  
-**Change:**
-- Add entry documenting the fix for breadcrumb structured data `itemID` attributes
-
-**Verify:**
-```bash
-git diff CHANGELOG.md
-```
-Expected: Shows the new changelog entry
-
----
-
-## Risks & Mitigations
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| `itemID` not recognized by React/Next.js | Low | Medium | Use lowercase `itemid` if camelCase doesn't work; test build first |
-| Base URL hardcoded incorrectly | Low | High | Use environment variable or constant; verify in rich results test |
-| Other pages have same issue | Medium | Low | The fix applies globally via the Breadcrumbs component |
-
----
-
-## Rollback Plan
-
-1. Revert changes to `components/Breadcrumbs.tsx`:
-   ```bash
-   git checkout HEAD~1 -- components/Breadcrumbs.tsx
-   ```
-2. Redeploy the application
-3. The structured data will return to its previous state (non-critical warning only)
-
----
-
-## Technical Details
-
-### Current Code (Problem)
-```tsx
-<Link href={item.href} itemProp="item">
-  <span itemProp="name">{item.label}</span>
-</Link>
-```
-
-### Fixed Code (Solution)
-```tsx
-<Link 
-  href={item.href} 
-  itemProp="item"
-  itemID={`https://kuccpscoursechecker.co.ke${item.href}`}
->
-  <span itemProp="name">{item.label}</span>
-</Link>
-```
-
-The `itemID` attribute explicitly tells Schema.org validators what the URL identifier is for each breadcrumb item.
+### Rollback plan
+- Revert changes to `middleware.ts` (set `httpOnly: true` again).
+- Remove validation logic from `app/api/admin/agent-tokens/route.ts`.
