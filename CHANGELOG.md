@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - 2026-01-27 (Admin UI Visibility)
+
+- Fixed white-on-white text visibility issue in Admin Token generation modal by forcing black text color on the display container and existing tokens list.
+
 ### Fixed - 2026-01-27 (Admin CSRF Token & Security Fix)
 
 **Problem:** Administrators encountered persistent "Missing CSRF token" errors when attempting to generate ART tokens or reset referral counts, requiring frequent page reloads.

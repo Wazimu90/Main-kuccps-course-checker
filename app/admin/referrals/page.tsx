@@ -680,7 +680,7 @@ export default function ReferralsPage() {
                   <CheckCircle2 className="h-5 w-5" />
                   Token Generated Successfully!
                 </h3>
-                <div className="bg-white rounded-md p-3 font-mono text-sm break-all border border-green-200">
+                <div className="bg-white text-black rounded-md p-3 font-mono text-sm break-all border border-green-200">
                   {generatedToken}
                 </div>
                 <div className="flex items-center gap-2 mt-3">
@@ -720,7 +720,7 @@ export default function ReferralsPage() {
                     return (
                       <div
                         key={token.id}
-                        className={`flex items-center justify-between p-3 rounded-md border ${isActive ? 'bg-white' : 'bg-gray-100 opacity-60'
+                        className={`flex items-center justify-between p-3 rounded-md border ${isActive ? 'bg-white text-black' : 'bg-gray-100 opacity-60'
                           }`}
                       >
                         <div className="flex-1 min-w-0">
