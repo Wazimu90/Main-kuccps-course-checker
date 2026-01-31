@@ -386,6 +386,64 @@ export async function POST(request: Request) {
       } catch { }
     }
 
+    // CRITICAL FIX: Update results_cache with user details after payment
+    // The results_cache was created during preview with empty user data
+    if (result_id) {
+      try {
+        const { error: cacheUpdateError } = await supabaseServer
+          .from("results_cache")
+          .update({
+            name: name,
+            phone_number: phone_number,
+            email: email,
+            agent_code: referral_code || null,
+          })
+          .eq("result_id", result_id)
+
+        if (cacheUpdateError) {
+          log("api:payments:cache", "Failed to update results_cache with user details", "warn", {
+            result_id,
+            error: cacheUpdateError.message
+          })
+        } else {
+          log("api:payments:cache", "✅ Updated results_cache with user details", "success", {
+            result_id,
+            email,
+            phone: phone_number
+          })
+        }
+      } catch (e: any) {
+        log("api:payments:cache", "Exception updating results_cache", "error", { error: e?.message })
+      }
+
+      // CRITICAL FIX: Ensure result_id is saved in payments table
+      // The RPC function may not handle result_id, so we update the most recent payment
+      try {
+        const { error: paymentUpdateError } = await supabaseServer
+          .from("payments")
+          .update({ result_id: result_id })
+          .eq("email", email)
+          .eq("phone_number", phone_number)
+          .is("result_id", null)
+          .order("paid_at", { ascending: false })
+          .limit(1)
+
+        if (paymentUpdateError) {
+          log("api:payments:result_id", "Failed to update payment with result_id", "warn", {
+            result_id,
+            error: paymentUpdateError.message
+          })
+        } else {
+          log("api:payments:result_id", "✅ Updated payment record with result_id", "success", {
+            result_id,
+            email
+          })
+        }
+      } catch (e: any) {
+        log("api:payments:result_id", "Exception updating payment result_id", "error", { error: e?.message })
+      }
+    }
+
     return NextResponse.json({ ok: true })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Failed to process payment" }, { status: 500 })

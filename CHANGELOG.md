@@ -7,6 +7,82 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - 2026-01-31 (n8n Webhook Integration for Email Notifications)
+
+**Objective:** Automatically send user details to an n8n webhook after successful payment, enabling automated email notifications with result information.
+
+**New Files Created:**
+- **`lib/n8n-webhook.ts`** - Webhook utility module:
+  - `N8nWebhookPayload` interface defining required fields
+  - `formatPhoneNumber()` - Converts phone to +254xxx format
+  - `validatePayload()` - Ensures all required fields are present
+  - `sendToN8nWebhook()` - Main function with:
+    - 10-second timeout using AbortController
+    - Comprehensive logging for debugging
+    - Fail-safe error handling (doesn't throw)
+    - Non-blocking design (won't delay payment responses)
+
+**Integration Point:**
+- **PesaFlux Webhook Handler** (`app/api/payments/webhook/route.ts`):
+  - After successful payment recording, sends data to n8n webhook
+  - Payload structure:
+    ```json
+    {
+      "name": "User Name",
+      "phone": "+254727921038",
+      "mpesaCode": "ABC123XYZ",
+      "email": "customer@example.com",
+      "resultId": "RES-2024-001"
+    }
+    ```
+  - Webhook failures don't affect payment processing
+
+**Environment Configuration:**
+- Added `N8N_WEBHOOK_URL` to `.env.local`
+- User must add their actual n8n webhook URL
+
+**Impact:**
+- Users will receive automated email notifications with their result details
+- Complete audit trail via logging
+- Zero impact on payment flow if webhook fails
+
+**References:**
+- [lib/n8n-webhook.ts](lib/n8n-webhook.ts)
+- [app/api/payments/webhook/route.ts](app/api/payments/webhook/route.ts)
+
+### Fixed - 2026-01-31 (CRITICAL: Result Cache and Payment Tracking Data Persistence)
+
+**Problem:** After successful payments, the `results_cache` table was missing user details (`name`, `phone_number`, `email`, `agent_code`), and the `payments` table was missing `result_id`. This prevented proper tracking of results and their associated payments.
+
+**Root Causes:**
+1. `results_cache` was created during the preview stage (before payment) with empty/anonymous user data and was never updated after payment.
+2. The RPC function `fn_record_payment_and_update_user` does not handle `result_id`, so when it succeeded, the payment record had a null `result_id`.
+
+**Fixes Applied:**
+- **Results Cache Update**: Added logic to update `results_cache` with user details (`name`, `phone_number`, `email`, `agent_code`) after payment is recorded, using the `result_id` to find the correct row.
+- **Payment Result ID Update**: Added logic to update the `payments` table to ensure `result_id` is set on the most recent payment record for the user when it's null.
+
+**Impact:**
+- `results_cache` now contains complete user information after payment
+- `payments` table now properly links to `results_cache` via `result_id`
+- Enables proper tracking of results and their payments for agent portal and admin features
+
+**References:**
+- [app/api/payments/route.ts](app/api/payments/route.ts)
+
+### Added - 2026-01-27 (Documentation: Student Guide)
+
+**Objective:** Create a comprehensive, non-technical guide for students to understand all features of the website.
+
+- **New Student Guide Created** (`docs/KUCCPS_COURSE_CHECKER_STUDENT_GUIDE.md`)
+  - Detailed overview of all website features and tools
+  - Step-by-step "Quick Start" guide
+  - Comprehensive inventory of all pages and routes
+  - Explanations for Degree, Diploma, Certificate, Artisan, and KMTC checkers
+  - Guides for Cluster Calculator, Results Page, and PDF Downloads
+  - Information on Payment, Refunds, and Support
+  - FAQ and Glossary sections
+
 ### Fixed - 2026-01-27 (Admin UI Visibility)
 
 - Fixed white-on-white text visibility issue in Admin Token generation modal by forcing black text color on the display container and existing tokens list.

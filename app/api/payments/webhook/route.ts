@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { supabaseServer } from "@/lib/supabaseServer"
 import { log } from "@/lib/logger"
+import { sendToN8nWebhook } from "@/lib/n8n-webhook"
 
 // Force dynamic rendering to prevent caching of webhook endpoint
 export const dynamic = "force-dynamic"
@@ -229,6 +230,35 @@ export async function POST(request: Request) {
                     reference: transaction.reference,
                     email: transaction.email,
                 })
+
+                // Send user details to n8n webhook for email notification
+                // This is non-blocking and fail-safe - won't affect payment processing
+                try {
+                    const webhookResult = await sendToN8nWebhook({
+                        name: transaction.name || "",
+                        phone: transaction.phone_number || "",
+                        mpesaCode: mpesaReceiptNumber || "",
+                        email: transaction.email || "",
+                        resultId: transaction.result_id || transaction.reference || ""
+                    })
+
+                    if (webhookResult.success) {
+                        log("webhook:pesaflux", "✅ n8n webhook sent successfully", "success", {
+                            email: transaction.email,
+                            resultId: transaction.result_id || transaction.reference
+                        })
+                    } else {
+                        log("webhook:pesaflux", "⚠️ n8n webhook not sent", "warn", {
+                            reason: webhookResult.error,
+                            email: transaction.email
+                        })
+                    }
+                } catch (webhookError: any) {
+                    // Log but don't fail - webhook is non-critical
+                    log("webhook:pesaflux", "⚠️ n8n webhook error (non-critical)", "warn", {
+                        error: webhookError?.message || String(webhookError)
+                    })
+                }
 
                 // Log activity
                 await supabaseServer.from("activity_logs").insert({
