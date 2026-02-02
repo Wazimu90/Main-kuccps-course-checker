@@ -251,115 +251,35 @@ export async function POST(request: Request) {
 
             try {
                 // ============================================================
-                // CRITICAL: Fetch the REAL result_id from payments table
-                // Use name + email from payment_transactions to find matching payment
-                // DO NOT fall back to reference unless absolutely necessary
+                // SIMPLIFIED: Read result_id directly from payment_transactions
+                // It's now stored during payment initiation from localStorage
                 // ============================================================
                 let resultIdToUse: string | null = null;
                 let resultIdSource = "none";
 
-                // Strategy 1: Query payments table by name AND email
-                if (transaction.name && transaction.email) {
-                    log("webhook:pesaflux", "🔍 Looking up result_id by name + email", "info", {
-                        name: transaction.name,
-                        email: transaction.email
+                // Primary source: payment_transactions.result_id (stored at initiation)
+                if (transaction.result_id) {
+                    resultIdToUse = transaction.result_id;
+                    resultIdSource = "payment_transactions";
+                    log("webhook:pesaflux", "✅ Using result_id from payment_transactions", "success", {
+                        resultId: resultIdToUse
                     });
-
-                    const { data: paymentByNameEmail, error: err1 } = await supabaseServer
-                        .from("payments")
-                        .select("result_id")
-                        .eq("name", transaction.name)
-                        .eq("email", transaction.email)
-                        .not("result_id", "is", null)
-                        .order("created_at", { ascending: false })
-                        .limit(1)
-                        .maybeSingle();
-
-                    if (paymentByNameEmail?.result_id) {
-                        resultIdToUse = paymentByNameEmail.result_id;
-                        resultIdSource = "payments_table_name_email";
-                        log("webhook:pesaflux", "✅ Found result_id by name + email", "success", {
-                            resultId: resultIdToUse
-                        });
-                    } else {
-                        log("webhook:pesaflux", "⚠️ No result_id found by name + email", "warn", { error: err1 });
-                    }
-                }
-
-                // Strategy 2: If not found, try email + phone
-                if (!resultIdToUse && transaction.email && transaction.phone_number) {
-                    log("webhook:pesaflux", "🔍 Trying email + phone lookup", "info", {
-                        email: transaction.email,
-                        phone: transaction.phone_number
-                    });
-
-                    const { data: paymentByEmailPhone } = await supabaseServer
-                        .from("payments")
-                        .select("result_id")
-                        .eq("email", transaction.email)
-                        .eq("phone_number", transaction.phone_number)
-                        .not("result_id", "is", null)
-                        .order("created_at", { ascending: false })
-                        .limit(1)
-                        .maybeSingle();
-
-                    if (paymentByEmailPhone?.result_id) {
-                        resultIdToUse = paymentByEmailPhone.result_id;
-                        resultIdSource = "payments_table_email_phone";
-                        log("webhook:pesaflux", "✅ Found result_id by email + phone", "success", {
-                            resultId: resultIdToUse
-                        });
-                    }
-                }
-
-                // Strategy 3: Try just email (broadest match)
-                if (!resultIdToUse && transaction.email) {
-                    log("webhook:pesaflux", "🔍 Trying email-only lookup as last resort", "info", {
-                        email: transaction.email
-                    });
-
-                    const { data: paymentByEmail } = await supabaseServer
-                        .from("payments")
-                        .select("result_id")
-                        .eq("email", transaction.email)
-                        .not("result_id", "is", null)
-                        .order("created_at", { ascending: false })
-                        .limit(1)
-                        .maybeSingle();
-
-                    if (paymentByEmail?.result_id) {
-                        resultIdToUse = paymentByEmail.result_id;
-                        resultIdSource = "payments_table_email_only";
-                        log("webhook:pesaflux", "✅ Found result_id by email only", "success", {
-                            resultId: resultIdToUse
-                        });
-                    }
-                }
-
-                // LAST RESORT: Use reference (but log a warning!)
-                if (!resultIdToUse) {
+                } else {
+                    // Legacy fallback: Use payment reference (for old transactions without result_id)
                     resultIdToUse = transaction.reference;
                     resultIdSource = "fallback_reference";
-                    log("webhook:pesaflux", "⚠️ CRITICAL: Could not find real result_id, using payment reference as fallback!", "error", {
+                    log("webhook:pesaflux", "⚠️ No result_id in payment_transactions, using reference as fallback", "warn", {
                         reference: transaction.reference,
-                        name: transaction.name,
-                        email: transaction.email,
-                        phone: transaction.phone_number
+                        hint: "This transaction was created before result_id was stored in payment_transactions"
                     });
                 }
 
-                log("webhook:pesaflux", "📤 Calling n8n webhook with result_id", "info", {
+                log("webhook:pesaflux", "📤 Calling n8n webhook", "info", {
                     resultId: resultIdToUse,
                     resultIdSource,
                     email: transaction.email,
-                    name: transaction.name
-                });
-
-                log("webhook:pesaflux", "📤 Calling n8n webhook NOW", "info", {
-                    email: transaction.email,
-                    resultId: resultIdToUse,
-                    phone: transaction.phone_number,
-                    name: transaction.name
+                    name: transaction.name,
+                    phone: transaction.phone_number
                 });
 
                 // 2. Prepare payload and send
@@ -415,37 +335,41 @@ export async function POST(request: Request) {
                     email: transaction.email
                 })
 
-                await supabaseServer.from("activity_logs").insert({
-                    event_type: "webhook.n8n.exception",
-                    description: `N8N Webhook threw exception: ${webhookError?.message}`,
-                    actor_role: "system",
-                    email: transaction.email,
-                    metadata: {
-                        error: webhookError?.message || String(webhookError),
-                        reference: transaction.reference
-                    },
-                }).catch(() => { }) // Ignore insert errors
+                try {
+                    await supabaseServer.from("activity_logs").insert({
+                        event_type: "webhook.n8n.exception",
+                        description: `N8N Webhook threw exception: ${webhookError?.message}`,
+                        actor_role: "system",
+                        email: transaction.email,
+                        metadata: {
+                            error: webhookError?.message || String(webhookError),
+                            reference: transaction.reference
+                        },
+                    })
+                } catch { /* Ignore insert errors */ }
             }
 
             // ============================================================
             // STEP 3: Log overall activity
             // ============================================================
-            await supabaseServer.from("activity_logs").insert({
-                event_type: rpcSucceeded ? "payment.webhook.success" : "payment.webhook.partial",
-                description: `Payment COMPLETED via webhook: ${transaction.reference}${rpcSucceeded ? "" : " (RPC failed but n8n attempted)"}`,
-                actor_role: "system",
-                email: transaction.email,
-                phone_number: transaction.phone_number,
-                ip_address: ipAddress,
-                metadata: {
-                    reference: transaction.reference,
-                    amount: actualAmount,
-                    mpesa_receipt_number: mpesaReceiptNumber,
-                    rpcSucceeded
-                },
-            }).catch((logError) => {
+            try {
+                await supabaseServer.from("activity_logs").insert({
+                    event_type: rpcSucceeded ? "payment.webhook.success" : "payment.webhook.partial",
+                    description: `Payment COMPLETED via webhook: ${transaction.reference}${rpcSucceeded ? "" : " (RPC failed but n8n attempted)"}`,
+                    actor_role: "system",
+                    email: transaction.email,
+                    phone_number: transaction.phone_number,
+                    ip_address: ipAddress,
+                    metadata: {
+                        reference: transaction.reference,
+                        amount: actualAmount,
+                        mpesa_receipt_number: mpesaReceiptNumber,
+                        rpcSucceeded
+                    },
+                })
+            } catch (logError) {
                 log("webhook:pesaflux", "Failed to insert activity log", "warn", { logError })
-            })
+            }
         } else if (internalStatus === "FAILED" || internalStatus === "CANCELLED") {
             // Log failed/cancelled payment
             await supabaseServer.from("activity_logs").insert({

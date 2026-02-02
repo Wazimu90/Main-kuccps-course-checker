@@ -38,6 +38,7 @@ export default function PaymentPage() {
   const [isAdminMode, setIsAdminMode] = useState(false)
   const [adminKey, setAdminKey] = useState("")
   const [courseCategory, setCourseCategory] = useState<string | null>(null)
+  const [resultId, setResultId] = useState<string | null>(null)  // CRITICAL: Store result_id for n8n
   const [paymentAmount, setPaymentAmount] = useState<number | null>(null) // Will be fetched from database
   const [isLoadingAmount, setIsLoadingAmount] = useState(true)
   const [currentChargeAmount, setCurrentChargeAmount] = useState<number>(200) // Track current charge amount
@@ -95,10 +96,15 @@ export default function PaymentPage() {
     }
     try {
       const category = localStorage.getItem("selectedCategory")
+      const storedResultId = localStorage.getItem("resultId")  // CRITICAL: Get result_id for n8n
       const parsed = savedData ? JSON.parse(savedData) : null
       const resolved = (category || parsed?.category || "").toString()
       setCourseCategory(resolved || null)
-      log("payment:init", "Loaded grade data and category", "debug", { category: resolved || null })
+      setResultId(storedResultId || null)
+      log("payment:init", "Loaded grade data and category", "debug", {
+        category: resolved || null,
+        resultId: storedResultId || null
+      })
     } catch { }
   }, [router, toast])
 
@@ -268,6 +274,7 @@ export default function PaymentPage() {
         name: formData.name,
         amount: amountToCharge,
         courseCategory: courseCategory,
+        resultId: resultId,  // CRITICAL: Pass result_id for n8n webhook
       })
 
       if (response.success && response.paymentId) {

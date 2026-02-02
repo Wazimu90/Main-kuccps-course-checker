@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - 2026-02-02 (result_id Now Stored in payment_transactions)
+
+**Problem:** The n8n webhook was receiving the payment reference (e.g., `PAY-xxx`) instead of the actual result ID (e.g., `degree_xxx`) because the lookup from the `payments` table was failing due to data format inconsistencies.
+
+**Solution:** Store `result_id` directly in `payment_transactions` at payment initiation, eliminating the need for cross-table lookups.
+
+**Database Change:**
+```sql
+ALTER TABLE payment_transactions ADD COLUMN result_id TEXT;
+```
+
+**Code Changes:**
+1. `app/payment/actions.ts` - Added `resultId` parameter to `initiatePayment()` function
+2. `app/payment/page.tsx` - Reads `resultId` from `localStorage` and passes it to `initiatePayment()`
+3. `app/api/payments/webhook/route.ts` - Simplified to use `transaction.result_id` directly
+
+**Data Flow (New):**
+1. User generates results → `result_id` saved to `localStorage`
+2. User pays → `initiatePayment()` stores `result_id` in `payment_transactions`
+3. PesaFlux sends webhook → Handler reads `result_id` from `payment_transactions`
+4. n8n webhook receives the **real** result ID
+
+**Verification:**
+- Check `payment_transactions.result_id` after payment
+- Check `activity_logs.metadata.resultIdSource` - should be `payment_transactions`
+
+**References:**
+- [app/payment/actions.ts](app/payment/actions.ts)
+- [app/payment/page.tsx](app/payment/page.tsx)
+- [app/api/payments/webhook/route.ts](app/api/payments/webhook/route.ts)
+
 ### Added - 2026-01-31 (n8n Webhook Integration for Email Notifications)
 
 **Objective:** Automatically send user details to an n8n webhook after successful payment, enabling automated email notifications with result information.

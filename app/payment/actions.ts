@@ -13,6 +13,7 @@ export async function initiatePayment(data: {
   name: string
   amount: number
   courseCategory?: string | null
+  resultId?: string | null  // CRITICAL: Store result_id for n8n webhook
 }) {
   try {
     // Generate a unique reference for this transaction
@@ -58,6 +59,7 @@ export async function initiatePayment(data: {
           name: data.name,
           amount: data.amount,
           course_category: data.courseCategory || null,
+          result_id: data.resultId || null,  // CRITICAL: Store for n8n webhook
           status: "PENDING",
           created_at: new Date().toISOString(),
         })
