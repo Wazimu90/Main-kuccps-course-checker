@@ -37,12 +37,37 @@ export async function POST(request: Request) {
         const body = await request.json()
         const { token, result_id, phone_number, mpesa_receipt } = body
 
-        if (!token || !result_id) {
+        // Validation: require token AND (result_id OR (mpesa_receipt AND phone_number))
+        if (!token) {
             return NextResponse.json(
-                { error: "token and result_id are required" },
+                { error: "Token is required" },
                 { status: 400, headers: rateLimitHeaders(rateCheck) }
             )
         }
+
+        const hasResultId = result_id && String(result_id).trim()
+        const hasMpesaLookup = mpesa_receipt && phone_number && String(mpesa_receipt).trim() && String(phone_number).trim()
+
+        if (!hasResultId && !hasMpesaLookup) {
+            return NextResponse.json(
+                { error: "Either Result ID, or M-Pesa Receipt + Phone Number are required" },
+                { status: 400, headers: rateLimitHeaders(rateCheck) }
+            )
+        }
+
+        // Normalize phone number (if provided)
+        let normalizedPhone = ""
+        if (phone_number) {
+            normalizedPhone = String(phone_number).replace(/\s+/g, "")
+            if (normalizedPhone.startsWith("0") && normalizedPhone.length === 10) {
+                normalizedPhone = "254" + normalizedPhone.substring(1)
+            }
+            if (normalizedPhone.startsWith("+254")) {
+                normalizedPhone = normalizedPhone.substring(1)
+            }
+        }
+
+        let resolvedResultId = result_id
 
         // Step 1: Verify token
         const tokenPrefix = token.substring(0, 8)
@@ -66,7 +91,7 @@ export async function POST(request: Request) {
             .eq("is_active", true)
 
         if (tokenError || !tokenRecords || tokenRecords.length === 0) {
-            await logDownloadAttempt(null, null, result_id, "failure", "Token not found", ip, userAgent)
+            await logDownloadAttempt(null, null, resolvedResultId || "unknown", "failure", "Token not found", ip, userAgent)
             return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 })
         }
 
@@ -80,18 +105,18 @@ export async function POST(request: Request) {
         }
 
         if (!matchedToken) {
-            await logDownloadAttempt(null, null, result_id, "failure", "Token hash mismatch", ip, userAgent)
+            await logDownloadAttempt(null, null, resolvedResultId || "unknown", "failure", "Token hash mismatch", ip, userAgent)
             return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 })
         }
 
         if (new Date(matchedToken.expires_at) < new Date()) {
-            await logDownloadAttempt(matchedToken.agent_id, matchedToken.id, result_id, "failure", "Token expired", ip, userAgent)
+            await logDownloadAttempt(matchedToken.agent_id, matchedToken.id, resolvedResultId || "unknown", "failure", "Token expired", ip, userAgent)
             return NextResponse.json({ error: "Token has expired" }, { status: 401 })
         }
 
         const agent = matchedToken.referrals as any
         if (!agent || agent.status === "disabled") {
-            await logDownloadAttempt(matchedToken.agent_id, matchedToken.id, result_id, "failure", "Agent disabled", ip, userAgent)
+            await logDownloadAttempt(matchedToken.agent_id, matchedToken.id, resolvedResultId || "unknown", "failure", "Agent disabled", ip, userAgent)
             return NextResponse.json({ error: "Agent is disabled" }, { status: 403 })
         }
 
@@ -119,28 +144,101 @@ export async function POST(request: Request) {
         const downloadsToday = actualCounter?.downloads_today || 0
 
         if (downloadsToday >= DAILY_LIMIT) {
-            await logDownloadAttempt(agent.id, matchedToken.id, result_id, "failure", "Daily limit reached", ip, userAgent)
+            await logDownloadAttempt(agent.id, matchedToken.id, resolvedResultId || "unknown", "failure", "Daily limit reached", ip, userAgent)
             return NextResponse.json(
                 { error: `Daily download limit reached (${DAILY_LIMIT}/day). Try again tomorrow.` },
                 { status: 429 }
             )
         }
 
-        // Step 3: Get result from results_cache
-        const { data: resultRecord, error: resultError } = await supabaseServer
-            .from("results_cache")
-            .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
-            .eq("result_id", result_id)
-            .single()
+        // Step 3: Get result - either by result_id or by M-Pesa lookup
+        let resultRecord = null
 
-        if (resultError || !resultRecord) {
-            await logDownloadAttempt(agent.id, matchedToken.id, result_id, "failure", "Result not found", ip, userAgent)
+        if (hasResultId) {
+            // Direct lookup by result_id
+            const { data: record, error: resultError } = await supabaseServer
+                .from("results_cache")
+                .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
+                .eq("result_id", result_id)
+                .single()
+
+            if (resultError || !record) {
+                await logDownloadAttempt(agent.id, matchedToken.id, result_id, "failure", "Result not found", ip, userAgent)
+                return NextResponse.json({ error: "Result not found" }, { status: 404 })
+            }
+            resultRecord = record
+            resolvedResultId = record.result_id
+        } else if (hasMpesaLookup) {
+            // M-Pesa-based lookup
+            const { data: transaction } = await supabaseServer
+                .from("payment_transactions")
+                .select("id, phone_number, mpesa_receipt_number, status")
+                .eq("mpesa_receipt_number", mpesa_receipt.toUpperCase().trim())
+                .eq("status", "COMPLETED")
+                .single()
+
+            if (transaction) {
+                // Find result by transaction phone
+                const txPhone = transaction.phone_number || ""
+                let txNormalizedPhone = txPhone.replace(/\s+/g, "")
+                if (txNormalizedPhone.startsWith("0") && txNormalizedPhone.length === 10) {
+                    txNormalizedPhone = "254" + txNormalizedPhone.substring(1)
+                }
+                if (txNormalizedPhone.startsWith("+254")) {
+                    txNormalizedPhone = txNormalizedPhone.substring(1)
+                }
+
+                const { data: results } = await supabaseServer
+                    .from("results_cache")
+                    .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
+                    .or(`phone_number.eq.${txNormalizedPhone},phone_number.eq.0${txNormalizedPhone.substring(3)},phone_number.eq.${normalizedPhone},phone_number.eq.0${normalizedPhone.substring(3)}`)
+                    .order("created_at", { ascending: false })
+                    .limit(1)
+
+                if (results && results.length > 0) {
+                    resultRecord = results[0]
+                    resolvedResultId = resultRecord.result_id
+                }
+            }
+
+            // Fallback: try to find by phone in payments table
+            if (!resultRecord) {
+                const { data: payment } = await supabaseServer
+                    .from("payments")
+                    .select("result_id")
+                    .or(`phone_number.eq.${normalizedPhone},phone_number.eq.0${normalizedPhone.substring(3)}`)
+                    .order("paid_at", { ascending: false })
+                    .limit(1)
+                    .single()
+
+                if (payment?.result_id) {
+                    const { data: record } = await supabaseServer
+                        .from("results_cache")
+                        .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
+                        .eq("result_id", payment.result_id)
+                        .single()
+
+                    if (record) {
+                        resultRecord = record
+                        resolvedResultId = record.result_id
+                    }
+                }
+            }
+
+            if (!resultRecord) {
+                await logDownloadAttempt(agent.id, matchedToken.id, "mpesa:" + mpesa_receipt, "failure", "Result not found via M-Pesa lookup", ip, userAgent)
+                return NextResponse.json({ error: "Could not find result for this M-Pesa payment" }, { status: 404 })
+            }
+        }
+
+        if (!resultRecord) {
+            await logDownloadAttempt(agent.id, matchedToken.id, "unknown", "failure", "Result record missing", ip, userAgent)
             return NextResponse.json({ error: "Result not found" }, { status: 404 })
         }
 
         // Step 4: Verify agent ownership (if agent_code set)
         if (resultRecord.agent_code && resultRecord.agent_code !== agent.code) {
-            await logDownloadAttempt(agent.id, matchedToken.id, result_id, "failure", "Agent mismatch", ip, userAgent)
+            await logDownloadAttempt(agent.id, matchedToken.id, resolvedResultId, "failure", "Agent mismatch", ip, userAgent)
             return NextResponse.json({ error: "This result belongs to a different agent" }, { status: 403 })
         }
 
@@ -149,20 +247,20 @@ export async function POST(request: Request) {
         await supabaseServer
             .from("result_download_counts")
             .upsert(
-                { result_id, download_count: 0 },
+                { result_id: resolvedResultId, download_count: 0 },
                 { onConflict: "result_id", ignoreDuplicates: true }
             )
 
         const { data: resultCount } = await supabaseServer
             .from("result_download_counts")
             .select("download_count")
-            .eq("result_id", result_id)
+            .eq("result_id", resolvedResultId)
             .single()
 
         const downloadCount = resultCount?.download_count || 0
 
         if (downloadCount >= PER_RESULT_LIMIT) {
-            await logDownloadAttempt(agent.id, matchedToken.id, result_id, "failure", "Per-result limit reached", ip, userAgent)
+            await logDownloadAttempt(agent.id, matchedToken.id, resolvedResultId, "failure", "Per-result limit reached", ip, userAgent)
             return NextResponse.json(
                 { error: `Download limit reached for this result (max ${PER_RESULT_LIMIT})` },
                 { status: 429 }
@@ -173,7 +271,7 @@ export async function POST(request: Request) {
         const courses = resultRecord.eligible_courses || []
 
         if (!Array.isArray(courses) || courses.length === 0) {
-            await logDownloadAttempt(agent.id, matchedToken.id, result_id, "failure", "No courses in result", ip, userAgent)
+            await logDownloadAttempt(agent.id, matchedToken.id, resolvedResultId, "failure", "No courses in result", ip, userAgent)
             return NextResponse.json({ error: "No courses found in this result" }, { status: 400 })
         }
 
@@ -185,7 +283,7 @@ export async function POST(request: Request) {
                 email: resultRecord.email || "",
                 phone: resultRecord.phone_number || "",
             },
-            resultId: result_id,
+            resultId: resolvedResultId,
         })
 
         // Step 7: Increment counters atomically
@@ -201,21 +299,21 @@ export async function POST(request: Request) {
                 download_count: downloadCount + 1,
                 last_download_at: new Date().toISOString(),
             })
-            .eq("result_id", result_id)
+            .eq("result_id", resolvedResultId)
 
         // Step 8: Log success
-        await logDownloadAttempt(agent.id, matchedToken.id, result_id, "success", null, ip, userAgent)
+        await logDownloadAttempt(agent.id, matchedToken.id, resolvedResultId, "success", null, ip, userAgent)
 
         log("agent-portal:download-pdf", "PDF generated successfully", "success", {
             agent_id: agent.id,
             agent_name: agent.name,
-            result_id,
+            result_id: resolvedResultId,
             courses_count: courses.length,
             category: resultRecord.category,
         })
 
         // Return PDF
-        const filename = `KUCCPS_${resultRecord.category || "results"}_${result_id.substring(0, 8)}.pdf`
+        const filename = `KUCCPS_${resultRecord.category || "results"}_${resolvedResultId.substring(0, 8)}.pdf`
 
         return new NextResponse(pdfBuffer, {
             status: 200,

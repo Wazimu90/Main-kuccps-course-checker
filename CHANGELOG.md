@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - 2026-02-02 (M-Pesa-Based Result Lookup for Agents)
+
+**Feature:** Allow agents to regenerate user results using M-Pesa receipt code + phone number as an alternative to Result ID.
+
+**Problem Solved:** Previously, agents required the exact Result ID to regenerate a user's PDF results. If a student lost their Result ID, the agent could not help them without admin intervention.
+
+**New Workflow:**
+- **Option A:** Enter Result ID directly (existing flow, still works)
+- **Option B:** Enter M-Pesa Receipt Code + Phone Number → System automatically finds the associated result
+
+**Backend Changes:**
+1. `app/api/agent-portal/verify-payment/route.ts`:
+   - Accepts either `result_id` OR (`mpesa_receipt` AND `phone_number`)
+   - Looks up payment in `payment_transactions` by M-Pesa receipt
+   - Matches to `results_cache` by phone number
+   - Returns resolved `result_id` in response
+
+2. `app/api/agent-portal/download-pdf/route.ts`:
+   - Same flexible validation as verify-payment
+   - Resolves `result_id` before PDF generation
+   - All limits (daily + per-result) still apply
+
+**Frontend Changes:**
+1. `app/agent-portal/page.tsx`:
+   - Result ID field now labeled "(optional if using M-Pesa)"
+   - Added helper text explaining the two lookup options
+   - Visual separator between Result ID and M-Pesa fields
+   - Button enabled if Result ID OR (M-Pesa + Phone) is provided
+   - Stores resolved `result_id` from verification response
+
+**Security:**
+- Rate limiting unchanged (10 verify attempts/min, 5 downloads/min per IP)
+- Per-result download limit (3) still applies
+- Agent daily limit (20) still applies
+- Agent ownership verification still enforced
+
 ### Fixed - 2026-02-02 (result_id Now Stored in payment_transactions)
 
 **Problem:** The n8n webhook was receiving the payment reference (e.g., `PAY-xxx`) instead of the actual result ID (e.g., `degree_xxx`) because the lookup from the `payments` table was failing due to data format inconsistencies.

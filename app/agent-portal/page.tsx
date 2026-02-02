@@ -97,8 +97,12 @@ export default function AgentPortalPage() {
     }
 
     const handleVerifyPayment = async () => {
-        if (!resultId.trim()) {
-            setError("Please enter the Result ID")
+        // Validate: need either Result ID OR (M-Pesa Receipt + Phone Number)
+        const hasResultId = resultId.trim()
+        const hasMpesaLookup = mpesaReceipt.trim() && phoneNumber.trim()
+
+        if (!hasResultId && !hasMpesaLookup) {
+            setError("Please enter Result ID, or M-Pesa Receipt Code + Phone Number")
             return
         }
 
@@ -110,9 +114,9 @@ export default function AgentPortalPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    result_id: resultId.trim(),
-                    phone_number: phoneNumber.trim(),
-                    mpesa_receipt: mpesaReceipt.trim(),
+                    result_id: resultId.trim() || undefined,
+                    phone_number: phoneNumber.trim() || undefined,
+                    mpesa_receipt: mpesaReceipt.trim() || undefined,
                     agent_code: agent?.code,
                 }),
             })
@@ -130,6 +134,11 @@ export default function AgentPortalPage() {
 
             setVerifiedResult(data.result)
             setDownloadQuota(data.download_quota)
+
+            // Store the resolved result_id (important for M-Pesa lookups)
+            if (data.result?.result_id && !resultId.trim()) {
+                setResultId(data.result.result_id)
+            }
 
             toast({
                 title: "Payment Verified",
@@ -149,15 +158,18 @@ export default function AgentPortalPage() {
         setStep("downloading")
         setError(null)
 
+        // Use the result_id from verification (handles M-Pesa lookups)
+        const downloadResultId = verifiedResult.result_id
+
         try {
             const res = await fetch("/api/agent-portal/download-pdf", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     token: token.trim(),
-                    result_id: resultId.trim(),
-                    phone_number: phoneNumber.trim(),
-                    mpesa_receipt: mpesaReceipt.trim(),
+                    result_id: downloadResultId,
+                    phone_number: phoneNumber.trim() || undefined,
+                    mpesa_receipt: mpesaReceipt.trim() || undefined,
                 }),
             })
 
@@ -173,7 +185,7 @@ export default function AgentPortalPage() {
             const url = window.URL.createObjectURL(blob)
             const a = document.createElement("a")
             a.href = url
-            a.download = `KUCCPS_${verifiedResult.category}_${resultId.substring(0, 8)}.pdf`
+            a.download = `KUCCPS_${verifiedResult.category}_${downloadResultId.substring(0, 8)}.pdf`
             document.body.appendChild(a)
             a.click()
             document.body.removeChild(a)
@@ -342,12 +354,21 @@ export default function AgentPortalPage() {
                                         Verify Student Payment
                                     </CardTitle>
                                     <CardDescription className="text-slate-300">
-                                        Enter the student's Result ID and contact details
+                                        Enter <strong>Result ID</strong> OR <strong>M-Pesa Receipt + Phone Number</strong>
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
+                                    {/* Helper text explaining lookup options */}
+                                    <div className="bg-slate-700/50 rounded-lg p-3 text-sm text-slate-300">
+                                        <p className="font-medium text-indigo-300 mb-1">💡 Two ways to find results:</p>
+                                        <ul className="list-disc list-inside space-y-1 text-xs">
+                                            <li><strong>Option A:</strong> Enter the Result ID directly</li>
+                                            <li><strong>Option B:</strong> Enter M-Pesa Receipt Code + Phone Number</li>
+                                        </ul>
+                                    </div>
+
                                     <div className="space-y-2">
-                                        <Label htmlFor="resultId" className="text-slate-200">Result ID *</Label>
+                                        <Label htmlFor="resultId" className="text-slate-200">Result ID (optional if using M-Pesa)</Label>
                                         <Input
                                             id="resultId"
                                             value={resultId}
@@ -357,24 +378,30 @@ export default function AgentPortalPage() {
                                         />
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="phoneNumber" className="text-slate-200">Phone Number (optional)</Label>
-                                        <Input
-                                            id="phoneNumber"
-                                            value={phoneNumber}
-                                            onChange={(e) => setPhoneNumber(e.target.value)}
-                                            placeholder="0712345678"
-                                            className="bg-slate-700 border-slate-600 text-white"
-                                        />
+                                    <div className="relative flex items-center py-2">
+                                        <div className="flex-grow border-t border-slate-600"></div>
+                                        <span className="flex-shrink mx-3 text-slate-400 text-xs">OR use M-Pesa details</span>
+                                        <div className="flex-grow border-t border-slate-600"></div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="mpesaReceipt" className="text-slate-200">M-Pesa Receipt (optional)</Label>
+                                        <Label htmlFor="mpesaReceipt" className="text-slate-200">M-Pesa Receipt Code</Label>
                                         <Input
                                             id="mpesaReceipt"
                                             value={mpesaReceipt}
                                             onChange={(e) => setMpesaReceipt(e.target.value.toUpperCase())}
                                             placeholder="e.g., SAB123XYZ"
+                                            className="bg-slate-700 border-slate-600 text-white"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="phoneNumber" className="text-slate-200">Phone Number {!resultId.trim() && "(required for M-Pesa lookup)"}</Label>
+                                        <Input
+                                            id="phoneNumber"
+                                            value={phoneNumber}
+                                            onChange={(e) => setPhoneNumber(e.target.value)}
+                                            placeholder="0712345678"
                                             className="bg-slate-700 border-slate-600 text-white"
                                         />
                                     </div>
@@ -389,7 +416,7 @@ export default function AgentPortalPage() {
                                     {!verifiedResult && (
                                         <Button
                                             onClick={handleVerifyPayment}
-                                            disabled={loading || !resultId.trim()}
+                                            disabled={loading || (!resultId.trim() && (!mpesaReceipt.trim() || !phoneNumber.trim()))}
                                             className="w-full bg-indigo-600 hover:bg-indigo-700"
                                         >
                                             {loading ? (

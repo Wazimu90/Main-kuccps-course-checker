@@ -1,65 +1,125 @@
-# Execution Log: Add result_id to payment_transactions
+# Execution Log: M-Pesa Based Result Regeneration
 
-## Plan Summary
-Adding `result_id` column to `payment_transactions` table and updating the data flow so the n8n webhook receives the real result ID instead of the payment reference.
+## Step 1: Update verify-payment API
+**Status:** ✅ Complete
 
----
+### Files Changed
+- `app/api/agent-portal/verify-payment/route.ts`
 
-## Step 1: Add `result_id` Column to Database ✅
-- **Change**: Applied migration via Supabase MCP
-  ```sql
-  ALTER TABLE payment_transactions ADD COLUMN result_id TEXT;
-  ```
-- **Verification**: `SELECT column_name FROM information_schema.columns WHERE table_name = 'payment_transactions' AND column_name = 'result_id';`
-- **Result**: PASS - Column created successfully
+### Changes Made
+- Modified validation: now accepts **either** `result_id` **OR** (`mpesa_receipt` AND `phone_number`)
+- Added M-Pesa-based lookup path:
+  1. Looks up payment in `payment_transactions` by `mpesa_receipt_number`
+  2. Uses transaction's phone number to find matching `results_cache` entry
+  3. Returns discovered `result_id` in response
+- Kept existing `result_id` flow intact as primary path
+- Added `resolvedResultId` variable to track the result ID regardless of lookup method
+- Updated all internal references to use `resolvedResultId`
 
----
-
-## Step 2: Update `initiatePayment` Action ✅
-- **Files changed**: `app/payment/actions.ts`
-- **What changed**:
-  - Added `resultId?: string | null` to function parameter interface
-  - Included `result_id: data.resultId || null` in INSERT statement
-- **Verification**: Build (step 4)
-- **Result**: PASS
+### Verification
+- Command: `npx tsc --noEmit --skipLibCheck | Select-String "verify-payment"`
+- Result: ✅ No TypeScript errors for this file
 
 ---
 
-## Step 3: Update Payment Page ✅
-- **Files changed**: `app/payment/page.tsx`
-- **What changed**:
-  - Added `resultId` state variable
-  - Read from `localStorage.getItem("resultId")` on mount
-  - Pass `resultId` to `initiatePayment()` call
-- **Verification**: Build (step 4)
-- **Result**: PASS
+## Step 2: Update download-pdf API
+**Status:** ✅ Complete
+
+### Files Changed
+- `app/api/agent-portal/download-pdf/route.ts`
+
+### Changes Made
+- Modified validation: now accepts **either** `result_id` **OR** (`mpesa_receipt` AND `phone_number`)
+- Added M-Pesa-based lookup path:
+  1. Looks up payment in `payment_transactions` by `mpesa_receipt_number`
+  2. Uses transaction's phone number to find matching `results_cache` entry
+  3. Proceeds with existing PDF generation flow using resolved result_id
+- Kept all existing limits (daily + per-result) intact
+- Added `resolvedResultId` variable to track the result ID regardless of lookup method
+- Updated all internal references to use `resolvedResultId`
+
+### Verification
+- Command: `npx tsc --noEmit --skipLibCheck | Select-String "download-pdf"`
+- Result: ✅ No TypeScript errors for this file
 
 ---
 
-## Step 4: Update Webhook Handler ✅
-- **Files changed**: `app/api/payments/webhook/route.ts`
-- **What changed**:
-  - Removed complex 3-tier lookup from `payments` table
-  - Simplified to use `transaction.result_id` directly
-  - Fixed lint errors: replaced `.catch()` with try-catch blocks
-- **Verification**: `npm run build`
-- **Result**: PASS - Exit code: 0
+## Step 3: Update Agent Portal frontend
+**Status:** ✅ Complete
+
+### Files Changed
+- `app/agent-portal/page.tsx`
+
+### Changes Made
+- Changed Result ID label from `*` (required) to `(optional if using M-Pesa)`
+- Added helper text box explaining the two lookup options
+- Added visual separator ("OR use M-Pesa details") between Result ID and M-Pesa fields
+- Reordered fields: Result ID → M-Pesa Receipt → Phone Number
+- Updated Phone Number label to show "(required for M-Pesa lookup)" when no Result ID
+- Updated button disabled logic: enabled if `resultId` OR (`mpesaReceipt` AND `phoneNumber`)
+
+### Verification
+- Command: `npx tsc --noEmit --skipLibCheck | Select-String "agent-portal"`
+- Result: ✅ No TypeScript errors for this file
 
 ---
 
-## Step 5: Backfill Existing Transactions ⚠️
-- **Change**: Attempted to update legacy transactions
-- **Result**: 0 rows updated (no matching records due to phone format differences)
-- **Note**: All 570 existing transactions will use fallback_reference. New transactions will have proper result_id.
+## Step 4: Update handleVerifyPayment
+**Status:** ✅ Complete
+
+### Files Changed
+- `app/agent-portal/page.tsx`
+
+### Changes Made
+- Updated validation: now checks for either Result ID OR (M-Pesa + Phone)
+- Modified API request to send `undefined` for empty fields instead of empty strings
+- Added code to store the returned `result_id` in state after M-Pesa lookups
+
+### Verification
+- Included in Step 3 TypeScript check
 
 ---
 
-## Step 6: Update CHANGELOG ✅
-- **Files changed**: `CHANGELOG.md`
-- **What changed**: Added comprehensive entry documenting the fix
-- **Result**: PASS
+## Step 5: Update handleDownloadPDF
+**Status:** ✅ Complete
+
+### Files Changed
+- `app/agent-portal/page.tsx`
+
+### Changes Made
+- Created `downloadResultId` variable from `verifiedResult.result_id`
+- Updated API request to use `downloadResultId` instead of form input
+- Updated filename generation to use `downloadResultId`
+
+### Verification
+- Included in Step 3 TypeScript check
 
 ---
 
-## Summary
-All plan steps completed successfully. The n8n webhook will now receive the real `result_id` from `payment_transactions` instead of the payment reference.
+## Step 6: Update CHANGELOG.md
+**Status:** ✅ Complete
+
+### Files Changed
+- `CHANGELOG.md`
+
+### Changes Made
+- Added new entry under `[Unreleased]` for "M-Pesa-Based Result Lookup for Agents" feature
+- Documented the problem solved, new workflow, backend changes, frontend changes, and security notes
+
+### Verification
+- ✅ Entry visible in CHANGELOG.md
+
+---
+
+## Step 7: End-to-end manual test
+**Status:** ⏳ Pending user testing
+
+### Test Cases to Verify
+1. Navigate to `/agent-portal`
+2. Enter valid ART token → Verify token step succeeds
+3. **Test Case A:** Enter only Result ID → Verify + Download works
+4. **Test Case B:** Enter only M-Pesa Receipt + Phone → Verify + Download works
+5. **Test Case C:** Enter all three → Should work (Result ID takes priority)
+6. Verify download limits still apply
+
+---
