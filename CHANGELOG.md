@@ -63,6 +63,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **References:**
 - [app/api/payments/webhook/route.ts](app/api/payments/webhook/route.ts)
 
+### Fixed - 2026-02-02 (CRITICAL: Sending Payment Reference Instead of Result ID)
+
+**Problem:** The n8n webhook was sending the payment reference (e.g., "PAY-xxx") instead of the actual result ID (e.g., "degree_xxx"). This meant users received emails with incorrect/useless result identifiers.
+
+**Root Cause:** The lookup was falling back to `transaction.reference` too quickly. The query was using `email + phone_number` but the `payments` table might have different phone formats.
+
+**Fix Applied:**
+- Implemented 3-tier lookup strategy in priority order:
+  1. **Name + Email** (most reliable match)
+  2. **Email + Phone** (fallback)
+  3. **Email only** (broadest match)
+- Only falls back to `reference` if ALL strategies fail (logs critical warning)
+- Added `resultIdSource` to activity logs to track exactly where the ID came from
+
+**Verification:**
+- Check activity_logs for `resultIdSource` field
+- Should see "payments_table_name_email" in most cases
+- If you see "fallback_reference", investigate missing data in payments table
+
+**References:**
+- [app/api/payments/webhook/route.ts](app/api/payments/webhook/route.ts)
+
 **References:**
 - [lib/n8n-webhook.ts](lib/n8n-webhook.ts)
 - [app/api/payments/webhook/route.ts](app/api/payments/webhook/route.ts)

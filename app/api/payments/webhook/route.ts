@@ -250,11 +250,50 @@ export async function POST(request: Request) {
             })
 
             try {
-                // 1. Attempt to fetch result_id from payments table
-                let resultIdToUse = transaction.result_id || transaction.reference;
+                // ============================================================
+                // CRITICAL: Fetch the REAL result_id from payments table
+                // Use name + email from payment_transactions to find matching payment
+                // DO NOT fall back to reference unless absolutely necessary
+                // ============================================================
+                let resultIdToUse: string | null = null;
+                let resultIdSource = "none";
 
-                if (transaction.email && transaction.phone_number) {
-                    const { data: paymentRecord } = await supabaseServer
+                // Strategy 1: Query payments table by name AND email
+                if (transaction.name && transaction.email) {
+                    log("webhook:pesaflux", "🔍 Looking up result_id by name + email", "info", {
+                        name: transaction.name,
+                        email: transaction.email
+                    });
+
+                    const { data: paymentByNameEmail, error: err1 } = await supabaseServer
+                        .from("payments")
+                        .select("result_id")
+                        .eq("name", transaction.name)
+                        .eq("email", transaction.email)
+                        .not("result_id", "is", null)
+                        .order("created_at", { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+
+                    if (paymentByNameEmail?.result_id) {
+                        resultIdToUse = paymentByNameEmail.result_id;
+                        resultIdSource = "payments_table_name_email";
+                        log("webhook:pesaflux", "✅ Found result_id by name + email", "success", {
+                            resultId: resultIdToUse
+                        });
+                    } else {
+                        log("webhook:pesaflux", "⚠️ No result_id found by name + email", "warn", { error: err1 });
+                    }
+                }
+
+                // Strategy 2: If not found, try email + phone
+                if (!resultIdToUse && transaction.email && transaction.phone_number) {
+                    log("webhook:pesaflux", "🔍 Trying email + phone lookup", "info", {
+                        email: transaction.email,
+                        phone: transaction.phone_number
+                    });
+
+                    const { data: paymentByEmailPhone } = await supabaseServer
                         .from("payments")
                         .select("result_id")
                         .eq("email", transaction.email)
@@ -264,13 +303,57 @@ export async function POST(request: Request) {
                         .limit(1)
                         .maybeSingle();
 
-                    if (paymentRecord?.result_id) {
-                        resultIdToUse = paymentRecord.result_id;
-                        log("webhook:pesaflux", "🔹 ResultID found in payments table", "info", { resultId: resultIdToUse });
-                    } else {
-                        log("webhook:pesaflux", "🔹 No result_id in payments table, using fallback", "info", { fallback: resultIdToUse });
+                    if (paymentByEmailPhone?.result_id) {
+                        resultIdToUse = paymentByEmailPhone.result_id;
+                        resultIdSource = "payments_table_email_phone";
+                        log("webhook:pesaflux", "✅ Found result_id by email + phone", "success", {
+                            resultId: resultIdToUse
+                        });
                     }
                 }
+
+                // Strategy 3: Try just email (broadest match)
+                if (!resultIdToUse && transaction.email) {
+                    log("webhook:pesaflux", "🔍 Trying email-only lookup as last resort", "info", {
+                        email: transaction.email
+                    });
+
+                    const { data: paymentByEmail } = await supabaseServer
+                        .from("payments")
+                        .select("result_id")
+                        .eq("email", transaction.email)
+                        .not("result_id", "is", null)
+                        .order("created_at", { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+
+                    if (paymentByEmail?.result_id) {
+                        resultIdToUse = paymentByEmail.result_id;
+                        resultIdSource = "payments_table_email_only";
+                        log("webhook:pesaflux", "✅ Found result_id by email only", "success", {
+                            resultId: resultIdToUse
+                        });
+                    }
+                }
+
+                // LAST RESORT: Use reference (but log a warning!)
+                if (!resultIdToUse) {
+                    resultIdToUse = transaction.reference;
+                    resultIdSource = "fallback_reference";
+                    log("webhook:pesaflux", "⚠️ CRITICAL: Could not find real result_id, using payment reference as fallback!", "error", {
+                        reference: transaction.reference,
+                        name: transaction.name,
+                        email: transaction.email,
+                        phone: transaction.phone_number
+                    });
+                }
+
+                log("webhook:pesaflux", "📤 Calling n8n webhook with result_id", "info", {
+                    resultId: resultIdToUse,
+                    resultIdSource,
+                    email: transaction.email,
+                    name: transaction.name
+                });
 
                 log("webhook:pesaflux", "📤 Calling n8n webhook NOW", "info", {
                     email: transaction.email,
@@ -301,6 +384,7 @@ export async function POST(request: Request) {
                         email: transaction.email,
                         metadata: {
                             resultId: resultIdToUse,
+                            resultIdSource,
                             reference: transaction.reference,
                             rpcSucceeded
                         },
@@ -318,6 +402,8 @@ export async function POST(request: Request) {
                         email: transaction.email,
                         metadata: {
                             error: webhookResult.error,
+                            resultId: resultIdToUse,
+                            resultIdSource,
                             reference: transaction.reference,
                             rpcSucceeded
                         },
