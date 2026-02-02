@@ -33,10 +33,10 @@ export interface N8nWebhookResult {
  */
 function formatPhoneNumber(phone: string): string {
   if (!phone) return ""
-  
+
   // Remove any non-digit characters except +
   let cleaned = phone.replace(/[^\d+]/g, "")
-  
+
   // If starts with 0, replace with +254
   if (cleaned.startsWith("0") && cleaned.length === 10) {
     cleaned = "+254" + cleaned.substring(1)
@@ -49,7 +49,7 @@ function formatPhoneNumber(phone: string): string {
   else if (!cleaned.startsWith("+") && cleaned.length === 9) {
     cleaned = "+254" + cleaned
   }
-  
+
   return cleaned
 }
 
@@ -60,14 +60,14 @@ function formatPhoneNumber(phone: string): string {
  */
 function validatePayload(data: Partial<N8nWebhookPayload>): data is N8nWebhookPayload {
   const requiredFields: (keyof N8nWebhookPayload)[] = ["name", "phone", "mpesaCode", "email", "resultId"]
-  
+
   for (const field of requiredFields) {
     if (!data[field] || String(data[field]).trim() === "") {
-      log("n8n:webhook", `Missing required field: ${field}`, "warn", { field, value: data[field] })
+      log("n8n:webhook", `❌ Validation Failed: Field '${field}' is missing or empty`, "warn", { field, value: data[field], fullPayload: data })
       return false
     }
   }
-  
+
   return true
 }
 
@@ -84,25 +84,33 @@ function validatePayload(data: Partial<N8nWebhookPayload>): data is N8nWebhookPa
  */
 export async function sendToN8nWebhook(data: Partial<N8nWebhookPayload>): Promise<N8nWebhookResult> {
   const webhookUrl = process.env.N8N_WEBHOOK_URL
-  
+
   // Check if webhook URL is configured
   if (!webhookUrl || webhookUrl.trim() === "") {
-    log("n8n:webhook", "N8N_WEBHOOK_URL not configured, skipping webhook", "debug")
+    log("n8n:webhook", "❌ N8N_WEBHOOK_URL not configured in environment variables", "error")
     return { success: false, error: "Webhook URL not configured" }
   }
-  
+
+  try {
+    const urlObj = new URL(webhookUrl);
+    log("n8n:webhook", `🔄 Starting webhook process for URL: ${urlObj.hostname}${urlObj.pathname}`, "info", { inputData: data })
+  } catch (urlError) {
+    log("n8n:webhook", "⚠️ Invalid N8N_WEBHOOK_URL format", "error", { url: webhookUrl });
+    return { success: false, error: "Invalid Webhook URL format" }
+  }
+
   // Format phone number
   const formattedData = {
     ...data,
     phone: formatPhoneNumber(data.phone || "")
   }
-  
+
   // Validate all required fields are present
   if (!validatePayload(formattedData)) {
     log("n8n:webhook", "Payload validation failed, skipping webhook", "warn", formattedData)
     return { success: false, error: "Missing required fields" }
   }
-  
+
   // Prepare the exact payload structure
   const payload: N8nWebhookPayload = {
     name: formattedData.name.trim(),
@@ -111,7 +119,7 @@ export async function sendToN8nWebhook(data: Partial<N8nWebhookPayload>): Promis
     email: formattedData.email.trim(),
     resultId: formattedData.resultId.trim()
   }
-  
+
   log("n8n:webhook", "📤 Sending data to n8n webhook", "info", {
     email: payload.email,
     resultId: payload.resultId,
@@ -119,12 +127,12 @@ export async function sendToN8nWebhook(data: Partial<N8nWebhookPayload>): Promis
     hasPhone: !!payload.phone,
     hasMpesaCode: !!payload.mpesaCode
   })
-  
+
   try {
     // Create abort controller for timeout
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-    
+
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: {
@@ -133,19 +141,21 @@ export async function sendToN8nWebhook(data: Partial<N8nWebhookPayload>): Promis
       body: JSON.stringify(payload),
       signal: controller.signal
     })
-    
+
     clearTimeout(timeoutId)
-    
+
     if (!response.ok) {
-      const errorText = await response.text().catch(() => "Unknown error")
-      log("n8n:webhook", "❌ Webhook returned error response", "error", {
+      const errorText = await response.text().catch(() => "Could not read error body")
+      log("n8n:webhook", "❌ Webhook POST failed", "error", {
         status: response.status,
         statusText: response.statusText,
-        error: errorText
+        url: webhookUrl,
+        error: errorText,
+        payload
       })
       return { success: false, error: `HTTP ${response.status}: ${errorText}` }
     }
-    
+
     // Try to parse response
     let responseData: any = null
     try {
@@ -153,16 +163,16 @@ export async function sendToN8nWebhook(data: Partial<N8nWebhookPayload>): Promis
     } catch {
       // Response might not be JSON, that's okay
     }
-    
+
     log("n8n:webhook", "✅ Successfully sent data to n8n webhook", "success", {
       email: payload.email,
       resultId: payload.resultId,
       responseStatus: response.status,
       responseData
     })
-    
+
     return { success: true }
-    
+
   } catch (error: any) {
     // Handle abort (timeout)
     if (error.name === "AbortError") {
@@ -172,14 +182,14 @@ export async function sendToN8nWebhook(data: Partial<N8nWebhookPayload>): Promis
       })
       return { success: false, error: "Request timed out" }
     }
-    
+
     // Handle other errors
     log("n8n:webhook", "❌ Failed to send webhook", "error", {
       email: payload.email,
       resultId: payload.resultId,
       error: error.message || String(error)
     })
-    
+
     return { success: false, error: error.message || "Unknown error" }
   }
 }

@@ -182,26 +182,28 @@ export async function POST(request: Request) {
 
         // If payment is completed, record it in the payments table
         if (internalStatus === "COMPLETED") {
-            try {
-                const courseCategory = transaction.course_category || 'degree'
+            // Get IP address from request headers (needed for both RPC and logging)
+            const ipAddress =
+                request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+                request.headers.get("x-real-ip") ||
+                "0.0.0.0"
 
+            // Use actual paid amount from webhook
+            const actualAmount = amount ? Number(amount) : Number(transaction.amount) || 200
+            const courseCategory = transaction.course_category || 'degree'
+
+            // ============================================================
+            // STEP 1: Record Payment via RPC (may fail, but we continue)
+            // ============================================================
+            let rpcSucceeded = false
+            try {
                 log("webhook:pesaflux", "Recording payment to payments table", "info", {
                     reference: transaction.reference,
                     email: transaction.email,
-                    amount: transaction.amount,
+                    amount: actualAmount,
                     courseCategory,
                 })
 
-                // Get IP address from request headers
-                const ipAddress =
-                    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-                    request.headers.get("x-real-ip") ||
-                    "0.0.0.0"
-
-                // Use actual paid amount from webhook
-                const actualAmount = amount ? Number(amount) : Number(transaction.amount) || 200
-
-                // Record payment using RPC function
                 const { error: rpcError } = await supabaseServer.rpc("fn_record_payment_and_update_user", {
                     p_name: transaction.name,
                     p_email: transaction.email,
@@ -219,72 +221,145 @@ export async function POST(request: Request) {
                 })
 
                 if (rpcError) {
-                    log("webhook:pesaflux", "RPC error recording payment", "error", {
+                    log("webhook:pesaflux", "⚠️ RPC error recording payment (continuing to n8n webhook anyway)", "error", {
                         reference: transaction.reference,
                         error: rpcError,
                     })
-                    throw rpcError
-                }
-
-                log("webhook:pesaflux", "Payment recorded successfully", "success", {
-                    reference: transaction.reference,
-                    email: transaction.email,
-                })
-
-                // Send user details to n8n webhook for email notification
-                // This is non-blocking and fail-safe - won't affect payment processing
-                try {
-                    const webhookResult = await sendToN8nWebhook({
-                        name: transaction.name || "",
-                        phone: transaction.phone_number || "",
-                        mpesaCode: mpesaReceiptNumber || "",
-                        email: transaction.email || "",
-                        resultId: transaction.result_id || transaction.reference || ""
-                    })
-
-                    if (webhookResult.success) {
-                        log("webhook:pesaflux", "✅ n8n webhook sent successfully", "success", {
-                            email: transaction.email,
-                            resultId: transaction.result_id || transaction.reference
-                        })
-                    } else {
-                        log("webhook:pesaflux", "⚠️ n8n webhook not sent", "warn", {
-                            reason: webhookResult.error,
-                            email: transaction.email
-                        })
-                    }
-                } catch (webhookError: any) {
-                    // Log but don't fail - webhook is non-critical
-                    log("webhook:pesaflux", "⚠️ n8n webhook error (non-critical)", "warn", {
-                        error: webhookError?.message || String(webhookError)
-                    })
-                }
-
-                // Log activity
-                await supabaseServer.from("activity_logs").insert({
-                    event_type: "payment.webhook.success",
-                    description: `Payment completed via webhook: ${transaction.reference}`,
-                    actor_role: "system",
-                    email: transaction.email,
-                    phone_number: transaction.phone_number,
-                    ip_address: ipAddress,
-                    metadata: {
+                    // Don't throw! We still want to send the n8n webhook
+                } else {
+                    rpcSucceeded = true
+                    log("webhook:pesaflux", "✅ Payment recorded successfully via RPC", "success", {
                         reference: transaction.reference,
-                        amount: actualAmount,
-                        mpesa_receipt_number: mpesaReceiptNumber,
-                    },
-                })
-            } catch (error) {
-                log("webhook:pesaflux", "Failed to record payment", "error", error)
-
-                await supabaseServer.from("activity_logs").insert({
-                    event_type: "payment.webhook.error",
-                    description: `Failed to record payment: ${transaction.reference}`,
-                    actor_role: "system",
-                    email: transaction.email,
-                    metadata: { reference: transaction.reference, error: String(error) },
+                        email: transaction.email,
+                    })
+                }
+            } catch (rpcException: any) {
+                log("webhook:pesaflux", "❌ RPC exception (continuing to n8n webhook anyway)", "error", {
+                    reference: transaction.reference,
+                    error: rpcException?.message || String(rpcException),
                 })
             }
+
+            // ============================================================
+            // STEP 2: Send n8n Webhook (ALWAYS runs for COMPLETED payments)
+            // ============================================================
+            log("webhook:pesaflux", "🚀 Starting n8n webhook process (independent of RPC)", "info", {
+                email: transaction.email,
+                reference: transaction.reference,
+                rpcSucceeded
+            })
+
+            try {
+                // 1. Attempt to fetch result_id from payments table
+                let resultIdToUse = transaction.result_id || transaction.reference;
+
+                if (transaction.email && transaction.phone_number) {
+                    const { data: paymentRecord } = await supabaseServer
+                        .from("payments")
+                        .select("result_id")
+                        .eq("email", transaction.email)
+                        .eq("phone_number", transaction.phone_number)
+                        .not("result_id", "is", null)
+                        .order("created_at", { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+
+                    if (paymentRecord?.result_id) {
+                        resultIdToUse = paymentRecord.result_id;
+                        log("webhook:pesaflux", "🔹 ResultID found in payments table", "info", { resultId: resultIdToUse });
+                    } else {
+                        log("webhook:pesaflux", "🔹 No result_id in payments table, using fallback", "info", { fallback: resultIdToUse });
+                    }
+                }
+
+                log("webhook:pesaflux", "📤 Calling n8n webhook NOW", "info", {
+                    email: transaction.email,
+                    resultId: resultIdToUse,
+                    phone: transaction.phone_number,
+                    name: transaction.name
+                });
+
+                // 2. Prepare payload and send
+                const webhookResult = await sendToN8nWebhook({
+                    name: transaction.name || "Valued Customer",
+                    phone: transaction.phone_number || phone || "",
+                    mpesaCode: mpesaReceiptNumber || transaction.mpesa_receipt_number || "PENDING",
+                    email: transaction.email || "",
+                    resultId: resultIdToUse || ""
+                })
+
+                if (webhookResult.success) {
+                    log("webhook:pesaflux", "✅ n8n webhook sent successfully!", "success", {
+                        email: transaction.email,
+                        resultId: resultIdToUse
+                    })
+
+                    await supabaseServer.from("activity_logs").insert({
+                        event_type: "webhook.n8n.success",
+                        description: `Successfully sent user details to n8n for ${transaction.email}`,
+                        actor_role: "system",
+                        email: transaction.email,
+                        metadata: {
+                            resultId: resultIdToUse,
+                            reference: transaction.reference,
+                            rpcSucceeded
+                        },
+                    })
+                } else {
+                    log("webhook:pesaflux", "⚠️ n8n webhook FAILED", "warn", {
+                        reason: webhookResult.error,
+                        email: transaction.email
+                    })
+
+                    await supabaseServer.from("activity_logs").insert({
+                        event_type: "webhook.n8n.failed",
+                        description: `N8N Webhook failed: ${webhookResult.error}`,
+                        actor_role: "system",
+                        email: transaction.email,
+                        metadata: {
+                            error: webhookResult.error,
+                            reference: transaction.reference,
+                            rpcSucceeded
+                        },
+                    })
+                }
+            } catch (webhookError: any) {
+                log("webhook:pesaflux", "❌ n8n webhook exception", "error", {
+                    error: webhookError?.message || String(webhookError),
+                    email: transaction.email
+                })
+
+                await supabaseServer.from("activity_logs").insert({
+                    event_type: "webhook.n8n.exception",
+                    description: `N8N Webhook threw exception: ${webhookError?.message}`,
+                    actor_role: "system",
+                    email: transaction.email,
+                    metadata: {
+                        error: webhookError?.message || String(webhookError),
+                        reference: transaction.reference
+                    },
+                }).catch(() => { }) // Ignore insert errors
+            }
+
+            // ============================================================
+            // STEP 3: Log overall activity
+            // ============================================================
+            await supabaseServer.from("activity_logs").insert({
+                event_type: rpcSucceeded ? "payment.webhook.success" : "payment.webhook.partial",
+                description: `Payment COMPLETED via webhook: ${transaction.reference}${rpcSucceeded ? "" : " (RPC failed but n8n attempted)"}`,
+                actor_role: "system",
+                email: transaction.email,
+                phone_number: transaction.phone_number,
+                ip_address: ipAddress,
+                metadata: {
+                    reference: transaction.reference,
+                    amount: actualAmount,
+                    mpesa_receipt_number: mpesaReceiptNumber,
+                    rpcSucceeded
+                },
+            }).catch((logError) => {
+                log("webhook:pesaflux", "Failed to insert activity log", "warn", { logError })
+            })
         } else if (internalStatus === "FAILED" || internalStatus === "CANCELLED") {
             // Log failed/cancelled payment
             await supabaseServer.from("activity_logs").insert({

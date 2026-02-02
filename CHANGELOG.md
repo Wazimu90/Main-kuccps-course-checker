@@ -15,16 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`lib/n8n-webhook.ts`** - Webhook utility module:
   - `N8nWebhookPayload` interface defining required fields
   - `formatPhoneNumber()` - Converts phone to +254xxx format
-  - `validatePayload()` - Ensures all required fields are present
+  - `validatePayload()` - Ensures all required fields are present with detailed error logging
   - `sendToN8nWebhook()` - Main function with:
     - 10-second timeout using AbortController
-    - Comprehensive logging for debugging
+    - Enhanced logging: URL domain verification, raw input data logging, and detailed fetch error bodies
     - Fail-safe error handling (doesn't throw)
     - Non-blocking design (won't delay payment responses)
 
 **Integration Point:**
 - **PesaFlux Webhook Handler** (`app/api/payments/webhook/route.ts`):
   - After successful payment recording, sends data to n8n webhook
+  - **Persistent Logging**: Now records n8n webhook status (success/fail) directly into the `activity_logs` database table for easier debugging.
+  - Robust `result_id` resolution: Fetches from `payments` table if missing.
   - Payload structure:
     ```json
     {
@@ -45,6 +47,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Users will receive automated email notifications with their result details
 - Complete audit trail via logging
 - Zero impact on payment flow if webhook fails
+
+### Fixed - 2026-02-02 (CRITICAL: n8n Webhook Not Firing)
+
+**Problem:** The n8n webhook was not being called during actual payment flows, even though manual tests worked.
+
+**Root Cause:** The n8n webhook call was nested inside the RPC success path. If `fn_record_payment_and_update_user` RPC failed for *any* reason (constraint violation, network issue, database timeout), the code would throw an exception and **skip the n8n webhook entirely**.
+
+**Fix Applied:**
+- Restructured `app/api/payments/webhook/route.ts` to separate the RPC call from the n8n webhook call.
+- The n8n webhook now runs **independently** of RPC success.
+- Even if the RPC fails, the webhook will still be attempted.
+- Added `rpcSucceeded` tracking to activity logs for debugging.
+
+**References:**
+- [app/api/payments/webhook/route.ts](app/api/payments/webhook/route.ts)
 
 **References:**
 - [lib/n8n-webhook.ts](lib/n8n-webhook.ts)

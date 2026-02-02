@@ -1,109 +1,63 @@
-# Plan: n8n Webhook Integration for Email Notifications
+# Plan: Debug and Fix n8n Webhook Delivery
 
 ## Goal
-Send user details to an n8n webhook URL after successful payment, enabling automated email notifications to users with their result information.
-
-## JSON Payload Structure
-```json
-{
-  "name": "User Name",
-  "phone": "+254727921038",
-  "mpesaCode": "ABC123XYZ",
-  "email": "customer@example.com",
-  "resultId": "artisane_rieru78549889yffhdh"
-}
-```
+Fix the issue where data is not being sent to the n8n webhook from the website, likely due to strict field validation or missing data in the transaction record.
 
 ## Assumptions
-- The n8n webhook URL will be added to `.env.local` as `N8N_WEBHOOK_URL`
-- The webhook should be called **after** a payment is confirmed as `COMPLETED`
-- We have access to all required fields (`name`, `phone`, `mpesaCode`, `email`, `resultId`) from the payment transaction and webhook data
-- The webhook call should be non-blocking (fire-and-forget) to not delay the payment response
-
-## Risks & Mitigations
-- **Risk**: n8n webhook might be down or slow
-  - **Mitigation**: Make webhook call async with timeout, log errors but don't fail payment
-- **Risk**: Missing fields (e.g., `resultId` not available)
-  - **Mitigation**: Only send webhook if all required fields are present, log warning otherwise
-- **Risk**: Duplicate webhook calls for same payment
-  - **Mitigation**: Add a flag to `payment_transactions` table to track if webhook was sent
+- The n8n URL is correct and reachable (verified by manual test).
+- The issue is caused by the `sendToN8nWebhook` function rejecting payloads because some fields (like `name` or `result_id`) might be empty in the source `payment_transactions` record.
+- Providing default values for non-critical fields (like `name`) will allow the webhook to succeed.
 
 ## Plan
 
-### Step 1: Add N8N_WEBHOOK_URL to environment configuration
-- **Files**: `.env.local`, `.env.example` (if exists)
-- **Change**:
-  - Add `N8N_WEBHOOK_URL=` placeholder to `.env.local`
-  - Document the new environment variable
-- **Verify**:
-  - Confirm the variable is readable: `grep N8N_WEBHOOK_URL .env.local`
-
-### Step 2: Create a utility function to send data to n8n webhook
-- **Files**: `lib/n8n-webhook.ts` (new file)
-- **Change**:
-  - Create a new utility function `sendToN8nWebhook(data: N8nWebhookPayload)`
-  - Function should:
-    - Validate all required fields are present
-    - Make a POST request to `process.env.N8N_WEBHOOK_URL`
-    - Use a 10-second timeout
-    - Log success/failure without throwing
-    - Return `{ success: boolean, error?: string }`
-- **Verify**:
-  - TypeScript compiles without errors: `npx tsc --noEmit lib/n8n-webhook.ts`
-
-### Step 3: Integrate webhook call into PesaFlux webhook handler
+### Step 1: Relax Validation and Add Defaults in Webhook Handler
 - **Files**: `app/api/payments/webhook/route.ts`
 - **Change**:
-  - Import `sendToN8nWebhook` from `lib/n8n-webhook`
-  - After payment is recorded successfully (after line 231), call `sendToN8nWebhook` with:
-    - `name`: from `transaction.name`
-    - `phone`: from `transaction.phone_number` (format as +254xxx)
-    - `mpesaCode`: from `mpesaReceiptNumber`
-    - `email`: from `transaction.email`
-    - `resultId`: from `transaction.result_id` or `transaction.reference`
-  - Log the webhook call result
-- **Verify**:
-  - Build passes: `npm run build`
-  - No TypeScript errors
+  - When calling `sendToN8nWebhook`, provide fallback values:
+    - `name`: Use `transaction.name` OR "Valued Customer" (if empty/null).
+    - `resultId`: Ensure fallback to `transaction.reference` or `transaction.transaction_id`.
+  - Log the payload *before* sending to help with future debugging.
+  - When relaxing the validations, the name, pho number and mpesa code can be null but the email and result id must be there - they are a must all.
+- **Verify**: `npm run build`
 
-### Step 4: Integrate webhook call into payments API route (fallback/direct recording)
-- **Files**: `app/api/payments/route.ts`
+### Step 2: Create a Test API Endpoint
+- **Files**: `app/api/debug/test-n8n/route.ts` (New)
 - **Change**:
-  - Import `sendToN8nWebhook` from `lib/n8n-webhook`
-  - After successful payment recording (after line 445), call `sendToN8nWebhook` with:
-    - `name`: from request body
-    - `phone`: from `phone_number` (format as +254xxx)
-    - `mpesaCode`: from body or transaction metadata (may need to pass from client)
-    - `email`: from request body
-    - `resultId`: from `result_id`
-  - Only call if we have the M-Pesa code available
-- **Verify**:
-  - Build passes: `npm run build`
+  - Create a secure (or simple) endpoint that allows manual triggering of the webhook with hardcoded "perfect" data.
+  - This allows us to verify if the Next.js environment itself can reach the external URL, ruling out firewall/network issues specific to the deployment.
+- **Verify**: User can visit `/api/debug/test-n8n` to see a success message.
 
-### Step 5: Update CHANGELOG.md
-- **Files**: `CHANGELOG.md`
+### Step 3: Update Library Logging
+- **Files**: `lib/n8n-webhook.ts`
 - **Change**:
-  - Add entry for n8n webhook integration feature
-- **Verify**:
-  - File updated correctly
+  - Enhance validation logging to explicitly state *which* value was rejected (e.g., "Name field was empty string").
+- **Verify**: Check logs after deployment.
 
-### Step 6: Final verification and testing
-- **Files**: N/A
-- **Change**: N/A
-- **Verify**:
-  - `npm run build` passes
-  - Check that webhook is called in logs (simulated or real test)
-  - Confirm all fields are correctly formatted per the spec
+## Risks & Mitigations
+- **Risk**: Sending "Valued Customer" might confuse the email template if it expects a real name.
+  - **Mitigation**: It's better than sending nothing. The email should be generic enough.
+- **Risk**: Abuse of Test Endpoint.
+  - **Mitigation**: We will make it a GET request that sends dummy data, harmless. Can be removed later.
+
+Make sure the email and result id is fetched and send on the n8n webhook.
+Fetch name, email, phone number from the payments_transactions table.
+Here is the table schema:
+table public.payment_transactions:
+  phone_number text not null,
+  email text not null,
+  name text not null,
+  mpesa_receipt_number text null,
+
+Then the result id of that user to be fetched from the payments table, making sure the email and phoen number are the same as the  ones on the payments_transactions table.
+Here is the payments table schema:
+ table public.payments:
+  name text not null,
+  email text null,
+  phone_number text null,
+  result_id text null,
+
 
 ## Rollback Plan
-- Delete `lib/n8n-webhook.ts`
-- Revert changes to `app/api/payments/webhook/route.ts`
-- Revert changes to `app/api/payments/route.ts`
-- Remove `N8N_WEBHOOK_URL` from environment files
+- Revert changes to `app/api/payments/webhook/route.ts`.
+- Delete `app/api/debug/test-n8n/route.ts`.
 
-## Acceptance Criteria
-1. ✅ When payment is successful, user details are sent to n8n webhook
-2. ✅ Payload matches the specified JSON structure exactly
-3. ✅ Webhook failures don't block payment processing
-4. ✅ All webhook calls are logged
-5. ✅ Environment variable is documented
