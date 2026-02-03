@@ -169,35 +169,61 @@ export async function POST(request: Request) {
             resultRecord = record
             resolvedResultId = record.result_id
         } else if (hasMpesaLookup) {
-            // M-Pesa-based lookup
+            // M-Pesa-based lookup - CRITICAL: Include result_id in query
             const { data: transaction } = await supabaseServer
                 .from("payment_transactions")
-                .select("id, phone_number, mpesa_receipt_number, status")
+                .select("id, phone_number, mpesa_receipt_number, status, result_id")
                 .eq("mpesa_receipt_number", mpesa_receipt.toUpperCase().trim())
                 .eq("status", "COMPLETED")
                 .single()
 
             if (transaction) {
-                // Find result by transaction phone
-                const txPhone = transaction.phone_number || ""
-                let txNormalizedPhone = txPhone.replace(/\s+/g, "")
-                if (txNormalizedPhone.startsWith("0") && txNormalizedPhone.length === 10) {
-                    txNormalizedPhone = "254" + txNormalizedPhone.substring(1)
-                }
-                if (txNormalizedPhone.startsWith("+254")) {
-                    txNormalizedPhone = txNormalizedPhone.substring(1)
-                }
+                // FIRST: Try to use result_id directly from payment_transactions
+                if (transaction.result_id) {
+                    resolvedResultId = transaction.result_id
+                    log("agent-portal:download-pdf", "Using result_id from payment_transactions", "debug", {
+                        result_id: resolvedResultId,
+                        mpesa_receipt
+                    })
 
-                const { data: results } = await supabaseServer
-                    .from("results_cache")
-                    .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
-                    .or(`phone_number.eq.${txNormalizedPhone},phone_number.eq.0${txNormalizedPhone.substring(3)},phone_number.eq.${normalizedPhone},phone_number.eq.0${normalizedPhone.substring(3)}`)
-                    .order("created_at", { ascending: false })
-                    .limit(1)
+                    // Fetch result record by ID
+                    const { data: record } = await supabaseServer
+                        .from("results_cache")
+                        .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
+                        .eq("result_id", resolvedResultId)
+                        .single()
 
-                if (results && results.length > 0) {
-                    resultRecord = results[0]
-                    resolvedResultId = resultRecord.result_id
+                    if (record) {
+                        resultRecord = record
+                    }
+                } else {
+                    // FALLBACK: Find result by transaction phone
+                    log("agent-portal:download-pdf", "⚠️ result_id missing in payment_transactions, using phone fallback", "warn", {
+                        mpesa_receipt,
+                        phone: transaction.phone_number,
+                        hint: "This transaction was likely created before result_id was stored"
+                    })
+
+                    const txPhone = transaction.phone_number || ""
+                    let txNormalizedPhone = txPhone.replace(/\s+/g, "")
+                    if (txNormalizedPhone.startsWith("0") && txNormalizedPhone.length === 10) {
+                        txNormalizedPhone = "254" + txNormalizedPhone.substring(1)
+                    }
+                    if (txNormalizedPhone.startsWith("+254")) {
+                        txNormalizedPhone = txNormalizedPhone.substring(1)
+                    }
+
+                    const { data: results } = await supabaseServer
+                        .from("results_cache")
+                        .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
+                        .or(`phone_number.eq.${txNormalizedPhone},phone_number.eq.0${txNormalizedPhone.substring(3)},phone_number.eq.${normalizedPhone},phone_number.eq.0${normalizedPhone.substring(3)}`)
+                        .order("created_at", { ascending: false })
+                        .limit(1)
+
+                    if (results && results.length > 0) {
+                        resultRecord = results[0]
+                        resolvedResultId = resultRecord.result_id
+                    }
                 }
             }
 

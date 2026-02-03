@@ -107,6 +107,10 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
               agentCode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null
             } catch { }
 
+            // CRITICAL: Store resultId in localStorage BEFORE database insert
+            localStorage.setItem("resultId", resultId)
+            console.log("✅ ResultId stored in localStorage (pre-insert):", resultId)
+
             // Store results in Supabase results_cache table
             const { error: insertError } = await supabase.from("results_cache").insert({
               result_id: resultId,
@@ -119,11 +123,9 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
             })
 
             if (insertError) {
-              console.error("❌ Error storing results in cache:", insertError)
+              console.error("⚠️ Error storing results in cache (localStorage still has resultId):", insertError)
             } else {
-              console.log("✅ Results stored successfully in cache with ID:", resultId)
-              // Store result ID in localStorage for results page
-              localStorage.setItem("resultId", resultId)
+              console.log("✅ Results stored successfully in database with ID:", resultId)
               try {
                 await fetch("/api/activity", {
                   method: "POST",
@@ -181,10 +183,10 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
                 >
                   <Card
                     className={`backdrop-blur-sm border transition-all duration-500 ${isCompleted
-                        ? "bg-green-500/20 border-green-400/50"
-                        : isActive
-                          ? "bg-orange-500/20 border-orange-400/50"
-                          : "bg-card/40 border-border/50"
+                      ? "bg-green-500/20 border-green-400/50"
+                      : isActive
+                        ? "bg-orange-500/20 border-orange-400/50"
+                        : "bg-card/40 border-border/50"
                       }`}
                   >
                     <CardContent className="p-6">
@@ -206,10 +208,10 @@ export default function ArtisanProcessingAnimation({ userData, onComplete }: Art
                           <p className="text-sm text-light hidden sm:block">{step.title}</p>
                           <p
                             className={`text-sm transition-colors duration-500 ${isCompleted
-                                ? "text-green-300/80"
-                                : isActive
-                                  ? "text-orange-300/80"
-                                  : "text-light"
+                              ? "text-green-300/80"
+                              : isActive
+                                ? "text-orange-300/80"
+                                : "text-light"
                               }`}
                           >
                             {step.description}

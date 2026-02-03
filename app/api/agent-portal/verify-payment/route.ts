@@ -86,9 +86,10 @@ export async function POST(request: Request) {
         // OPTION B: M-Pesa Receipt lookup
         else if (hasMpesaLookup) {
             // Step 1: Find payment by M-Pesa receipt
+            // CRITICAL: Include result_id in the query for direct lookup
             const { data: transaction } = await supabaseServer
                 .from("payment_transactions")
-                .select("id, name, email, phone_number, amount, completed_at, mpesa_receipt_number, status")
+                .select("id, name, email, phone_number, amount, completed_at, mpesa_receipt_number, status, result_id")
                 .eq("mpesa_receipt_number", mpesa_receipt.toUpperCase().trim())
                 .eq("status", "COMPLETED")
                 .single()
@@ -134,33 +135,48 @@ export async function POST(request: Request) {
                     resolvedResultId = resultRecord.result_id
                 }
             } else {
-                // Transaction found - now find the result
-                const txPhone = transaction.phone_number || ""
-                let txNormalizedPhone = txPhone.replace(/\s+/g, "")
-                if (txNormalizedPhone.startsWith("0") && txNormalizedPhone.length === 10) {
-                    txNormalizedPhone = "254" + txNormalizedPhone.substring(1)
-                }
-                if (txNormalizedPhone.startsWith("+254")) {
-                    txNormalizedPhone = txNormalizedPhone.substring(1)
-                }
+                // Transaction found - FIRST try to use result_id from payment_transactions
+                if (transaction.result_id) {
+                    resolvedResultId = transaction.result_id
+                    log("agent-portal:verify-payment", "Using result_id from payment_transactions", "debug", {
+                        result_id: resolvedResultId,
+                        mpesa_receipt
+                    })
+                } else {
+                    // FALLBACK: Find result by phone number match
+                    log("agent-portal:verify-payment", "⚠️ result_id missing in payment_transactions, using phone fallback", "warn", {
+                        mpesa_receipt,
+                        phone: transaction.phone_number,
+                        hint: "This transaction was likely created before result_id was stored"
+                    })
 
-                // Find result matching transaction phone
-                const { data: resultsByPhone } = await supabaseServer
-                    .from("results_cache")
-                    .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
-                    .or(`phone_number.eq.${txNormalizedPhone},phone_number.eq.0${txNormalizedPhone.substring(3)},phone_number.eq.${normalizedPhone},phone_number.eq.0${normalizedPhone.substring(3)}`)
-                    .order("created_at", { ascending: false })
-                    .limit(1)
+                    const txPhone = transaction.phone_number || ""
+                    let txNormalizedPhone = txPhone.replace(/\s+/g, "")
+                    if (txNormalizedPhone.startsWith("0") && txNormalizedPhone.length === 10) {
+                        txNormalizedPhone = "254" + txNormalizedPhone.substring(1)
+                    }
+                    if (txNormalizedPhone.startsWith("+254")) {
+                        txNormalizedPhone = txNormalizedPhone.substring(1)
+                    }
 
-                if (!resultsByPhone || resultsByPhone.length === 0) {
-                    log("agent-portal:verify-payment", "No result found for M-Pesa payment", "warn", { mpesa_receipt, phone: txNormalizedPhone })
-                    return NextResponse.json(
-                        { error: "Could not find result for this payment. The student may not have generated results yet." },
-                        { status: 404, headers: rateLimitHeaders(rateCheck) }
-                    )
+                    // Find result matching transaction phone
+                    const { data: resultsByPhone } = await supabaseServer
+                        .from("results_cache")
+                        .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
+                        .or(`phone_number.eq.${txNormalizedPhone},phone_number.eq.0${txNormalizedPhone.substring(3)},phone_number.eq.${normalizedPhone},phone_number.eq.0${normalizedPhone.substring(3)}`)
+                        .order("created_at", { ascending: false })
+                        .limit(1)
+
+                    if (!resultsByPhone || resultsByPhone.length === 0) {
+                        log("agent-portal:verify-payment", "No result found for M-Pesa payment", "warn", { mpesa_receipt, phone: txNormalizedPhone })
+                        return NextResponse.json(
+                            { error: "Could not find result for this payment. The student may not have generated results yet." },
+                            { status: 404, headers: rateLimitHeaders(rateCheck) }
+                        )
+                    }
+                    resultRecord = resultsByPhone[0]
+                    resolvedResultId = resultRecord.result_id
                 }
-                resultRecord = resultsByPhone[0]
-                resolvedResultId = resultRecord.result_id
             }
 
             // If we still don't have resultRecord, fetch it by resolved ID

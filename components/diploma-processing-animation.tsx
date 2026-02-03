@@ -128,6 +128,10 @@ export default function DiplomaProcessingAnimation({ userData, onComplete }: Dip
           agentCode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null
         } catch { }
 
+        // CRITICAL: Store resultId in localStorage BEFORE database insert
+        localStorage.setItem("resultId", resultId)
+        log("diploma:cache", "ResultId stored in localStorage (pre-insert)", "debug", { resultId })
+
         const { error: insertError } = await supabase.from("results_cache").insert({
           result_id: resultId,
           phone_number: paymentInfo.phone || "",
@@ -139,10 +143,13 @@ export default function DiplomaProcessingAnimation({ userData, onComplete }: Dip
         })
 
         if (insertError) {
-          log("diploma:cache", "Error storing results in cache", "error", insertError)
+          log("diploma:cache", "⚠️ Error storing results in cache (localStorage still has resultId)", "error", {
+            insertError,
+            resultId,
+            hint: "User can still proceed with payment"
+          })
         } else {
-          localStorage.setItem("resultId", resultId)
-          log("diploma:cache", "Results cached successfully", "success", { resultId })
+          log("diploma:cache", "Results cached successfully in database", "success", { resultId })
           try {
             await fetch("/api/activity", {
               method: "POST",

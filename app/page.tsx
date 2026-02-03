@@ -26,6 +26,7 @@ import TestimonialCarousel from "@/components/testimonial-carousel"
 import Footer from "@/components/footer"
 import TextType from "@/components/ui/text-type"
 import HowItWorks from "@/components/how-it-works"
+import FloatingAIAssistant from "@/components/floating-ai-assistant"
 
 export default function Home() {
   const { toast } = useToast()
@@ -406,6 +407,9 @@ export default function Home() {
       </section>
 
       <Footer showOnHomepage={true} />
+
+      {/* Floating AI Assistant Button */}
+      <FloatingAIAssistant />
     </div>
   )
 }

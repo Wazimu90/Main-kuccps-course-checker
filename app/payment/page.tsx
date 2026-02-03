@@ -101,10 +101,25 @@ export default function PaymentPage() {
       const resolved = (category || parsed?.category || "").toString()
       setCourseCategory(resolved || null)
       setResultId(storedResultId || null)
-      log("payment:init", "Loaded grade data and category", "debug", {
-        category: resolved || null,
-        resultId: storedResultId || null
-      })
+
+      // CRITICAL: Warn if resultId is missing - this will cause issues with M-Pesa lookups
+      if (!storedResultId) {
+        log("payment:init", "⚠️ WARNING: resultId is missing from localStorage", "warn", {
+          category: resolved || null,
+          hasGradeData: !!savedData,
+          hint: "User may have navigated directly to payment or results_cache insert failed"
+        })
+        toast({
+          title: "⚠️ Result ID Missing",
+          description: "Your result ID could not be found. You can still pay, but contact support if you need result regeneration later.",
+          variant: "destructive",
+        })
+      } else {
+        log("payment:init", "Loaded grade data and category", "debug", {
+          category: resolved || null,
+          resultId: storedResultId
+        })
+      }
     } catch { }
   }, [router, toast])
 

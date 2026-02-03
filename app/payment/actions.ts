@@ -19,10 +19,23 @@ export async function initiatePayment(data: {
     // Generate a unique reference for this transaction
     const reference = `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`
 
+    // CRITICAL: Warn if resultId is missing - this will cause M-Pesa lookup failures
+    if (!data.resultId) {
+      log("payment:init", "⚠️ CRITICAL WARNING: initiatePayment called WITHOUT resultId", "warn", {
+        email: data.email,
+        amount: data.amount,
+        courseCategory: data.courseCategory,
+        reference,
+        maskedPhone: data.phone.substring(0, 4) + "****",
+        hint: "This payment will not have a result_id in payment_transactions, making M-Pesa lookups impossible"
+      })
+    }
+
     log("payment:init", "Starting initiatePayment action", "info", {
       email: data.email,
       amount: data.amount,
       courseCategory: data.courseCategory,
+      resultId: data.resultId || "⚠️ MISSING",
       reference,
       maskedPhone: data.phone.substring(0, 4) + "****" // Mask phone for logs
     })

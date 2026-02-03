@@ -109,6 +109,10 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
           agentCode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null
         } catch { }
 
+        // CRITICAL: Store resultId in localStorage BEFORE database insert
+        localStorage.setItem("resultId", resultId)
+        log("certificate:cache", "ResultId stored in localStorage (pre-insert)", "debug", { resultId })
+
         const { error: insertError } = await supabase.from("results_cache").insert({
           result_id: resultId,
           phone_number: paymentInfo.phone || "",
@@ -119,7 +123,7 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
           agent_code: agentCode,
         })
         if (!insertError) {
-          localStorage.setItem("resultId", resultId)
+          log("certificate:cache", "Results cached successfully in database", "success", { resultId })
           try {
             await fetch("/api/activity", {
               method: "POST",
@@ -135,7 +139,10 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
             })
           } catch { }
         } else {
-          log("certificate:cache", "Error storing results in cache", "error", insertError)
+          log("certificate:cache", "⚠️ Error storing results in cache (localStorage still has resultId)", "error", {
+            insertError,
+            resultId
+          })
         }
       } catch (e) {
         log("certificate:cache", "Unhandled error during caching", "error", e)
@@ -180,18 +187,18 @@ export default function CertificateProcessingAnimation({ userData, onComplete }:
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
                   className={`flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 p-4 rounded-xl border transition-all duration-300 ${isActive
-                      ? "bg-primary/10 border-primary shadow-md"
-                      : isCompleted
-                        ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
-                        : "bg-muted/50 border-border"
+                    ? "bg-primary/10 border-primary shadow-md"
+                    : isCompleted
+                      ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                      : "bg-muted/50 border-border"
                     }`}
                 >
                   <div
                     className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${isActive
-                        ? "bg-primary text-primary-foreground animate-pulse"
-                        : isCompleted
-                          ? "bg-green-500 text-white"
-                          : "bg-muted text-white"
+                      ? "bg-primary text-primary-foreground animate-pulse"
+                      : isCompleted
+                        ? "bg-green-500 text-white"
+                        : "bg-muted text-white"
                       }`}
                   >
                     <AnimatePresence mode="wait">

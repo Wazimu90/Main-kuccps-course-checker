@@ -195,3 +195,186 @@ A: Yes. It is a partnership with **Bfasta** to help students get internet access
 *   **TVET**: Technical and Vocational Education and Training.
 *   **KMTC**: Kenya Medical Training College.
 *   **Programme Code**: The unique number for a course. You need this to apply on the KUCCPS portal.
+
+---
+
+## 14. Troubleshooting Common Issues
+
+### **PDF Not Downloading**
+If your PDF fails to download after payment:
+
+1.  **Check Your Browser Settings**:
+    *   On mobile (especially Chrome), look for a download prompt at the bottom of your screen or in the notification bar.
+    *   Tap "Download" or "Yes" when prompted.
+    *   Some browsers block automatic downloads — check your "Downloads" folder anyway.
+
+2.  **Pop-up Blockers**:
+    *   Disable pop-up blockers temporarily for our site.
+    *   Try a different browser (Chrome, Firefox, Edge, or Samsung Internet).
+
+3.  **Retry from Results Page**:
+    *   If you're still on the results page, click the **"Download PDF"** button again.
+    *   Wait until you see a confirmation or feel the download start.
+
+4.  **Clear Browser Cache**:
+    *   Sometimes old data can interfere. Clear your browser cache and cookies, then try again.
+
+### **Result ID Missing or Lost**
+If you cannot find your Result ID:
+
+1.  **Check Your Email**:
+    *   After successful payment, we send a confirmation email with your Result ID.
+    *   Search your inbox (and spam/junk folder) for "KUCCPS Course Checker" or "Result ID".
+
+2.  **Check M-Pesa Message**:
+    *   Your M-Pesa confirmation message contains the transaction code.
+    *   Contact support with this code — we can trace your Result ID from the payment.
+
+3.  **Contact Your Agent**:
+    *   If you used an agent's referral code, message them with your phone number and payment details.
+    *   They can look up your results and re-send your PDF.
+
+4.  **Contact Support**:
+    *   WhatsApp: +254790295408 or +254713111921
+    *   Email: kuccpscoursechecker1@gmail.com
+    *   Provide: Your name, phone number used for payment, and M-Pesa transaction code.
+
+### **Page Not Loading or Errors**
+*   **Check Internet Connection**: Ensure you have stable internet.
+*   **Refresh the Page**: Sometimes a simple refresh fixes temporary glitches.
+*   **Try Incognito/Private Mode**: This rules out extension or cache issues.
+*   **Use a Different Device**: If issues persist, try on another phone or computer.
+
+### **Grades Not Saving or Form Resetting**
+*   Ensure you don't refresh the page midway through entering grades.
+*   Use the same browser throughout the entire process (from grade entry to payment).
+*   Avoid switching tabs during payment — return to the original tab after M-Pesa confirmation.
+
+---
+
+## 15. Payment Issues & Recovery
+
+### **I Paid But Didn't Get Results**
+This is the most common issue. Here's what to do:
+
+1.  **Wait 1-2 Minutes**: Sometimes there's a slight delay in processing. Do not refresh immediately; wait a moment.
+
+2.  **Check Your M-Pesa Balance**: Confirm the money was actually deducted.
+
+3.  **Re-enter Your Phone Number**: If you're stuck, try reloading the page and entering the same phone number you used for payment. Our system automatically detects completed payments.
+
+4.  **Contact Support Immediately**:
+    *   Send a WhatsApp message to **+254713111921** with:
+        *   Your full name
+        *   Phone number used for payment
+        *   M-Pesa transaction code (from SMS)
+        *   Screenshot of M-Pesa confirmation (if possible)
+    *   We will manually verify your payment and send you your results.
+
+### **Money Was Deducted Twice / Double Payment**
+*   This is rare, but if it happens:
+    *   Do NOT keep retrying payments.
+    *   Contact support with M-Pesa transaction codes for both payments.
+    *   We will verify and process a refund for the extra payment.
+
+### **STK Push Not Received**
+If you don't receive the M-Pesa pop-up:
+*   Ensure you entered the correct phone number (07... or 01...).
+*   Make sure M-Pesa is set up on your phone (especially if you have a new phone or SIM).
+*   Try restarting your phone or toggling airplane mode briefly.
+*   If repeated failures, try paying from a different Mpesa line.
+
+### **Payment Timeout**
+*   If the payment times out, your money is NOT deducted.
+*   Wait a few seconds and try again.
+*   Ensure you have enough balance and your phone is connected to the network.
+
+---
+
+## 16. Agent Support & Re-download Instructions
+
+### **What is an Agent?**
+Agents are students or community members who help others use our service. If you were referred by an agent (using their referral code), they can assist you with:
+*   Understanding how to use the website.
+*   Explaining your results.
+*   Re-downloading your PDF if you lose it.
+
+### **How to Get Help from Your Agent**
+1.  **Find Their Contact**: You likely have their phone number or know them personally.
+2.  **Provide Your Details**: Give them:
+    *   Your full name (as entered on the website)
+    *   Phone number used for payment
+    *   The date and time of your payment (approximately)
+3.  **Agent Re-downloads Your PDF**: Agents have access to a portal where they can re-generate your results PDF and send it to you.
+
+### **If You Don't Have an Agent**
+*   No problem! Contact our main support directly:
+    *   WhatsApp: +254713111921 or +254790295408
+    *   Email: kuccpscoursechecker1@gmail.com
+*   We provide the same support that agents do.
+
+### **Becoming an Agent**
+Interested in helping others and earning referral bonuses? Contact us to learn about our agent program.
+
+---
+
+## 17. AI Assistant Usage Guide
+
+### **What is the AI Assistant?**
+We have a free AI-powered chatbot trained specifically on KUCCPS Course Checker information. It can answer questions about:
+*   How to use the website
+*   What cluster points are
+*   Which courses you might qualify for
+*   Payment issues and troubleshooting
+*   KUCCPS application process
+*   And much more!
+
+### **How to Access the AI Assistant**
+1.  **On the Home Page**: Look for the floating **purple AI button** in the bottom-right corner of the screen.
+2.  **Click the Button**: A popup will appear with instructions.
+3.  **Open the Assistant**: Click "Open AI Assistant" to launch ChatGPT in a new window.
+
+### **Requirements**
+*   **ChatGPT Account**: You need a free ChatGPT account to use the assistant. If you don't have one:
+    *   Go to [chat.openai.com](https://chat.openai.com/auth/login)
+    *   Sign up with your email or Google account (takes 30 seconds)
+    *   It's completely FREE — no payment required
+*   **Internet Connection**: The AI runs online, so you need an active internet connection.
+
+### **Tips for Best Results**
+*   **Be Specific**: Instead of "help me," ask "How do I download my PDF after payment?"
+*   **Provide Context**: Mention your specific situation, like "I have a C+ mean grade, what diploma courses can I apply for?"
+*   **Ask Follow-up Questions**: The AI remembers your conversation, so you can build on previous answers.
+
+### **Cost**
+*   **Free for You**: Using our AI assistant costs you nothing.
+*   **Free ChatGPT Account**: The free tier of ChatGPT is sufficient — no need for ChatGPT Plus.
+
+### **What the AI Can't Do**
+*   It cannot access your personal payment records or results.
+*   It cannot make changes to your account or download PDFs for you.
+*   For account-specific issues, contact human support.
+
+---
+
+## 18. Additional Tips for Success
+
+### **Before Using the Course Checker**
+*   Have your KCSE result slip ready with all subject grades.
+*   Know your exact mean grade (e.g., C+ Plain, B Minus).
+*   Have your M-Pesa registered phone ready for payment.
+
+### **During the Application Season**
+*   Use our results as a **guide**, not a guarantee — cutoffs change each year.
+*   Apply for multiple courses across different institutions to maximize your chances.
+*   Apply early — don't wait until the last day of the KUCCPS window.
+
+### **Useful External Links**
+*   **KUCCPS Student Portal**: [students.kuccps.net](https://students.kuccps.net)
+*   **HELB Portal**: [portal.helb.co.ke](https://portal.helb.co.ke)
+*   **KNEC Results**: [knec-portal.ac.ke](https://knec-portal.ac.ke)
+
+---
+
+*Last Updated: February 2026*  
+*KUCCPS Course Checker — Helping Kenyan Students Make Informed Choices*

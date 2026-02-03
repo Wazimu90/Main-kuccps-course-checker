@@ -1,117 +1,98 @@
-# Plan: Allow Agent Result Regeneration via M-Pesa Code (Without Result ID)
+# Superpowers Plan: Embed ChatGPT Assistant & Update Student Guide
+
+**Date:** 2026-02-03  
+**Task:** Embed custom ChatGPT assistant on home page + update student guide documentation
+
+---
 
 ## Goal
+1. **Embed a custom ChatGPT assistant** as a floating help icon on the home page that opens in a mobile-sized popup window. The chatbot is powered by OpenAI GPT (user-provided Custom GPT at `https://chatgpt.com/g/g-697a18934aac8191a33c3c51e8a9b52b-kuccps-course-checker-assistant`) and costs nothing to the website owner.
+2. **Update the student guide documentation** (`KUCCPS_COURSE_CHECKER_STUDENT_GUIDE.md`) with comprehensive help content including PDF troubleshooting, result ID recovery, agent support, and other common issues.
 
-Allow agents to regenerate user results using **M-Pesa receipt code + phone number** as an alternative to Result ID. This makes the workflow more flexible while maintaining security and not breaking existing token-based functionality.
-
-**Current Flow:**
-1. Agent enters ART token → Verified
-2. Agent enters Result ID (required) + Phone Number (optional) + M-Pesa Receipt (optional)
-3. System verifies payment and generates PDF
-
-**New Flow:**
-1. Agent enters ART token → Verified
-2. Agent enters **one of**:
-   - **Option A:** Result ID (current flow, still works)
-   - **Option B:** M-Pesa Receipt Code + Phone Number (new alternative)
-3. System looks up the result via whichever method is provided
-4. System generates PDF
+---
 
 ## Assumptions
+1. The Custom GPT link is a fully functional public GPT.
+2. Users will need a ChatGPT account to interact with the chatbot (Free or Plus).
+3. The chatbot will open in a new popup window since iframes are blocked by ChatGPT.
+4. The existing floating help button is on the results page - this new AI assistant icon will be on the home page (and potentially global).
+5. The student guide markdown will be uploaded to the GPT's configuration to serve as its knowledge base.
 
-1. M-Pesa receipt codes are unique per transaction
-2. The `payments` table or `payment_transactions` table contains M-Pesa receipt numbers
-3. We can link a payment to a result via `result_id` in payments table or by matching phone number to `results_cache`
-4. The existing token verification flow remains unchanged
-5. Per-result download limits (3) still apply regardless of lookup method
-6. Agent daily limits (20) still apply
+---
 
 ## Plan
 
-### Step 1: Update verify-payment API to accept M-Pesa receipt as primary lookup (5 min)
-- **Files**: `app/api/agent-portal/verify-payment/route.ts`
-- **Change**: 
-  - Modify validation: require **either** `result_id` **OR** (`mpesa_receipt` AND `phone_number`)
-  - Add new lookup path: If `result_id` not provided but `mpesa_receipt` is:
-    1. Find payment in `payment_transactions` by `mpesa_receipt_number`
-    2. Use the found payment's `phone_number` to find matching `results_cache` entry
-    3. Return the discovered `result_id` in response
-  - Keep existing `result_id` flow intact as first priority
-- **Verify**: 
-  - Call API with only `mpesa_receipt` + `phone_number` → Should return result info
-  - Call API with only `result_id` → Should still work (regression test)
+### Step 1: Create Floating AI Assistant Button Component
+**Files:** `components/floating-ai-assistant.tsx` (new)  
+**Change:** Create a new floating button component that:
+- Displays a distinctive AI/chatbot icon (different from the WhatsApp help button)
+- Shows an expandable tooltip/popover with instructions on how to use the assistant
+- Opens ChatGPT in a new popup window
+- Includes clear instructions about needing a ChatGPT account
+- Has a pulsing/animated effect to attract attention
 
-### Step 2: Update download-pdf API to accept M-Pesa-based lookup (5 min)
-- **Files**: `app/api/agent-portal/download-pdf/route.ts`
-- **Change**: 
-  - Modify validation: require **either** `result_id` **OR** (`mpesa_receipt` AND `phone_number`)
-  - Add resolution logic: If `result_id` not provided:
-    1. Look up payment by `mpesa_receipt`
-    2. Get associated `result_id` from payment or match via phone
-    3. Proceed with existing PDF generation flow using resolved `result_id`
-  - Keep all existing limits (daily + per-result) intact
-- **Verify**: 
-  - API should generate PDF when given M-Pesa receipt instead of result_id
-  - Existing `result_id` flow should remain unchanged
+**Verify:** 
+```bash
+npm run lint
+npm run build
+```
 
-### Step 3: Update Agent Portal frontend to make Result ID optional (5 min)
-- **Files**: `app/agent-portal/page.tsx`
-- **Change**: 
-  - Change Result ID label from `*` (required) to `(optional)`
-  - Update form validation: Enable "Verify Payment" button if EITHER:
-    - `resultId` is filled, OR
-    - (`mpesaReceipt` AND `phoneNumber`) are both filled
-  - Update phone number label from `(optional)` to indicate it's required when no Result ID
-  - Add helper text explaining the two options
-- **Verify**: 
-  - Button should be enabled when M-Pesa + Phone are filled but Result ID is empty
-  - Button should still work when only Result ID is filled
+---
 
-### Step 4: Update handleVerifyPayment to pass correct params (3 min)
-- **Files**: `app/agent-portal/page.tsx`
-- **Change**: 
-  - Modify `handleVerifyPayment` to send request even without `result_id` if `mpesa_receipt` and `phone_number` are provided
-  - Store the returned `result_id` from API response for use in download
-- **Verify**: 
-  - Verification should succeed with M-Pesa + Phone only
-  - Returned result_id should be stored in state
+### Step 2: Add Floating AI Assistant to Home Page
+**Files:** `app/page.tsx`  
+**Change:** Import and add the `FloatingAIAssistant` component to the home page, positioning it on the bottom-right corner (the existing help button is bottom-left on results page)
 
-### Step 5: Update handleDownloadPDF to use resolved result_id (3 min)
-- **Files**: `app/agent-portal/page.tsx`
-- **Change**: 
-  - Use `verifiedResult.result_id` (from verification response) instead of form input `resultId`
-  - This ensures the resolved result_id is used for download regardless of lookup method
-- **Verify**: 
-  - Download should work after M-Pesa-based verification
+**Verify:**
+```bash
+npm run build
+npm run dev
+```
+Then manually verify the button appears and opens the ChatGPT link.
 
-### Step 6: Update CHANGELOG.md (2 min)
-- **Files**: `CHANGELOG.md`
-- **Change**: Add entry documenting the new M-Pesa-based lookup feature
-- **Verify**: Entry appears in changelog
+---
 
-### Step 7: End-to-end manual test (5 min)
-- **Files**: None (testing only)
-- **Verify**:
-  1. Navigate to `/agent-portal`
-  2. Enter valid ART token → Success
-  3. **Test Case A**: Enter only Result ID → Verify + Download works
-  4. **Test Case B**: Enter only M-Pesa Receipt + Phone → Verify + Download works
-  5. **Test Case C**: Enter all three → Should work (Result ID takes priority)
-  6. Verify download limits still apply
+### Step 3: Update Student Guide with Comprehensive Help Content
+**Files:** `docs/KUCCPS_COURSE_CHECKER_STUDENT_GUIDE.md`  
+**Change:** Add new sections:
+- **14. Troubleshooting Common Issues** (PDF not downloading, result ID missing, etc.)
+- **15. Payment Issues & Recovery** (what to do if payment failed but money was deducted)
+- **16. Agent Support & Re-download Instructions**
+- **17. AI Assistant Usage Guide** (how to use the ChatGPT assistant)
+- Update existing sections with more comprehensive help content
+
+**Verify:**
+```bash
+cat docs/KUCCPS_COURSE_CHECKER_STUDENT_GUIDE.md
+```
+Review the content manually.
+
+---
+
+### Step 4: Update CHANGELOG.md
+**Files:** `CHANGELOG.md`  
+**Change:** Document all changes made in this implementation
+
+**Verify:**
+```bash
+cat CHANGELOG.md | head -50
+```
+
+---
 
 ## Risks & Mitigations
+| Risk | Mitigation |
+|------|------------|
+| ChatGPT blocks iframe embedding | Open in popup window instead of iframe |
+| Users may not have ChatGPT accounts | Add clear instructions about signup requirements |
+| Popup blockers may prevent opening | Use user-initiated click event; add fallback link |
+| Button may overlap with other UI elements | Position carefully and test on mobile |
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| M-Pesa code doesn't link to result | Medium | Medium | Fallback error message: "Could not find result for this payment" |
-| Multiple results match same phone | Low | Medium | Use most recent result or require M-Pesa code to be unique per result |
-| Breaking existing Result ID flow | Low | High | Keep Result ID as primary path; M-Pesa is fallback |
-| Abuse via guessing M-Pesa codes | Very Low | Low | Rate limiting already in place (10/min); M-Pesa codes are random |
+---
 
 ## Rollback Plan
-
-1. Revert changes to `verify-payment/route.ts`
-2. Revert changes to `download-pdf/route.ts`
-3. Revert changes to `agent-portal/page.tsx`
-4. Revert CHANGELOG.md entry
-5. No database changes required
+1. Remove the `FloatingAIAssistant` import and usage from `app/page.tsx`
+2. Delete `components/floating-ai-assistant.tsx`
+3. Revert changes to `KUCCPS_COURSE_CHECKER_STUDENT_GUIDE.md` using git
+4. Revert CHANGELOG.md changes
+5. Run `npm run build` to verify clean rollback

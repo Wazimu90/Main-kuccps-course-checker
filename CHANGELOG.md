@@ -7,7 +7,121 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - 2026-02-03 (AI Assistant & Comprehensive Student Guide Update)
+
+**Feature 1: Floating AI Course Assistant**
+
+A new AI-powered assistant powered by ChatGPT is now available on the home page to help students with questions about KUCCPS, courses, cluster points, and using the website.
+
+**Implementation:**
+- **New Component**: `components/floating-ai-assistant.tsx`
+  - Floating purple button with "AI" badge in bottom-right corner
+  - Expandable popup with usage instructions
+  - Opens custom ChatGPT (`https://chatgpt.com/g/g-697a18934aac8191a33c3c51e8a9b52b-kuccps-course-checker-assistant`) in popup window
+  - Clear instructions about ChatGPT account requirements (free signup)
+  - Animated pulse effect to attract attention
+  - Mobile-responsive design
+- **Home Page Integration**: Added `FloatingAIAssistant` component to `app/page.tsx`
+
+**Why Popup Window:**
+- ChatGPT blocks iframe embedding for security reasons
+- Popup window provides the best user experience without redirecting away from the site
+- No cost to us - users use their own free ChatGPT account
+
+**Feature 2: Comprehensive Student Guide Update**
+
+Updated `docs/KUCCPS_COURSE_CHECKER_STUDENT_GUIDE.md` with 5 new sections:
+
+1. **Section 14: Troubleshooting Common Issues**
+   - PDF not downloading (browser settings, pop-up blockers, retry instructions)
+   - Result ID missing or lost (email check, M-Pesa code, agent contact)
+   - Page errors (internet, refresh, incognito mode)
+   - Grades not saving (browser tips)
+
+2. **Section 15: Payment Issues & Recovery**
+   - Paid but didn't get results (wait, re-enter phone, contact support)
+   - Double payment handling (refund process)
+   - STK push not received (phone number format, M-Pesa setup)
+   - Payment timeout (no deduction, retry)
+
+3. **Section 16: Agent Support & Re-download**
+   - What agents are and how they help
+   - How to contact your agent with required details
+   - How to get support without an agent
+   - Becoming an agent
+
+4. **Section 17: AI Assistant Usage Guide**
+   - What the AI can help with
+   - How to access (purple button on home page)
+   - ChatGPT account requirements (free)
+   - Tips for best results
+   - Limitations (cannot access personal data)
+
+5. **Section 18: Additional Tips for Success**
+   - Preparation checklist
+   - Application season advice
+   - Useful external links (KUCCPS, HELB, KNEC)
+
+**Impact:**
+- Students can get instant answers to common questions via AI
+- Comprehensive troubleshooting guide reduces support requests
+- Agent support instructions help students recover lost results
+- Updated guide serves as knowledge base for the AI assistant
+
+**Files Changed:**
+- `components/floating-ai-assistant.tsx` (new)
+- `app/page.tsx` (added FloatingAIAssistant)
+- `docs/KUCCPS_COURSE_CHECKER_STUDENT_GUIDE.md` (5 new sections)
+
+**References:**
+- [components/floating-ai-assistant.tsx](components/floating-ai-assistant.tsx)
+- [docs/KUCCPS_COURSE_CHECKER_STUDENT_GUIDE.md](docs/KUCCPS_COURSE_CHECKER_STUDENT_GUIDE.md)
+
+
+### Fixed - 2026-02-03 (Ensure result_id is Always Stored in payment_transactions)
+
+**Problem:** Some `payment_transactions` records were missing `result_id`, causing M-Pesa-based lookups in the agent portal to fail.
+
+**Root Causes Fixed:**
+1. **Payment page proceeded without `resultId`**: No warning was shown if `resultId` was missing from localStorage.
+2. **Results cache insert failures**: If the database insert failed, `resultId` was never stored in localStorage.
+3. **M-Pesa lookup didn't check `result_id` column**: The agent portal queries were not selecting `result_id` directly.
+
+**Changes Made:**
+
+1. **Payment Page Warning** (`app/payment/page.tsx`):
+   - Added warning toast when `resultId` is missing from localStorage
+   - Added warning log for tracking purposes
+
+2. **Store resultId Before DB Insert** (All processing animations):
+   - `components/results-preview.tsx`
+   - `components/diploma-processing-animation.tsx`
+   - `components/certificate-processing-animation.tsx`
+   - `components/artisan-processing-animation.tsx`
+   - `components/kmtc-processing-animation.tsx`
+   - `components/loading-animation.tsx`
+   - Now stores `resultId` in localStorage BEFORE attempting database insert
+   - If DB insert fails, user still has valid `resultId` for payment
+
+3. **Payment Initiation Warning** (`app/payment/actions.ts`):
+   - Added critical warning log when `resultId` is null
+
+4. **Improved M-Pesa Lookup** (`app/api/agent-portal/verify-payment/route.ts`, `app/api/agent-portal/download-pdf/route.ts`):
+   - Now includes `result_id` in `payment_transactions` query
+   - Uses `result_id` directly if available
+   - Falls back to phone number matching only when `result_id` is missing
+
+5. **Backfill Script** (`scripts/backfill-result-id.sql.md`):
+   - SQL queries to update existing transactions with missing `result_id`
+   - Matches by phone number to `results_cache`
+
+**Impact:**
+- All new payments will have `result_id` stored reliably
+- M-Pesa-based lookups now work for new transactions
+- Legacy transactions can be backfilled with provided SQL
+
 ### Added - 2026-02-02 (M-Pesa-Based Result Lookup for Agents)
+
 
 **Feature:** Allow agents to regenerate user results using M-Pesa receipt code + phone number as an alternative to Result ID.
 

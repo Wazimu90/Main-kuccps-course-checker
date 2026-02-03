@@ -59,6 +59,10 @@ export default function LoadingAnimation({ userData, onComplete }: LoadingAnimat
           agentCode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null
         } catch { }
 
+        // CRITICAL: Store resultId in localStorage BEFORE database insert
+        localStorage.setItem("resultId", resultId)
+        console.log("✅ ResultId stored in localStorage (pre-insert):", resultId)
+
         const { error: insertError } = await supabase.from("results_cache").insert({
           result_id: resultId,
           category: userData.category,
@@ -70,12 +74,11 @@ export default function LoadingAnimation({ userData, onComplete }: LoadingAnimat
         })
 
         if (insertError) {
-          console.error("❌ Error storing results in cache:", insertError)
-          throw insertError
+          console.error("⚠️ Error storing results in cache (localStorage still has resultId):", insertError)
+          // Don't throw - let user proceed with payment
+        } else {
+          console.log("✅ Results stored successfully in database with ID:", resultId)
         }
-
-        localStorage.setItem("resultId", resultId)
-        console.log("✅ Results stored successfully with ID:", resultId)
 
         if (onComplete) {
           onComplete(eligibleCourses)

@@ -161,6 +161,10 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
         agentCode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null
       } catch { }
 
+      // CRITICAL: Store resultId in localStorage BEFORE database insert
+      localStorage.setItem("resultId", resultId)
+      log("kmtc:cache", "ResultId stored in localStorage (pre-insert)", "debug", { resultId })
+
       const { error: cacheError } = await supabase.from("results_cache").insert({
         result_id: resultId,
         name: userInfo.name,
@@ -172,25 +176,27 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
       })
 
       if (cacheError) {
-        log("kmtc:cache", "Error storing results in cache", "error", cacheError)
-        throw cacheError
-      }
-
-      // Store result ID for later retrieval
-      localStorage.setItem("resultId", resultId)
-      log("kmtc:cache", "Results cached successfully", "success", { resultId })
-      try {
-        await fetch("/api/activity", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            event_type: "user.course.generate",
-            actor_role: "user",
-            description: `Generated ${qualifiedCourses.length} KMTC programmes`,
-            metadata: { category: "kmtc", resultId, count: qualifiedCourses.length },
-          }),
+        log("kmtc:cache", "⚠️ Error storing results in cache (localStorage still has resultId)", "error", {
+          cacheError,
+          resultId,
+          hint: "User can still proceed with payment"
         })
-      } catch { }
+        // Don't throw - let user proceed with payment
+      } else {
+        log("kmtc:cache", "Results cached successfully in database", "success", { resultId })
+        try {
+          await fetch("/api/activity", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event_type: "user.course.generate",
+              actor_role: "user",
+              description: `Generated ${qualifiedCourses.length} KMTC programmes`,
+              metadata: { category: "kmtc", resultId, count: qualifiedCourses.length },
+            }),
+          })
+        } catch { }
+      }
 
       for (let i = 0; i <= 100; i += 20) {
         updateStepStatus(4, "processing", i)
@@ -236,12 +242,12 @@ export default function KmtcProcessingAnimation({ userData, onComplete }: KmtcPr
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
                   className={`flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left space-x-4 p-4 rounded-lg transition-all duration-300 ${isActive
-                      ? "bg-primary/10 border border-primary/20"
-                      : isCompleted
-                        ? "bg-green-50 dark:bg-green-900/20"
-                        : isError
-                          ? "bg-red-50 dark:bg-red-900/20"
-                          : "bg-muted/50"
+                    ? "bg-primary/10 border border-primary/20"
+                    : isCompleted
+                      ? "bg-green-50 dark:bg-green-900/20"
+                      : isError
+                        ? "bg-red-50 dark:bg-red-900/20"
+                        : "bg-muted/50"
                     }`}
                 >
                   <div className="flex-shrink-0">
