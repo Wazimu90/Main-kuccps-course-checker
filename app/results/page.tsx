@@ -913,38 +913,66 @@ export default function ResultsPage() {
           </DialogContent>
         </Dialog>
         <Dialog open={showPostDownloadModal} onOpenChange={setShowPostDownloadModal}>
-          <DialogContent className="sm:max-w-2xl" aria-label="Post download offer" showCloseButton>
+          <DialogContent className="sm:max-w-2xl" aria-label="SkillUp Digital invite" showCloseButton>
             <div className="rounded-xl overflow-hidden">
               <div className="bg-gradient-to-br from-emerald-500 via-blue-600 to-cyan-500 p-8">
                 <motion.div initial="hidden" animate="visible" variants={containerVariants} className="space-y-6 text-white">
                   <motion.div variants={itemVariants} className="flex justify-center">
                     <div className="rounded-full bg-white/20 backdrop-blur px-4 py-2 text-xs font-medium">
-                      Special Offer
+                      SkillUp Digital (WhatsApp Channel)
                     </div>
                   </motion.div>
+
                   <motion.h3 variants={itemVariants} className="text-2xl md:text-3xl font-bold text-center leading-tight">
-                    Did you know you can buy Safaricom Data, SMS & Minutes even with Unpaid Okoa Jahazi Debt?
+                    KCSE is done. Now what?
                   </motion.h3>
+
                   <motion.p variants={itemVariants} className="text-center text-sm md:text-base text-white/90 max-w-2xl mx-auto">
-                    Stay connected with flexible options tailored for you — fast, easy, and reliable.
+                    If you’re waiting for campus and feeling stuck, this channel helps you build one practical digital skill
+                    step-by-step using your phone. No hype. No “quick money” lies. Just small lessons and tiny tasks you can
+                    finish in under 15 minutes.
                   </motion.p>
+
+                  <motion.div variants={itemVariants} className="max-w-xl mx-auto text-sm md:text-base text-white/90 space-y-2">
+                    <div className="flex gap-2">
+                      <span className="font-semibold">What you’ll get:</span>
+                    </div>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Daily bite-sized posts that actually teach (not motivation)</li>
+                      <li>Beginner-friendly paths: design, content, AI basics, online work skills</li>
+                      <li>A clear weekly routine so you don’t get overwhelmed</li>
+                    </ul>
+                  </motion.div>
+
+                  <motion.p variants={itemVariants} className="text-center text-xs md:text-sm text-white/80 max-w-2xl mx-auto">
+                    Expectation: 30–60 minutes a day if you want results. If you want shortcuts, this won’t entertain you.
+                  </motion.p>
+
                   <motion.div variants={itemVariants} className="flex justify-center">
                     <Button
                       onClick={() => launchConfetti()}
                       asChild
                       className="bg-white text-blue-700 hover:bg-blue-100 font-semibold px-8 py-6 rounded-lg shadow-lg"
                     >
-                      <a href="https://bingwazone.co.ke/app/Bfasta" target="_blank" rel="noopener noreferrer" aria-label="Open Safaricom buying page">
-                        Buy Data, SMS & Minutes
+                      <a
+                        href="https://whatsapp.com/channel/0029VbBw1it3WHTbDLpgOL1w"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Join SkillUp Digital"
+                      >
+                        Join SkillUp Digital
                       </a>
                     </Button>
                   </motion.div>
+
+                  <motion.p variants={itemVariants} className="text-center text-xs text-white/75">
+                    Free to join. Leave anytime. Stay if you’re serious.
+                  </motion.p>
                 </motion.div>
               </div>
             </div>
           </DialogContent>
         </Dialog>
-
         {/* Floating Help Button */}
         <FloatingHelpButton
           userName={paymentInfo?.name || "Student"}

@@ -20,10 +20,12 @@ yarn-error.log*
 .env*
 architecture.md
 kuccpscoursechecker.md
-changelog.md
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#superpowers
+/artifacts
