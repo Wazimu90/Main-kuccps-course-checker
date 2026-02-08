@@ -847,9 +847,9 @@ export default function ResultsPage() {
 
         {/* PDF Download Dialog */}
         <Dialog open={showPdfDialog} onOpenChange={setShowPdfDialog}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-md max-h-[85vh] overflow-y-auto overflow-x-hidden">
             <DialogHeader>
-              <DialogTitle className="text-xl flex items-center gap-2">
+              <DialogTitle className="text-xl flex flex-wrap items-center gap-2">
                 <span>📄</span> Download your course results
               </DialogTitle>
             </DialogHeader>
@@ -858,13 +858,14 @@ export default function ResultsPage() {
               {/* Result ID Section */}
               <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 space-y-2">
                 <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Your Result ID:</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-white dark:bg-slate-900 px-3 py-2 rounded border text-sm font-mono truncate">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <code className="w-full sm:flex-1 min-w-0 bg-white dark:bg-slate-900 px-3 py-2 rounded border text-sm font-mono truncate">
                     {paymentInfo?.reference || localStorage.getItem("resultId") || "N/A"}
                   </code>
                   <Button
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       const resultId = paymentInfo?.reference || localStorage.getItem("resultId") || ""
                       navigator.clipboard.writeText(resultId).then(() => {
@@ -929,8 +930,7 @@ export default function ResultsPage() {
 
                   <motion.p variants={itemVariants} className="text-center text-sm md:text-base text-white/90 max-w-2xl mx-auto">
                     If you’re waiting for campus and feeling stuck, this channel helps you build one practical digital skill
-                    step-by-step using your phone. No hype. No “quick money” lies. Just small lessons and tiny tasks you can
-                    finish in under 15 minutes.
+                    step-by-step using your phone.
                   </motion.p>
 
                   <motion.div variants={itemVariants} className="max-w-xl mx-auto text-sm md:text-base text-white/90 space-y-2">
@@ -943,11 +943,6 @@ export default function ResultsPage() {
                       <li>A clear weekly routine so you don’t get overwhelmed</li>
                     </ul>
                   </motion.div>
-
-                  <motion.p variants={itemVariants} className="text-center text-xs md:text-sm text-white/80 max-w-2xl mx-auto">
-                    Expectation: 30–60 minutes a day if you want results. If you want shortcuts, this won’t entertain you.
-                  </motion.p>
-
                   <motion.div variants={itemVariants} className="flex justify-center">
                     <Button
                       onClick={() => launchConfetti()}
