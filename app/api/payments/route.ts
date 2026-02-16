@@ -4,9 +4,18 @@ import { supabaseServer } from "@/lib/supabaseServer"
 import { validatePaymentPayload } from "@/lib/paymentValidation"
 import bcrypt from "bcryptjs"
 import { log } from "@/lib/logger"
+import { checkRateLimit, getClientIp, rateLimitHeaders } from "@/lib/rate-limit"
 
 export async function POST(request: Request) {
   try {
+    // --- RATE LIMITING ---
+    const clientIp = getClientIp(request)
+    const rateLimitResult = checkRateLimit(`payment-record:${clientIp}`, { maxRequests: 5, windowSeconds: 60 })
+    if (!rateLimitResult.allowed) {
+      log("api:payments:rate", "Rate limit exceeded", "warn", { ip: clientIp })
+      const headers = rateLimitHeaders(rateLimitResult)
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429, headers })
+    }
     const body = await request.json()
     const name = String(body.name || "").trim()
     const email = String(body.email || "").trim()
@@ -64,7 +73,8 @@ export async function POST(request: Request) {
       if (adminRow?.is_active && adminRow?.access_code_hash) {
         try {
           okEarly = await bcrypt.compare(admin_access_code, adminRow.access_code_hash)
-        } catch {
+        } catch (e: any) {
+          log("api:payments:admin", "bcrypt compare error", "error", { error: e?.message })
           okEarly = false
         }
       }
@@ -85,7 +95,7 @@ export async function POST(request: Request) {
             created_at: paid_at,
             metadata: { amount: 0, course_category },
           })
-      } catch { }
+      } catch (e: any) { log("api:payments:admin", "Activity log insert error", "error", { error: e?.message }) }
       const dedupSince = new Date(Date.now() - 10 * 60 * 1000).toISOString()
       const { data: existingPay } = await supabaseServer
         .from("payments")
@@ -109,7 +119,7 @@ export async function POST(request: Request) {
               paid_at,
               agent_id: agentIdEarly,
             })
-        } catch { }
+        } catch (e: any) { log("api:payments:admin", "Payment insert error", "error", { error: e?.message }) }
       }
       const { data: existingUser } = await supabaseServer
         .from("users")
@@ -129,7 +139,7 @@ export async function POST(request: Request) {
               status: "active",
             })
             .or(`email.eq.${email},phone_number.eq.`)
-        } catch { }
+        } catch (e: any) { log("api:payments:admin", "User update error", "error", { error: e?.message }) }
       } else {
         try {
           await supabaseServer
@@ -144,7 +154,7 @@ export async function POST(request: Request) {
               agent_id: agentIdEarly,
               status: "active",
             })
-        } catch { }
+        } catch (e: any) { log("api:payments:admin", "User insert error", "error", { error: e?.message }) }
       }
       return NextResponse.json({ ok: true, admin_bypass: true })
     }
@@ -186,25 +196,36 @@ export async function POST(request: Request) {
 
     const meta = { referral_code, device: hdrs.get("user-agent") || null }
 
-    let rpcError: any = null
-    let shouldBypass = false
-    if (email === "wazimuautomate@gmail.com" && admin_access_code) {
-      const { data: adminRow } = await supabaseServer
-        .from("admin_access_codes")
-        .select("access_code_hash,is_active")
+    // SECURITY: Verify a COMPLETED payment_transaction exists before recording
+    // This prevents forged /api/payments calls without real M-Pesa payment
+    let paymentTxnVerified = false
+    try {
+      const fiveMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+      const { data: completedTxn } = await supabaseServer
+        .from("payment_transactions")
+        .select("id, status, phone_number")
+        .eq("status", "COMPLETED")
         .eq("email", email)
+        .gte("created_at", fiveMinAgo)
         .limit(1)
         .maybeSingle()
-      if (adminRow?.is_active && adminRow?.access_code_hash) {
-        try {
-          const ok = await bcrypt.compare(admin_access_code, adminRow.access_code_hash)
-          shouldBypass = ok
-        } catch {
-          shouldBypass = false
-        }
+
+      if (completedTxn) {
+        paymentTxnVerified = true
       }
+    } catch (e: any) {
+      log("api:payments:verify", "Error checking payment_transactions", "error", { error: e?.message })
     }
 
+    if (!paymentTxnVerified) {
+      log("api:payments:verify", "❌ No completed payment_transaction found — rejecting", "warn", { email, phone_number })
+      return NextResponse.json(
+        { error: "Payment not verified. Please complete M-Pesa payment first." },
+        { status: 403 }
+      )
+    }
+
+    let rpcError: any = null
     log("api:payments:rpc", "Calling fn_record_payment_and_update_user RPC", "debug", { email, amount })
     const { error } = await supabaseServer.rpc("fn_record_payment_and_update_user", {
       p_name: name,
@@ -224,16 +245,14 @@ export async function POST(request: Request) {
       log("api:payments:rpc", "RPC SUCCESS", "success", { email })
     }
 
-    if (shouldBypass || rpcError) {
-      log("api:payments:fallback", "Starting fallback recording", "info", { reason: shouldBypass ? "admin_bypass" : "rpc_failed" })
+    if (rpcError) {
+      log("api:payments:fallback", "Starting fallback recording", "info", { reason: "rpc_failed" })
       try {
         await supabaseServer
           .from("activity_logs")
           .insert({
-            event_type: shouldBypass ? "payment.admin_bypass" : "payment.failed",
-            description: shouldBypass
-              ? "Admin bypass applied, recording payment without RPC"
-              : `Payment RPC failed: ${rpcError?.message || "unknown"}`,
+            event_type: "payment.failed",
+            description: `Payment RPC failed: ${rpcError?.message || "unknown"}`,
             actor_role: "user",
             email,
             phone_number,
@@ -241,7 +260,7 @@ export async function POST(request: Request) {
             created_at: paid_at,
             metadata: { amount, course_category },
           })
-      } catch { }
+      } catch (e: any) { log("api:payments:fallback", "Activity log insert error", "error", { error: e?.message }) }
       // Fallback: record directly into payments and users tables
       // Dedup recent payment
       const dedupSince = new Date(Date.now() - 10 * 60 * 1000).toISOString()
@@ -268,7 +287,7 @@ export async function POST(request: Request) {
               agent_id: agent_id,
               result_id: result_id,
             })
-        } catch { }
+        } catch (e: any) { log("api:payments:fallback", "Payment insert error", "error", { error: e?.message }) }
       }
       // Upsert user row by email/phone
       const { data: existingUser } = await supabaseServer
@@ -289,7 +308,7 @@ export async function POST(request: Request) {
               status: "active",
             })
             .or(`email.eq.${email},phone_number.eq.${phone_number}`)
-        } catch { }
+        } catch (e: any) { log("api:payments:fallback", "User update error", "error", { error: e?.message }) }
       } else {
         try {
           await supabaseServer
@@ -304,9 +323,9 @@ export async function POST(request: Request) {
               agent_id: agent_id,
               status: "active",
             })
-        } catch { }
+        } catch (e: any) { log("api:payments:fallback", "User insert error", "error", { error: e?.message }) }
       }
-      return NextResponse.json({ ok: true, fallback: true, admin_bypass: shouldBypass || undefined })
+      return NextResponse.json({ ok: true, fallback: true })
     }
 
     // Log payment initiation/completion on server
@@ -323,7 +342,7 @@ export async function POST(request: Request) {
           created_at: paid_at,
           metadata: { amount, course_category },
         })
-    } catch { }
+    } catch (e: any) { log("api:payments:activity", "Activity log insert error", "error", { error: e?.message }) }
     // Ensure payments and users tables reflect the transaction even when RPC succeeded
     const { data: existingPay2 } = await supabaseServer
       .from("payments")
@@ -348,7 +367,7 @@ export async function POST(request: Request) {
             agent_id: agent_id,
             result_id: result_id,
           })
-      } catch { }
+      } catch (e: any) { log("api:payments:main", "Payment insert error", "error", { error: e?.message }) }
     }
     const { data: existingUser2 } = await supabaseServer
       .from("users")
@@ -368,7 +387,7 @@ export async function POST(request: Request) {
             status: "active",
           })
           .or(`email.eq.${email},phone_number.eq.${phone_number}`)
-      } catch { }
+      } catch (e: any) { log("api:payments:main", "User update error", "error", { error: e?.message }) }
     } else {
       try {
         await supabaseServer
@@ -383,7 +402,7 @@ export async function POST(request: Request) {
             agent_id: agent_id,
             status: "active",
           })
-      } catch { }
+      } catch (e: any) { log("api:payments:main", "User insert error", "error", { error: e?.message }) }
     }
 
     // CRITICAL FIX: Update results_cache with user details after payment

@@ -275,7 +275,7 @@ export default function PaymentPage() {
       setPaymentState(PaymentState.PROCESSING)
 
       // Use paymentAmount from settings, fallback to 200 if not loaded
-      const amountToCharge = paymentAmount || 1
+      const amountToCharge = paymentAmount || 200
       setCurrentChargeAmount(amountToCharge) // Store in state for use in polling
 
       log("payment:init", "Calling initiatePayment action", "debug", {
@@ -287,7 +287,6 @@ export default function PaymentPage() {
         phone: formData.phone,
         email: formData.email,
         name: formData.name,
-        amount: amountToCharge,
         courseCategory: courseCategory,
         resultId: resultId,  // CRITICAL: Pass result_id for n8n webhook
       })

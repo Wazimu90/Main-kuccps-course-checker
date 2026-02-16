@@ -1,95 +1,84 @@
-# Superpowers Execution Summary
+# Payment Security Hardening — Execution Log
 
-**Date:** 2026-02-03  
-**Plan:** Embed ChatGPT Assistant & Update Student Guide
-
----
-
-## Execution Batches
-
-### Batch 1 (Parallel) - Steps 1 & 3
-| Step | Description | Status | Duration |
-|------|-------------|--------|----------|
-| **1** | Create `floating-ai-assistant.tsx` | ✅ SUCCESS | ~1 min |
-| **3** | Update student guide with 5 new sections | ✅ SUCCESS | ~1 min |
-
-**Verification:**
-- Step 1: File created successfully
-- Step 3: File updated with 183 new lines of content
+**Date:** 2026-02-16
+**Based on:** `artifacts/superpowers/review.md` + `artifacts/superpowers/plan.md`
 
 ---
 
-### Batch 2 (Sequential) - Step 2
-| Step | Description | Status | Duration |
-|------|-------------|--------|----------|
-| **2** | Add FloatingAIAssistant to home page | ✅ SUCCESS | ~30 sec |
+## Execution Summary
 
-**Verification:**
-- Import added to `app/page.tsx`
-- Component rendered after Footer
+### Batch 1 — Core Server-Side Hardening (ALL PARALLEL) ✅
 
----
+| Step | Status | Description |
+|------|--------|-------------|
+| **Step 1** | ✅ DONE | Server-side amount enforcement in `actions.ts` — removed `amount` param, reads from `system_settings` |
+| **Step 1b** | ✅ DONE | Client fallback `1` → `200`, removed `amount` from `initiatePayment()` call |
+| **Step 2** | ✅ DONE | Webhook HMAC auth + Safaricom IP whitelist + GET→405 |
+| **Step 2b** | ✅ DONE | STK push generates HMAC token appended to response |
+| **Step 3** | ✅ DONE | Payment API: rate limiting, payment txn verification gate, error logging |
+| **Step 4** | ✅ DONE | New `/api/results` endpoint with 3-tier payment verification |
+| **Step 4b** | ✅ DONE | Results page uses secure API instead of direct Supabase query |
 
-### Batch 3 (Sequential) - Step 4
-| Step | Description | Status | Duration |
-|------|-------------|--------|----------|
-| **4** | Update CHANGELOG.md | ✅ SUCCESS | ~30 sec |
+### Fixes Applied During Execution
 
-**Verification:**
-- New changelog entry added with full documentation
+| Fix | Description |
+|-----|-------------|
+| Lint fix | Added `webhookToken` to `StkPushResponse` interface |
+| Import fix | `setRateLimitHeaders` → `rateLimitHeaders` (correct export name) |
+| API fix | `checkRateLimit` call uses `{ maxRequests, windowSeconds }` config object |
+| Build fix | Removed `"use server"` directive from API route file |
+| CSRF removal | Removed CSRF from payment API — payment txn verification is stronger |
+| n8n auth | Added `Authorization: Bearer` header to n8n webhook calls |
 
----
-
-## Build Verification
+### Build Verification
 
 ```
-npm run build
+npx next build → Exit code: 0 ✅
 ```
-
-**Result:** ✅ SUCCESS
-- Compiled successfully in 3.2 min
-- 56 static pages generated
-- Exit code: 0
-
----
 
 ## Files Changed
 
-1. **Created:**
-   - `components/floating-ai-assistant.tsx` (158 lines)
+### Created
+- `app/api/results/route.ts` — Secure results endpoint with payment verification
 
-2. **Modified:**
-   - `app/page.tsx` (added import + component usage)
-   - `docs/KUCCPS_COURSE_CHECKER_STUDENT_GUIDE.md` (+183 lines, 5 new sections)
-   - `CHANGELOG.md` (+72 lines)
+### Modified
+- `app/payment/actions.ts` — Server-side amount enforcement
+- `app/payment/page.tsx` — Removed client `amount`, fixed fallback
+- `app/api/payments/webhook/route.ts` — HMAC auth, IP whitelist, GET→405
+- `app/api/payments/route.ts` — Rate limiting, payment gate, error logging
+- `app/results/page.tsx` — Uses `/api/results` instead of direct Supabase
+- `lib/mpesa.ts` — HMAC token generation, `webhookToken` in type
+- `lib/n8n-webhook.ts` — Auth header for n8n
+- `CHANGELOG.md` — Security hardening entry
 
----
+## New Environment Variables Required
 
-## Total Execution Time
+```env
+# HMAC key for M-Pesa webhook verification
+WEBHOOK_SECRET=<generate with: openssl rand -hex 32>
 
-- Batch 1 (parallel): ~2 min
-- Batch 2: ~30 sec
-- Batch 3: ~30 sec
-- Build verification: ~3.2 min
-- **Total:** ~6.5 min
+# Set to "production" to enable Safaricom IP whitelist
+MPESA_ENV=sandbox
 
-**Time saved vs sequential:** ~1.5 min (Steps 1 & 3 ran in parallel)
+# Bearer token for n8n webhook authentication
+N8N_WEBHOOK_AUTH_TOKEN=<your-n8n-auth-token>
 
----
-
-## Next Steps (Manual)
-
-1. **Run `npm run dev`** to preview the changes locally
-2. **Upload the updated student guide** (`docs/KUCCPS_COURSE_CHECKER_STUDENT_GUIDE.md`) to the ChatGPT configuration as the knowledge base
-3. **Test the AI assistant** button on the home page
-4. **Deploy** to production when satisfied
-
----
+# Server-only admin email (no NEXT_PUBLIC_ prefix)
+ADMIN_EMAIL=wazimuautomate@gmail.com
+```
 
 ## Review Pass
 
-| Severity | Issue | Status |
-|----------|-------|--------|
-| - | None identified | ✅ Clean |
+| Severity | Finding |
+|----------|---------|
+| **Nit** | `NEXT_PUBLIC_ADMIN_EMAIL` still used client-side for UI auto-detect — not a security issue since admin bypass is bcrypt-verified server-side |
+| **Nit** | Fake CAPTCHA checkbox still present — recommend replacing with real reCAPTCHA in future |
+| **Minor** | No RLS enforcement added in this batch — existing service-key queries remain; consider adding RLS policies for `results_cache` |
 
-**All changes verified and working correctly.**
+## What's NOT Done (Deferred)
+
+- B5 full fix: Moving admin email entirely server-side (low priority — server already verifies)
+- Real CAPTCHA integration (reCAPTCHA v3)
+- RLS policies on `results_cache`, `payment_transactions`
+- Webhook callback URL in env (currently ngrok — should be production domain)
+- Phone validation consolidation

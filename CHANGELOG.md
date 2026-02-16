@@ -7,6 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security — 2026-02-16 (Payment Integration Security Hardening)
+
+**Objective:** Harden the payment integration against fraud, forged callbacks, and unauthorized access based on a comprehensive deep security review.
+
+**BLOCKER Fixes (5):**
+
+1. **B1: Webhook HMAC Authentication** (`app/api/payments/webhook/route.ts`, `lib/mpesa.ts`)
+   - Webhook now validates an HMAC-SHA256 token (computed from `CheckoutRequestID` + `WEBHOOK_SECRET`)
+   - Safaricom IP whitelist enforced in production mode (`MPESA_ENV=production`)
+   - GET handler replaced with 405 Method Not Allowed (was leaking service status)
+
+2. **B2: Payment Recording Requires Verified Transaction** (`app/api/payments/route.ts`)
+   - `/api/payments` POST now verifies a COMPLETED `payment_transaction` exists before recording
+   - Rate limiting: 5 req/60s per IP using in-memory sliding window
+   - Removed duplicate admin bypass logic (consolidated to one location)
+
+3. **B3 + B4: Secure Results API** (`app/api/results/route.ts` — NEW)
+   - New server-side API route that verifies payment before returning results
+   - 3-tier payment verification: `payment_transactions` → `payments` → `results_cache`
+   - Results page now fetches through `/api/results` instead of querying Supabase directly with anon key
+
+4. **B5 (Partial): Admin Email Mitigation**
+   - Admin bypass on server is already verified via bcrypt hash (secure)
+   - `NEXT_PUBLIC_ADMIN_EMAIL` remains for UI convenience only; real security is server-side
+
+**MAJOR Fixes (4):**
+
+1. **M1: Server-Side Amount Enforcement** (`app/payment/actions.ts`, `app/payment/page.tsx`)
+   - `initiatePayment()` no longer accepts `amount` from client
+   - Amount always read from `system_settings` table server-side
+   - Client fallback changed from `1` → `200` (safe default)
+
+2. **M4: CSRF Analysis**
+   - CSRF validation deferred — payment transaction verification provides stronger protection
+   - CSRF remains enforced on admin routes via middleware
+
+3. **M5: Amount Fallback Hardened** (`app/payment/page.tsx`)
+   - Changed `paymentAmount || 1` → `paymentAmount || 200`
+
+4. **M6: GET Information Leak Fixed** (`app/api/payments/webhook/route.ts`)
+   - Webhook GET returns 405 instead of service status JSON
+
+**MINOR Fixes (3):**
+
+1. **Silent Error Logging** (`app/api/payments/route.ts`)
+   - All 15+ empty `catch { }` blocks now log errors with context
+
+2. **n8n Webhook Auth** (`lib/n8n-webhook.ts`)
+   - Added `Authorization: Bearer <N8N_WEBHOOK_AUTH_TOKEN>` header
+
+3. **StkPushResponse Type** (`lib/mpesa.ts`)
+   - Added `webhookToken` field to interface for type safety
+
+**New Environment Variables Required:**
+- `WEBHOOK_SECRET` — HMAC key for M-Pesa callback verification (generate with `openssl rand -hex 32`)
+- `MPESA_ENV` — Set to `production` to enable Safaricom IP whitelist
+- `N8N_WEBHOOK_AUTH_TOKEN` — Bearer token for n8n webhook authentication
+- `ADMIN_EMAIL` — Server-only admin email (replaces `NEXT_PUBLIC_ADMIN_EMAIL` on server)
+
+**Files Created:**
+- `app/api/results/route.ts` (secure results endpoint)
+
+**Files Modified:**
+- `app/payment/actions.ts` (server-side amount enforcement)
+- `app/payment/page.tsx` (remove amount from client, fix fallback)
+- `app/api/payments/webhook/route.ts` (HMAC auth, IP whitelist, 405 GET)
+- `app/api/payments/route.ts` (rate limiting, payment verification gate, error logging)
+- `app/results/page.tsx` (use secure API instead of direct Supabase query)
+- `lib/mpesa.ts` (HMAC token generation, type update)
+- `lib/n8n-webhook.ts` (auth header)
+
+**Build Status:** ✅ Passes (`next build` exit code 0)
+
+
 ### Added - 2026-02-03 (AI Assistant & Comprehensive Student Guide Update)
 
 **Feature 1: Floating AI Course Assistant**

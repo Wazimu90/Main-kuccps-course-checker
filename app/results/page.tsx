@@ -36,7 +36,7 @@ import UserSummary from "@/components/results/user-summary"
 import CourseTable from "@/components/results/course-table"
 import ChatbotAssistant from "@/components/results/chatbot-assistant"
 import FloatingHelpButton from "@/components/floating-help-button"
-import { supabase } from "@/lib/supabase"
+// import { supabase } from "@/lib/supabase" // Replaced with secure API route
 // import { jsPDF } from "jspdf" // Dynamically imported
 // import autoTable from "jspdf-autotable" // Dynamically imported
 import { deduplicateCourses } from "@/lib/utils"
@@ -163,23 +163,34 @@ export default function ResultsPage() {
 
         console.log("Loading results for result ID:", resultId)
 
-        // Fetch results from Supabase using result_id
-        const { data: resultData, error } = await supabase
-          .from("results_cache")
-          .select("*")
-          .eq("result_id", resultId)
-          .single()
+        // SECURITY: Fetch results via secure API that verifies payment server-side
+        const res = await fetch(`/api/results?result_id=${encodeURIComponent(resultId)}`)
 
-        if (error) {
-          console.error("Error fetching results from cache:", error)
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}))
+          console.error("Results API error:", res.status, errBody)
+
+          if (res.status === 403) {
+            // Payment not verified
+            toast({
+              title: "Payment Required",
+              description: errBody.error || "Please complete payment to view your results.",
+              variant: "destructive",
+            })
+            router.push("/payment")
+            return
+          }
+
           toast({
             title: "Results Not Found",
-            description: "Could not find your results. Please try the qualification process again.",
+            description: errBody.error || "Could not find your results. Please try the qualification process again.",
             variant: "destructive",
           })
           router.push("/")
           return
         }
+
+        const { data: resultData } = await res.json()
 
         if (!resultData) {
           console.error("No result data found for ID:", resultId)

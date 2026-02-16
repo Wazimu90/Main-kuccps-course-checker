@@ -129,3 +129,24 @@ The cron job is running at the correct time (midnight Kenya time).
 | Revenue shows wrong | Same timezone issue | Same fix |
 | News card present | Dashboard not updated | Replace with Video Tutorials |
 
+
+> my-v0-project@0.1.0 dev
+> next dev
+
+ΓÜá Port 3000 is in use by an unknown process, using available port 3001 instead.
+ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\ADMIN\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\ADMIN\OneDrive\Desktop\kuccps_course_checker_advanced\v0-kuccps-course-checker\package-lock.json
+
+Γû▓ Next.js 16.1.0 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.100.3:3001
+- Environments: .env.local
+
+Γ£ô Starting...
+Γ¿» Unable to acquire lock at C:\Users\ADMIN\OneDrive\Desktop\kuccps_course_checker_advanced\v0-kuccps-course-checker\.next\dev\lock, is another instance of next dev running?
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h

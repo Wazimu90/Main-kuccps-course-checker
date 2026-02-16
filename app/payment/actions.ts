@@ -1,17 +1,16 @@
 "use server"
 
 import { log } from "@/lib/logger"
-import { initiateStkPush, normalizePhoneNumber } from "@/lib/pesaflux"
+import { initiateStkPush, normalizePhoneNumber } from "@/lib/mpesa"
 import { supabaseServer } from "@/lib/supabaseServer"
 
 /**
- * Initiate payment via PesaFlux STK Push
+ * Initiate payment via M-Pesa STK Push
  */
 export async function initiatePayment(data: {
   phone: string
   email: string
   name: string
-  amount: number
   courseCategory?: string | null
   resultId?: string | null  // CRITICAL: Store result_id for n8n webhook
 }) {
@@ -31,46 +30,68 @@ export async function initiatePayment(data: {
       })
     }
 
+    // SECURITY: Always read amount from database server-side — never trust client
+    let paymentAmountFromDb = 200 // Hard fallback
+    try {
+      const { data: settingsRows } = await supabaseServer
+        .from("system_settings")
+        .select("value")
+        .eq("key", "payment_amount")
+        .limit(1)
+        .maybeSingle()
+      if (settingsRows?.value) {
+        const parsed = Number(settingsRows.value)
+        if (!isNaN(parsed) && parsed > 0) {
+          paymentAmountFromDb = parsed
+        }
+      }
+    } catch (e: any) {
+      log("payment:init", "⚠️ Failed to load payment_amount from DB, using fallback 200", "warn", { error: e?.message })
+    }
+
     log("payment:init", "Starting initiatePayment action", "info", {
       email: data.email,
-      amount: data.amount,
+      amount: paymentAmountFromDb,
       courseCategory: data.courseCategory,
       resultId: data.resultId || "⚠️ MISSING",
       reference,
       maskedPhone: data.phone.substring(0, 4) + "****" // Mask phone for logs
     })
 
-    log("payment:init", "Initiating PesaFlux payment", "info", {
-      ...data,
+    log("payment:init", "Initiating M-Pesa payment", "info", {
+      email: data.email,
+      amount: paymentAmountFromDb,
       reference,
       phone: data.phone.substring(0, 4) + "****" // Mask phone for logs
     })
 
-    // Call PesaFlux STK Push API
+    // CRITICAL: Normalize phone to 254xxx format
+    const normalizedPhone = normalizePhoneNumber(data.phone)
+
+    // Call M-Pesa STK Push API — amount is ALWAYS from server DB
     const response = await initiateStkPush({
-      amount: data.amount,
-      msisdn: data.phone,
-      reference,
+      amount: paymentAmountFromDb,
+      phoneNumber: normalizedPhone,
+      accountReference: "Kuccps Course Checker",
+      transactionDesc: "Course Checking on Kuccps Course Checker"
     })
 
     if (response.success) {
-      log("payment:init", "✅ PesaFlux STK Push successful", "success", {
+      log("payment:init", "✅ M-Pesa STK Push successful", "success", {
         reference,
-        transaction_id: response.transaction_id,
-        message: response.message
+        transaction_id: response.checkoutRequestID,
+        message: response.customerMessage || response.responseDescription
       })
 
       // Store payment initiation in database for tracking
-      // CRITICAL: Normalize phone to 254xxx format to match webhook Msisdn format
-      const normalizedPhone = normalizePhoneNumber(data.phone)
       try {
         const { error: insertError } = await supabaseServer.from("payment_transactions").insert({
           reference,
-          transaction_id: response.transaction_id,
+          transaction_id: response.checkoutRequestID, // Store CheckoutRequestID for webhook matching
           phone_number: normalizedPhone, // Store in 254xxx format for webhook matching
           email: data.email,
           name: data.name,
-          amount: data.amount,
+          amount: paymentAmountFromDb,
           course_category: data.courseCategory || null,
           result_id: data.resultId || null,  // CRITICAL: Store for n8n webhook
           status: "PENDING",
@@ -91,7 +112,7 @@ export async function initiatePayment(data: {
 
         log("payment:db", "✅ Transaction stored in database", "debug", {
           reference,
-          transaction_id: response.transaction_id,
+          transaction_id: response.checkoutRequestID,
           course_category: data.courseCategory
         })
       } catch (dbError: any) {
@@ -110,18 +131,17 @@ export async function initiatePayment(data: {
       return {
         success: true,
         paymentId: reference, // Use reference as paymentId for tracking
-        message: response.message || "STK Push sent to your phone",
+        message: response.customerMessage || "STK Push sent to your phone",
       }
     } else {
-      log("payment:init", "PesaFlux STK Push failed", "error", {
+      log("payment:init", "M-Pesa STK Push failed", "error", {
         success: response.success,
-        message: response.message,
-        error: response.error,
-        fullResponse: JSON.stringify(response)
+        message: response.error || response.responseDescription,
+        code: response.responseCode
       })
       return {
         success: false,
-        message: response.message || "Failed to initiate payment",
+        message: response.error || response.responseDescription || "Failed to initiate payment",
       }
     }
   } catch (error) {
