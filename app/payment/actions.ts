@@ -41,8 +41,7 @@ export async function initiatePayment(data: {
     })
 
     log("payment:init", "Initiating M-Pesa payment", "info", {
-      email: data.email,
-      amount: data.amount,
+      ...data,
       reference,
       phone: data.phone.substring(0, 4) + "****" // Mask phone for logs
     })

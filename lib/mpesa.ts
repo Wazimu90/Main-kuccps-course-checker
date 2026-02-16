@@ -24,7 +24,6 @@ export interface StkPushResponse {
     responseDescription?: string
     customerMessage?: string
     error?: string
-    webhookToken?: string
 }
 
 /**
@@ -119,7 +118,6 @@ export async function initiateStkPush(request: StkPushRequest): Promise<StkPushR
         if (phone.startsWith("0")) phone = "254" + phone.slice(1)
         if (phone.length === 9) phone = "254" + phone // default to 254 if 9 digits
 
-
         const payload = {
             BusinessShortCode: shortcode,
             Password: password,
@@ -160,7 +158,7 @@ export async function initiateStkPush(request: StkPushRequest): Promise<StkPushR
 
         if (data.ResponseCode === "0") {
             log("mpesa:stk_push", "STK Push Initiated Successfully", "success", {
-                checkoutRequestID: data.CheckoutRequestID,
+                checkoutRequestID: data.CheckoutRequestID
             })
             return {
                 success: true,

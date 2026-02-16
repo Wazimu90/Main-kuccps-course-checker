@@ -13,40 +13,18 @@ export const dynamic = "force-dynamic"
  * This endpoint receives payment status callbacks from M-Pesa (Daraja)
  * Configure this URL as the CallbackURL in your STK Push request
  */
-// Safaricom production IPs (for IP whitelisting)
-const SAFARICOM_IP_PREFIXES = [
-    "196.201.214.",
-    "196.201.213.",
-    "41.215.49.",
-]
-
-function isSafaricomIp(ip: string): boolean {
-    if (process.env.MPESA_ENV !== "production") return true // Allow all in non-production
-    if (!ip || ip === "unknown") return false
-    return SAFARICOM_IP_PREFIXES.some(prefix => ip.startsWith(prefix))
-}
-
-
-
 export async function POST(request: Request) {
     try {
-
         const body = await request.json()
         const headers = request.headers
-        const ip = headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || "unknown"
+        const ip = headers.get("x-forwarded-for") || headers.get("x-real-ip") || "unknown"
 
         log("webhook:mpesa", "📥 Received M-Pesa webhook", "info", {
             ip,
             contentLength: headers.get("content-length"),
             userAgent: headers.get("user-agent"),
-            bodySummary: JSON.stringify(body).substring(0, 100) + "...",
+            bodySummary: JSON.stringify(body).substring(0, 100) + "..."
         })
-
-        // IP whitelist check (production only)
-        if (!isSafaricomIp(ip)) {
-            log("webhook:mpesa", "❌ Rejected webhook: IP not in Safaricom whitelist", "error", { ip })
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-        }
 
         // Extract fields using helper
         const webhookData = processWebhookPayload(body)
@@ -66,8 +44,6 @@ export async function POST(request: Request) {
                 error: "Missing CheckoutRequestID"
             })
         }
-
-
 
         // Determine internal status
         // ResultCode 0 = Success
@@ -244,5 +220,5 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-    return new NextResponse(null, { status: 405, headers: { Allow: "POST" } })
+    return NextResponse.json({ service: "M-Pesa Webhook Handler", status: "active" })
 }

@@ -275,7 +275,7 @@ export default function PaymentPage() {
       setPaymentState(PaymentState.PROCESSING)
 
       // Use paymentAmount from settings, fallback to 200 if not loaded
-      const amountToCharge = paymentAmount || 200
+      const amountToCharge = paymentAmount || 1
       setCurrentChargeAmount(amountToCharge) // Store in state for use in polling
 
       log("payment:init", "Calling initiatePayment action", "debug", {
