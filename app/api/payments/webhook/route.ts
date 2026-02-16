@@ -3,7 +3,6 @@ import { supabaseServer } from "@/lib/supabaseServer"
 import { log } from "@/lib/logger"
 import { sendToN8nWebhook } from "@/lib/n8n-webhook"
 import { processWebhookPayload } from "@/lib/mpesa"
-import crypto from "crypto"
 
 // Force dynamic rendering to prevent caching of webhook endpoint
 export const dynamic = "force-dynamic"
@@ -27,23 +26,10 @@ function isSafaricomIp(ip: string): boolean {
     return SAFARICOM_IP_PREFIXES.some(prefix => ip.startsWith(prefix))
 }
 
-function verifyWebhookToken(checkoutRequestID: string, token: string | null): boolean {
-    const secret = process.env.WEBHOOK_SECRET
-    if (!secret) {
-        // If WEBHOOK_SECRET is not configured, log warning but allow (grace period)
-        log("webhook:mpesa", "⚠️ WEBHOOK_SECRET not configured — skipping HMAC verification", "warn")
-        return true
-    }
-    if (!token) return false
-    const expected = crypto.createHmac("sha256", secret).update(checkoutRequestID).digest("hex")
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(token))
-}
+
 
 export async function POST(request: Request) {
     try {
-        // Extract webhook token from URL query params
-        const url = new URL(request.url)
-        const webhookToken = url.searchParams.get("token")
 
         const body = await request.json()
         const headers = request.headers
@@ -54,7 +40,6 @@ export async function POST(request: Request) {
             contentLength: headers.get("content-length"),
             userAgent: headers.get("user-agent"),
             bodySummary: JSON.stringify(body).substring(0, 100) + "...",
-            hasToken: !!webhookToken,
         })
 
         // IP whitelist check (production only)
@@ -82,11 +67,7 @@ export async function POST(request: Request) {
             })
         }
 
-        // HMAC token verification
-        if (!verifyWebhookToken(checkoutRequestID, webhookToken)) {
-            log("webhook:mpesa", "❌ Rejected webhook: Invalid HMAC token", "error", { checkoutRequestID, ip })
-            return NextResponse.json({ error: "Forbidden: Invalid token" }, { status: 403 })
-        }
+
 
         // Determine internal status
         // ResultCode 0 = Success

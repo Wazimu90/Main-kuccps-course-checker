@@ -1,5 +1,4 @@
 import { log } from "@/lib/logger"
-import crypto from "crypto"
 
 const MPESA_CONSUMER_KEY = process.env.MPESA_CONSUMER_KEY || ""
 const MPESA_CONSUMER_SECRET = process.env.MPESA_CONSUMER_SECRET || ""
@@ -120,15 +119,6 @@ export async function initiateStkPush(request: StkPushRequest): Promise<StkPushR
         if (phone.startsWith("0")) phone = "254" + phone.slice(1)
         if (phone.length === 9) phone = "254" + phone // default to 254 if 9 digits
 
-        // Generate HMAC token for webhook verification
-        // We use a temporary placeholder; the real CheckoutRequestID comes in the response.
-        // So we append the token AFTER getting the response — but M-Pesa requires CallBackURL
-        // at request time. We'll generate a pre-shared token based on timestamp + shortcode.
-        const webhookSecret = process.env.WEBHOOK_SECRET || ""
-        let callbackUrl = MPESA_CALLBACK_URL.trim()
-        // Token will be verified against CheckoutRequestID in the webhook handler
-        // Since CheckoutRequestID isn't known yet, we compute the HMAC post-response
-        // and store it. For now, include a pre-token that the webhook can verify.
 
         const payload = {
             BusinessShortCode: shortcode,
@@ -139,7 +129,7 @@ export async function initiateStkPush(request: StkPushRequest): Promise<StkPushR
             PartyA: phone,
             PartyB: shortcode,
             PhoneNumber: phone,
-            CallBackURL: callbackUrl, // Token appended post-response
+            CallBackURL: MPESA_CALLBACK_URL.trim(),
             AccountReference: request.accountReference,
             TransactionDesc: request.transactionDesc || "Payment",
         }
@@ -169,17 +159,8 @@ export async function initiateStkPush(request: StkPushRequest): Promise<StkPushR
         })
 
         if (data.ResponseCode === "0") {
-            // Generate HMAC token for this specific CheckoutRequestID
-            let webhookHmacToken: string | undefined
-            if (webhookSecret && data.CheckoutRequestID) {
-                webhookHmacToken = crypto.createHmac("sha256", webhookSecret)
-                    .update(data.CheckoutRequestID)
-                    .digest("hex")
-            }
-
             log("mpesa:stk_push", "STK Push Initiated Successfully", "success", {
                 checkoutRequestID: data.CheckoutRequestID,
-                hasWebhookToken: !!webhookHmacToken,
             })
             return {
                 success: true,
@@ -188,7 +169,6 @@ export async function initiateStkPush(request: StkPushRequest): Promise<StkPushR
                 responseCode: data.ResponseCode,
                 responseDescription: data.ResponseDescription,
                 customerMessage: data.CustomerMessage,
-                webhookToken: webhookHmacToken,
             }
         } else {
             log("mpesa:stk_push", "STK Push Failed", "error", data)

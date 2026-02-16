@@ -11,6 +11,7 @@ export async function initiatePayment(data: {
   phone: string
   email: string
   name: string
+  amount: number
   courseCategory?: string | null
   resultId?: string | null  // CRITICAL: Store result_id for n8n webhook
 }) {
@@ -30,28 +31,9 @@ export async function initiatePayment(data: {
       })
     }
 
-    // SECURITY: Always read amount from database server-side — never trust client
-    let paymentAmountFromDb = 200 // Hard fallback
-    try {
-      const { data: settingsRows } = await supabaseServer
-        .from("system_settings")
-        .select("value")
-        .eq("key", "payment_amount")
-        .limit(1)
-        .maybeSingle()
-      if (settingsRows?.value) {
-        const parsed = Number(settingsRows.value)
-        if (!isNaN(parsed) && parsed > 0) {
-          paymentAmountFromDb = parsed
-        }
-      }
-    } catch (e: any) {
-      log("payment:init", "⚠️ Failed to load payment_amount from DB, using fallback 200", "warn", { error: e?.message })
-    }
-
     log("payment:init", "Starting initiatePayment action", "info", {
       email: data.email,
-      amount: paymentAmountFromDb,
+      amount: data.amount,
       courseCategory: data.courseCategory,
       resultId: data.resultId || "⚠️ MISSING",
       reference,
@@ -60,7 +42,7 @@ export async function initiatePayment(data: {
 
     log("payment:init", "Initiating M-Pesa payment", "info", {
       email: data.email,
-      amount: paymentAmountFromDb,
+      amount: data.amount,
       reference,
       phone: data.phone.substring(0, 4) + "****" // Mask phone for logs
     })
@@ -68,9 +50,9 @@ export async function initiatePayment(data: {
     // CRITICAL: Normalize phone to 254xxx format
     const normalizedPhone = normalizePhoneNumber(data.phone)
 
-    // Call M-Pesa STK Push API — amount is ALWAYS from server DB
+    // Call M-Pesa STK Push API
     const response = await initiateStkPush({
-      amount: paymentAmountFromDb,
+      amount: data.amount,
       phoneNumber: normalizedPhone,
       accountReference: "Kuccps Course Checker",
       transactionDesc: "Course Checking on Kuccps Course Checker"
@@ -91,7 +73,7 @@ export async function initiatePayment(data: {
           phone_number: normalizedPhone, // Store in 254xxx format for webhook matching
           email: data.email,
           name: data.name,
-          amount: paymentAmountFromDb,
+          amount: data.amount,
           course_category: data.courseCategory || null,
           result_id: data.resultId || null,  // CRITICAL: Store for n8n webhook
           status: "PENDING",

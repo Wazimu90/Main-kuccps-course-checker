@@ -287,6 +287,7 @@ export default function PaymentPage() {
         phone: formData.phone,
         email: formData.email,
         name: formData.name,
+        amount: amountToCharge,
         courseCategory: courseCategory,
         resultId: resultId,  // CRITICAL: Pass result_id for n8n webhook
       })
