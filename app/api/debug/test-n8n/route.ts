@@ -15,7 +15,7 @@ export async function GET(request: Request) {
         const payload = {
             name: "Debug API User",
             phone: "+254727921038",
-            mpesaCode: "DEBUG123XYZ",
+            paystackReference: "PAY-DEBUG-123XYZ",
             email: "wazimucreations@gmail.com",
             resultId: "debug-result-id-TEST"
         };

@@ -119,7 +119,7 @@ export default function PaymentWarningModal({
                             <p className="text-4xl sm:text-5xl font-bold text-white">
                                 KES {isLoading ? "..." : paymentAmount}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">Via M-Pesa</p>
+                            <p className="text-xs text-gray-400 mt-1">Via Paystack (Secure)</p>
                         </div>
 
                         {/* Main CTA */}

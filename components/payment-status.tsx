@@ -8,7 +8,7 @@ interface PaymentStatusProps {
   state: "initial" | "processing" | "success" | "failed"
   onRetry: () => void
   phone: string
-  paymentAmount?: number // Optional, defaults to 200
+  paymentAmount?: number
 }
 
 export default function PaymentStatus({ state, onRetry, phone, paymentAmount = 200 }: PaymentStatusProps) {
@@ -26,10 +26,10 @@ export default function PaymentStatus({ state, onRetry, phone, paymentAmount = 2
             </motion.div>
             <h3 className="mb-2 text-xl font-semibold">Processing Payment</h3>
             <p className="mb-6 text-center text-white">
-              We've sent an M-Pesa payment request to <span className="font-medium">{phone}</span>
+              Your payment is being processed via Paystack. Please complete the payment in the popup window.
             </p>
             <div className="space-y-4 text-center">
-              <p className="text-sm">Please check your phone and enter your M-Pesa PIN to complete the payment</p>
+              <p className="text-sm">This may take a moment. Please do not close this page.</p>
               <div className="flex items-center justify-center space-x-2">
                 <div className="h-2 w-2 animate-pulse rounded-full bg-primary"></div>
                 <div className="h-2 w-2 animate-pulse rounded-full bg-primary" style={{ animationDelay: "0.2s" }}></div>
@@ -37,7 +37,6 @@ export default function PaymentStatus({ state, onRetry, phone, paymentAmount = 2
               </div>
             </div>
 
-            {/* Retry button for cases where STK was cancelled or not received */}
             <div className="mt-6 w-full space-y-2">
               <Button
                 onClick={onRetry}
@@ -47,7 +46,7 @@ export default function PaymentStatus({ state, onRetry, phone, paymentAmount = 2
                 Cancel & Retry Payment
               </Button>
               <p className="text-xs text-white text-center">
-                Didn't receive the STK prompt? Click above to retry.
+                Payment window didn't open? Click above to retry.
               </p>
             </div>
           </div>
@@ -98,15 +97,15 @@ export default function PaymentStatus({ state, onRetry, phone, paymentAmount = 2
             <ul className="mb-6 space-y-2 text-sm text-white">
               <li className="flex items-start gap-2">
                 <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-500" />
-                <span>Insufficient funds in your M-Pesa account</span>
+                <span>Payment was cancelled or the payment window was closed</span>
               </li>
               <li className="flex items-start gap-2">
                 <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-500" />
-                <span>Incorrect phone number format</span>
+                <span>Insufficient funds or card declined</span>
               </li>
               <li className="flex items-start gap-2">
                 <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-500" />
-                <span>M-Pesa request timed out or was cancelled</span>
+                <span>Network error or payment timeout</span>
               </li>
             </ul>
             <Button onClick={onRetry} className="w-full">

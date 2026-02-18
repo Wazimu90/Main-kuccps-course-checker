@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic"
 
 /**
  * Verify payment for agent PDF download
- * POST: Verify result_id, phone, mpesa_receipt match a valid payment
+ * POST: Verify result_id, phone, paystack_reference match a valid payment
  */
 
 export async function POST(request: Request) {
@@ -29,15 +29,15 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json()
-        const { result_id, phone_number, mpesa_receipt, agent_code } = body
+        const { result_id, phone_number, paystack_reference, agent_code } = body
 
-        // Validation: require EITHER result_id OR (mpesa_receipt AND phone_number)
+        // Validation: require EITHER result_id OR (paystack_reference AND phone_number)
         const hasResultId = result_id && String(result_id).trim()
-        const hasMpesaLookup = mpesa_receipt && phone_number && String(mpesa_receipt).trim() && String(phone_number).trim()
+        const hasPaystackLookup = paystack_reference && phone_number && String(paystack_reference).trim() && String(phone_number).trim()
 
-        if (!hasResultId && !hasMpesaLookup) {
+        if (!hasResultId && !hasPaystackLookup) {
             return NextResponse.json(
-                { error: "Either Result ID, or M-Pesa Receipt Code + Phone Number are required" },
+                { error: "Either Result ID, or Paystack Reference + Phone Number are required" },
                 { status: 400, headers: rateLimitHeaders(rateCheck) }
             )
         }
@@ -55,11 +55,11 @@ export async function POST(request: Request) {
         }
 
         log("agent-portal:verify-payment", "Verifying payment", "info", {
-            result_id: result_id || "not provided (M-Pesa lookup)",
+            result_id: result_id || "not provided (Paystack lookup)",
             phone: normalizedPhone || "not provided",
-            mpesa_receipt: mpesa_receipt || "not provided",
+            paystack_reference: paystack_reference || "not provided",
             agent_code,
-            lookup_method: hasResultId ? "result_id" : "mpesa",
+            lookup_method: hasResultId ? "result_id" : "paystack",
         })
 
         let resultRecord = null
@@ -83,56 +83,98 @@ export async function POST(request: Request) {
             resultRecord = record
             resolvedResultId = record.result_id
         }
-        // OPTION B: M-Pesa Receipt lookup
-        else if (hasMpesaLookup) {
-            // Step 1: Find payment by M-Pesa receipt
+        // OPTION B: Paystack Reference lookup
+        else if (hasPaystackLookup) {
+            // Step 1: Find payment by Paystack reference
             // CRITICAL: Include result_id in the query for direct lookup
             const { data: transaction } = await supabaseServer
                 .from("payment_transactions")
-                .select("id, name, email, phone_number, amount, completed_at, mpesa_receipt_number, status, result_id")
-                .eq("mpesa_receipt_number", mpesa_receipt.toUpperCase().trim())
+                .select("id, name, email, phone_number, amount, completed_at, paystack_reference, status, result_id")
+                .eq("paystack_reference", paystack_reference.toUpperCase().trim())
                 .eq("status", "COMPLETED")
                 .single()
 
             if (!transaction) {
-                // Also try payments table by mpesa code (if stored there)
-                const { data: payment } = await supabaseServer
-                    .from("payments")
-                    .select("id, name, email, phone_number, amount, paid_at, result_id")
-                    .or(`phone_number.eq.${normalizedPhone},phone_number.eq.0${normalizedPhone.substring(3)}`)
-                    .order("paid_at", { ascending: false })
-                    .limit(1)
+                // Also try by reference column (our internal reference)
+                const { data: txByRef } = await supabaseServer
+                    .from("payment_transactions")
+                    .select("id, name, email, phone_number, amount, completed_at, paystack_reference, status, result_id")
+                    .eq("reference", paystack_reference.toUpperCase().trim())
+                    .eq("status", "COMPLETED")
                     .single()
 
-                if (!payment) {
-                    log("agent-portal:verify-payment", "Payment not found by M-Pesa receipt", "warn", { mpesa_receipt, phone: normalizedPhone })
-                    return NextResponse.json(
-                        { error: "No payment found with this M-Pesa receipt code. Verify the details." },
-                        { status: 404, headers: rateLimitHeaders(rateCheck) }
-                    )
-                }
-
-                // If payment has result_id, use it
-                if (payment.result_id) {
-                    resolvedResultId = payment.result_id
-                } else {
-                    // Find result by phone number match
-                    const { data: resultsByPhone } = await supabaseServer
-                        .from("results_cache")
-                        .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
+                if (!txByRef) {
+                    // Also try payments table by phone number
+                    const { data: payment } = await supabaseServer
+                        .from("payments")
+                        .select("id, name, email, phone_number, amount, paid_at, result_id")
                         .or(`phone_number.eq.${normalizedPhone},phone_number.eq.0${normalizedPhone.substring(3)}`)
-                        .order("created_at", { ascending: false })
+                        .order("paid_at", { ascending: false })
                         .limit(1)
+                        .single()
 
-                    if (!resultsByPhone || resultsByPhone.length === 0) {
-                        log("agent-portal:verify-payment", "No result found matching phone", "warn", { phone: normalizedPhone })
+                    if (!payment) {
+                        log("agent-portal:verify-payment", "Payment not found by Paystack reference", "warn", { paystack_reference, phone: normalizedPhone })
                         return NextResponse.json(
-                            { error: "Could not find result for this payment. Contact support." },
+                            { error: "No payment found with this Paystack reference. Verify the details." },
                             { status: 404, headers: rateLimitHeaders(rateCheck) }
                         )
                     }
-                    resultRecord = resultsByPhone[0]
-                    resolvedResultId = resultRecord.result_id
+
+                    // If payment has result_id, use it
+                    if (payment.result_id) {
+                        resolvedResultId = payment.result_id
+                    } else {
+                        // Find result by phone number match
+                        const { data: resultsByPhone } = await supabaseServer
+                            .from("results_cache")
+                            .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
+                            .or(`phone_number.eq.${normalizedPhone},phone_number.eq.0${normalizedPhone.substring(3)}`)
+                            .order("created_at", { ascending: false })
+                            .limit(1)
+
+                        if (!resultsByPhone || resultsByPhone.length === 0) {
+                            log("agent-portal:verify-payment", "No result found matching phone", "warn", { phone: normalizedPhone })
+                            return NextResponse.json(
+                                { error: "Could not find result for this payment. Contact support." },
+                                { status: 404, headers: rateLimitHeaders(rateCheck) }
+                            )
+                        }
+                        resultRecord = resultsByPhone[0]
+                        resolvedResultId = resultRecord.result_id
+                    }
+                } else {
+                    // Found by reference column
+                    if (txByRef.result_id) {
+                        resolvedResultId = txByRef.result_id
+                    } else {
+                        // Phone fallback
+                        const txPhone = txByRef.phone_number || ""
+                        let txNormalizedPhone = txPhone.replace(/\s+/g, "")
+                        if (txNormalizedPhone.startsWith("0") && txNormalizedPhone.length === 10) {
+                            txNormalizedPhone = "254" + txNormalizedPhone.substring(1)
+                        }
+                        if (txNormalizedPhone.startsWith("+254")) {
+                            txNormalizedPhone = txNormalizedPhone.substring(1)
+                        }
+
+                        const { data: resultsByPhone } = await supabaseServer
+                            .from("results_cache")
+                            .select("result_id, agent_code, email, phone_number, name, category, eligible_courses")
+                            .or(`phone_number.eq.${txNormalizedPhone},phone_number.eq.0${txNormalizedPhone.substring(3)},phone_number.eq.${normalizedPhone},phone_number.eq.0${normalizedPhone.substring(3)}`)
+                            .order("created_at", { ascending: false })
+                            .limit(1)
+
+                        if (!resultsByPhone || resultsByPhone.length === 0) {
+                            log("agent-portal:verify-payment", "No result found for Paystack payment", "warn", { paystack_reference, phone: txNormalizedPhone })
+                            return NextResponse.json(
+                                { error: "Could not find result for this payment. The student may not have generated results yet." },
+                                { status: 404, headers: rateLimitHeaders(rateCheck) }
+                            )
+                        }
+                        resultRecord = resultsByPhone[0]
+                        resolvedResultId = resultRecord.result_id
+                    }
                 }
             } else {
                 // Transaction found - FIRST try to use result_id from payment_transactions
@@ -140,12 +182,12 @@ export async function POST(request: Request) {
                     resolvedResultId = transaction.result_id
                     log("agent-portal:verify-payment", "Using result_id from payment_transactions", "debug", {
                         result_id: resolvedResultId,
-                        mpesa_receipt
+                        paystack_reference
                     })
                 } else {
                     // FALLBACK: Find result by phone number match
                     log("agent-portal:verify-payment", "⚠️ result_id missing in payment_transactions, using phone fallback", "warn", {
-                        mpesa_receipt,
+                        paystack_reference,
                         phone: transaction.phone_number,
                         hint: "This transaction was likely created before result_id was stored"
                     })
@@ -168,7 +210,7 @@ export async function POST(request: Request) {
                         .limit(1)
 
                     if (!resultsByPhone || resultsByPhone.length === 0) {
-                        log("agent-portal:verify-payment", "No result found for M-Pesa payment", "warn", { mpesa_receipt, phone: txNormalizedPhone })
+                        log("agent-portal:verify-payment", "No result found for Paystack payment", "warn", { paystack_reference, phone: txNormalizedPhone })
                         return NextResponse.json(
                             { error: "Could not find result for this payment. The student may not have generated results yet." },
                             { status: 404, headers: rateLimitHeaders(rateCheck) }
@@ -246,12 +288,12 @@ export async function POST(request: Request) {
             }
         }
 
-        // Also check payment_transactions by M-Pesa receipt
-        if (!paymentFound && mpesa_receipt) {
+        // Also check payment_transactions by Paystack reference
+        if (!paymentFound && paystack_reference) {
             const { data: transaction } = await supabaseServer
                 .from("payment_transactions")
-                .select("id, name, email, phone_number, amount, completed_at, mpesa_receipt_number, status")
-                .eq("mpesa_receipt_number", mpesa_receipt.toUpperCase().trim())
+                .select("id, name, email, phone_number, amount, completed_at, paystack_reference, status")
+                .eq("paystack_reference", paystack_reference.toUpperCase().trim())
                 .eq("status", "COMPLETED")
                 .single()
 
@@ -264,7 +306,7 @@ export async function POST(request: Request) {
                     phone_number: transaction.phone_number,
                     amount: transaction.amount,
                     paid_at: transaction.completed_at,
-                    mpesa_receipt: transaction.mpesa_receipt_number,
+                    paystack_reference: transaction.paystack_reference,
                 }
             }
         }
@@ -273,10 +315,10 @@ export async function POST(request: Request) {
             log("agent-portal:verify-payment", "Payment not found", "warn", {
                 result_id: resolvedResultId,
                 phone: normalizedPhone,
-                mpesa_receipt,
+                paystack_reference,
             })
             return NextResponse.json(
-                { error: "No payment found. Verify the M-Pesa receipt or Result ID." },
+                { error: "No payment found. Verify the Paystack reference or Result ID." },
                 { status: 404, headers: rateLimitHeaders(rateCheck) }
             )
         }

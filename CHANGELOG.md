@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed - 2026-02-18 (BREAKING: Payment Gateway Migration — M-Pesa → Paystack)
+
+**Objective:** Replace the M-Pesa/PesaFlux payment integration with Paystack for more reliable, secure, and versatile payment processing.
+
+**Breaking Changes:**
+- All M-Pesa STK push functionality removed
+- `mpesa_receipt_number` column renamed to `paystack_reference` in `payment_transactions` table
+- `paystack_access_code` column added to `payment_transactions` table
+- N8n webhook payload field `mpesaCode` renamed to `paystackReference`
+- Phone number is now optional during checkout (Paystack requires email, not phone)
+
+**New Files Created:**
+- `lib/paystack.ts` — Server-side Paystack helper (initialize, verify, HMAC webhook signature)
+- `app/api/paystack/initialize/route.ts` — Initialize Paystack transaction
+- `app/api/paystack/verify/route.ts` — Verify Paystack transaction after callback
+- `app/api/paystack/webhook/route.ts` — Handle Paystack charge.success webhooks
+- `app/payment/callback/page.tsx` — Callback page after Paystack redirect/popup
+
+**Files Deleted:**
+- `lib/mpesa.ts` — Old M-Pesa STK push integration
+
+**Files Modified:**
+- `.env.local` — Removed M-Pesa keys, added `PAYSTACK_SECRET_KEY`, `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY`, `NEXT_PUBLIC_SITE_URL`
+- `app/payment/page.tsx` — Complete rewrite: Paystack popup checkout via `@paystack/inline-js`, optional phone number
+- `app/payment/actions.ts` — Replaced M-Pesa initiation with Paystack initialization, updated status check queries
+- `app/api/payments/webhook/route.ts` — Rewritten for Paystack webhook handling with HMAC SHA512 verification
+- `components/payment-status.tsx` — Updated text from M-Pesa STK push to Paystack popup messaging
+- `components/payment-warning-modal.tsx` — Changed "Via M-Pesa" to "Via Paystack (Secure)"
+- `app/agent-portal/page.tsx` — M-Pesa Receipt fields → Paystack Reference fields
+- `app/api/agent-portal/verify-payment/route.ts` — Updated to query `paystack_reference` column
+- `app/api/agent-portal/download-pdf/route.ts` — Updated to query `paystack_reference` column
+- `lib/n8n-webhook.ts` — `mpesaCode` → `paystackReference`, added optional `amount` and `courseCategory` fields
+- `lib/paymentValidation.ts` — Made `phone_number` optional
+- `app/api/debug/test-n8n/route.ts` — Updated test payload
+
+**Database Migration:**
+- `supabase/migrations/20260218_paystack_migration.sql`
+  - Renames `mpesa_receipt_number` → `paystack_reference`
+  - Adds `paystack_access_code` column
+  - Updates indexes accordingly
+
+**Security Measures:**
+- Paystack secret key kept server-only (never exposed to frontend)
+- Webhook signature verification using HMAC SHA512
+- Amount verification before confirming payments (prevents underpayment attacks)
+- Idempotent webhook processing (prevents double-crediting)
+- Admin bypass flow preserved with admin key verification
+
+**Impact:**
+- Users now pay via Paystack popup (supports cards, mobile money, bank transfers)
+- Phone number is optional during checkout
+- Agent portal uses Paystack Reference instead of M-Pesa Receipt for lookups
+- All 0 remaining M-Pesa references in TypeScript/TSX codebase
+
+**References:**
+- [lib/paystack.ts](lib/paystack.ts)
+- [app/api/paystack/initialize/route.ts](app/api/paystack/initialize/route.ts)
+- [app/payment/page.tsx](app/payment/page.tsx)
+- [artifacts/superpowers/plan.md](artifacts/superpowers/plan.md)
+
+
 ### Added - 2026-02-03 (AI Assistant & Comprehensive Student Guide Update)
 
 **Feature 1: Floating AI Course Assistant**

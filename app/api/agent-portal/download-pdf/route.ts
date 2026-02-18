@@ -35,9 +35,9 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json()
-        const { token, result_id, phone_number, mpesa_receipt } = body
+        const { token, result_id, phone_number, paystack_reference } = body
 
-        // Validation: require token AND (result_id OR (mpesa_receipt AND phone_number))
+        // Validation: require token AND (result_id OR (paystack_reference AND phone_number))
         if (!token) {
             return NextResponse.json(
                 { error: "Token is required" },
@@ -46,11 +46,11 @@ export async function POST(request: Request) {
         }
 
         const hasResultId = result_id && String(result_id).trim()
-        const hasMpesaLookup = mpesa_receipt && phone_number && String(mpesa_receipt).trim() && String(phone_number).trim()
+        const hasPaystackLookup = paystack_reference && phone_number && String(paystack_reference).trim() && String(phone_number).trim()
 
-        if (!hasResultId && !hasMpesaLookup) {
+        if (!hasResultId && !hasPaystackLookup) {
             return NextResponse.json(
-                { error: "Either Result ID, or M-Pesa Receipt + Phone Number are required" },
+                { error: "Either Result ID, or Paystack Reference + Phone Number are required" },
                 { status: 400, headers: rateLimitHeaders(rateCheck) }
             )
         }
@@ -168,12 +168,12 @@ export async function POST(request: Request) {
             }
             resultRecord = record
             resolvedResultId = record.result_id
-        } else if (hasMpesaLookup) {
-            // M-Pesa-based lookup - CRITICAL: Include result_id in query
+        } else if (hasPaystackLookup) {
+            // Paystack-based lookup - CRITICAL: Include result_id in query
             const { data: transaction } = await supabaseServer
                 .from("payment_transactions")
-                .select("id, phone_number, mpesa_receipt_number, status, result_id")
-                .eq("mpesa_receipt_number", mpesa_receipt.toUpperCase().trim())
+                .select("id, phone_number, paystack_reference, status, result_id")
+                .eq("paystack_reference", paystack_reference.toUpperCase().trim())
                 .eq("status", "COMPLETED")
                 .single()
 
@@ -183,7 +183,7 @@ export async function POST(request: Request) {
                     resolvedResultId = transaction.result_id
                     log("agent-portal:download-pdf", "Using result_id from payment_transactions", "debug", {
                         result_id: resolvedResultId,
-                        mpesa_receipt
+                        paystack_reference
                     })
 
                     // Fetch result record by ID
@@ -199,7 +199,7 @@ export async function POST(request: Request) {
                 } else {
                     // FALLBACK: Find result by transaction phone
                     log("agent-portal:download-pdf", "⚠️ result_id missing in payment_transactions, using phone fallback", "warn", {
-                        mpesa_receipt,
+                        paystack_reference,
                         phone: transaction.phone_number,
                         hint: "This transaction was likely created before result_id was stored"
                     })
@@ -252,8 +252,8 @@ export async function POST(request: Request) {
             }
 
             if (!resultRecord) {
-                await logDownloadAttempt(agent.id, matchedToken.id, "mpesa:" + mpesa_receipt, "failure", "Result not found via M-Pesa lookup", ip, userAgent)
-                return NextResponse.json({ error: "Could not find result for this M-Pesa payment" }, { status: 404 })
+                await logDownloadAttempt(agent.id, matchedToken.id, "paystack:" + paystack_reference, "failure", "Result not found via Paystack lookup", ip, userAgent)
+                return NextResponse.json({ error: "Could not find result for this Paystack payment" }, { status: 404 })
             }
         }
 

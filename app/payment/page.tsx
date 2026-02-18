@@ -13,7 +13,6 @@ import PaymentStatus from "@/components/payment-status"
 import PaymentSummary from "@/components/payment-summary"
 import { initiatePayment, checkPaymentStatus } from "@/app/payment/actions"
 import Footer from "@/components/footer"
-import { supabase } from "@/lib/supabase"
 import { log } from "@/lib/logger"
 
 enum PaymentState {
@@ -33,15 +32,15 @@ export default function PaymentPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [paymentState, setPaymentState] = useState<PaymentState>(PaymentState.INITIAL)
-  const [paymentId, setPaymentId] = useState<string | null>(null)
+  const [paymentReference, setPaymentReference] = useState<string | null>(null)
   const [isVerified, setIsVerified] = useState(false)
   const [isAdminMode, setIsAdminMode] = useState(false)
   const [adminKey, setAdminKey] = useState("")
   const [courseCategory, setCourseCategory] = useState<string | null>(null)
-  const [resultId, setResultId] = useState<string | null>(null)  // CRITICAL: Store result_id for n8n
-  const [paymentAmount, setPaymentAmount] = useState<number | null>(null) // Will be fetched from database
+  const [resultId, setResultId] = useState<string | null>(null)
+  const [paymentAmount, setPaymentAmount] = useState<number | null>(null)
   const [isLoadingAmount, setIsLoadingAmount] = useState(true)
-  const [currentChargeAmount, setCurrentChargeAmount] = useState<number>(200) // Track current charge amount
+  const [currentChargeAmount, setCurrentChargeAmount] = useState<number>(200)
   const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "wazimuautomate@gmail.com"
 
   // Load payment amount from admin settings
@@ -49,7 +48,6 @@ export default function PaymentPage() {
     const fetchPaymentAmount = async () => {
       try {
         setIsLoadingAmount(true)
-        // Use the dedicated public settings endpoint with cache-busting
         const res = await fetch(`/api/settings?t=${Date.now()}`, {
           cache: "no-store",
           headers: {
@@ -59,17 +57,14 @@ export default function PaymentPage() {
         })
         if (res.ok) {
           const data = await res.json()
-          // payment_amount is returned directly, not nested in settings
           if (data?.payment_amount !== undefined && data?.payment_amount !== null) {
             setPaymentAmount(Number(data.payment_amount))
             log("payment:settings", "Payment amount loaded from database", "debug", { amount: data.payment_amount })
           } else {
-            // Fallback if no setting exists
             setPaymentAmount(200)
             log("payment:settings", "No payment_amount in response, using fallback of 200", "warn", data)
           }
         } else {
-          // API error fallback
           setPaymentAmount(200)
           log("payment:settings", "Failed to fetch settings, using fallback of 200", "warn", { status: res.status })
         }
@@ -96,18 +91,16 @@ export default function PaymentPage() {
     }
     try {
       const category = localStorage.getItem("selectedCategory")
-      const storedResultId = localStorage.getItem("resultId")  // CRITICAL: Get result_id for n8n
+      const storedResultId = localStorage.getItem("resultId")
       const parsed = savedData ? JSON.parse(savedData) : null
       const resolved = (category || parsed?.category || "").toString()
       setCourseCategory(resolved || null)
       setResultId(storedResultId || null)
 
-      // CRITICAL: Warn if resultId is missing - this will cause issues with M-Pesa lookups
       if (!storedResultId) {
         log("payment:init", "⚠️ WARNING: resultId is missing from localStorage", "warn", {
           category: resolved || null,
           hasGradeData: !!savedData,
-          hint: "User may have navigated directly to payment or results_cache insert failed"
         })
         toast({
           title: "⚠️ Result ID Missing",
@@ -127,7 +120,6 @@ export default function PaymentPage() {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
 
-    // Clear error for this field if it exists
     if (errors[name]) {
       setErrors((prev) => {
         const newErrors = { ...prev }
@@ -158,15 +150,16 @@ export default function PaymentPage() {
         newErrors.name = "Name is required"
       }
 
-      const phoneRegex = /^(07|01)[0-9]{8}$/
-      if (!formData.phone.trim()) {
-        newErrors.phone = "Phone number is required"
-      } else if (!phoneRegex.test(formData.phone)) {
-        newErrors.phone = "Enter a valid Kenyan phone number (e.g., 0712345678)"
+      // Phone is optional for Paystack but validated if provided
+      if (formData.phone.trim()) {
+        const phoneRegex = /^(07|01)[0-9]{8}$/
+        if (!phoneRegex.test(formData.phone)) {
+          newErrors.phone = "Enter a valid Kenyan phone number (e.g., 0712345678)"
+        }
       }
     }
 
-    // Validate email
+    // Validate email (required for Paystack)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!formData.email.trim()) {
       newErrors.email = "Email is required"
@@ -201,6 +194,8 @@ export default function PaymentPage() {
       email: formData.email,
       courseCategory
     })
+
+    // Admin bypass flow (unchanged)
     if (isAdminMode) {
       if (!adminKey.trim()) {
         toast({ title: "Admin Key Required", description: "Please enter the admin access key.", variant: "destructive" })
@@ -271,12 +266,12 @@ export default function PaymentPage() {
       }
     }
 
+    // ─── Paystack payment flow ───
     try {
       setPaymentState(PaymentState.PROCESSING)
 
-      // Use paymentAmount from settings, fallback to 200 if not loaded
       const amountToCharge = paymentAmount || 1
-      setCurrentChargeAmount(amountToCharge) // Store in state for use in polling
+      setCurrentChargeAmount(amountToCharge)
 
       log("payment:init", "Calling initiatePayment action", "debug", {
         amount: amountToCharge,
@@ -284,19 +279,34 @@ export default function PaymentPage() {
       })
 
       const response = await initiatePayment({
-        phone: formData.phone,
         email: formData.email,
         name: formData.name,
         amount: amountToCharge,
+        phone: formData.phone || null,
         courseCategory: courseCategory,
-        resultId: resultId,  // CRITICAL: Pass result_id for n8n webhook
+        resultId: resultId,
       })
 
-      if (response.success && response.paymentId) {
-        setPaymentId(response.paymentId)
+      if (response.success && response.accessCode) {
+        setPaymentReference(response.reference || null)
 
-        // Start polling for payment status
-        log("payment:init", "Payment initiated", "success", { paymentId: response.paymentId })
+        // Save pending payment info for the callback page
+        try {
+          localStorage.setItem("pendingPaymentInfo", JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            amount: amountToCharge,
+            courseCategory,
+            resultId,
+          }))
+        } catch { }
+
+        log("payment:init", "Opening Paystack popup", "info", {
+          reference: response.reference,
+          hasAccessCode: !!response.accessCode,
+        })
+
         try {
           await fetch("/api/activity", {
             method: "POST",
@@ -306,12 +316,50 @@ export default function PaymentPage() {
               actor_role: "user",
               email: formData.email,
               phone_number: formData.phone,
-              description: "Client initiated payment",
-              metadata: { paymentId: response.paymentId, amount: amountToCharge, category: courseCategory },
+              description: "Client initiated Paystack payment",
+              metadata: { reference: response.reference, amount: amountToCharge, category: courseCategory },
             }),
           })
         } catch { }
-        pollPaymentStatus(response.paymentId)
+
+        // Open Paystack popup via @paystack/inline-js
+        try {
+          const PaystackPop = (await import("@paystack/inline-js")).default
+          const popup = new PaystackPop()
+          popup.resumeTransaction(response.accessCode, {
+            onSuccess: () => {
+              log("payment:popup", "Paystack popup success callback", "success", { reference: response.reference })
+              // Start polling — the webhook or verify endpoint will confirm
+              if (response.reference) {
+                pollPaymentStatus(response.reference)
+              }
+            },
+            onCancel: () => {
+              log("payment:popup", "Paystack popup cancelled by user", "warn", { reference: response.reference })
+              setPaymentState(PaymentState.FAILED)
+              toast({
+                title: "Payment Cancelled",
+                description: "You closed the payment window. Click 'Try Again' to retry.",
+                variant: "destructive",
+              })
+            },
+          })
+        } catch (popupError: any) {
+          log("payment:popup", "Failed to open Paystack popup, falling back to redirect", "warn", {
+            error: popupError.message,
+          })
+          // Fallback: redirect to Paystack hosted checkout
+          if (response.authorizationUrl) {
+            window.location.href = response.authorizationUrl
+          } else {
+            setPaymentState(PaymentState.FAILED)
+            toast({
+              title: "Payment Error",
+              description: "Could not open payment window. Please try again.",
+              variant: "destructive",
+            })
+          }
+        }
       } else {
         setPaymentState(PaymentState.FAILED)
         toast({
@@ -346,14 +394,14 @@ export default function PaymentPage() {
     }
   }
 
-  const pollPaymentStatus = async (id: string) => {
+  const pollPaymentStatus = async (ref: string) => {
     try {
-      log("payment:poll", "Polling for status", "debug", { paymentId: id })
-      const statusResponse = await checkPaymentStatus(id)
+      log("payment:poll", "Polling for status", "debug", { reference: ref })
+      const statusResponse = await checkPaymentStatus(ref)
 
       if (statusResponse.status === "COMPLETED") {
         setPaymentState(PaymentState.SUCCESS)
-        log("payment:status", "Payment completed", "success", { paymentId: id })
+        log("payment:status", "Payment completed", "success", { reference: ref })
 
         try {
           await fetch("/api/activity", {
@@ -365,7 +413,7 @@ export default function PaymentPage() {
               email: formData.email,
               phone_number: formData.phone,
               description: "Payment completed",
-              metadata: { paymentId: id, amount: currentChargeAmount, category: courseCategory },
+              metadata: { reference: ref, amount: currentChargeAmount, category: courseCategory },
             }),
           })
         } catch { }
@@ -374,7 +422,7 @@ export default function PaymentPage() {
         localStorage.setItem(
           "paymentInfo",
           JSON.stringify({
-            id,
+            id: ref,
             amount: currentChargeAmount,
             phone: formData.phone,
             email: formData.email,
@@ -386,12 +434,10 @@ export default function PaymentPage() {
         try {
           log("payment:record", "Recording finished transaction to /api/payments", "info", {
             email: formData.email,
-            reference: id,
+            reference: ref,
             courseCategory: courseCategory || "degree"
           })
 
-          // CRITICAL: course_category must be a valid value for payments table constraint
-          // If null/empty, default to 'degree' to ensure payment is recorded
           const validCategory = courseCategory &&
             ['degree', 'diploma', 'certificate', 'artisan', 'kmtc'].includes(courseCategory.toLowerCase())
             ? courseCategory.toLowerCase()
@@ -442,7 +488,7 @@ export default function PaymentPage() {
 
       } else if (statusResponse.status === "FAILED") {
         setPaymentState(PaymentState.FAILED)
-        log("payment:status", "Payment failed", "warn", { paymentId: id })
+        log("payment:status", "Payment failed", "warn", { reference: ref })
         try {
           await fetch("/api/activity", {
             method: "POST",
@@ -453,14 +499,14 @@ export default function PaymentPage() {
               email: formData.email,
               phone_number: formData.phone,
               description: "Payment failed",
-              metadata: { paymentId: id, amount: currentChargeAmount, category: courseCategory },
+              metadata: { reference: ref, amount: currentChargeAmount, category: courseCategory },
             }),
           })
         } catch { }
       } else {
         // Continue polling if still pending
-        log("payment:status", "Payment pending; continue polling", "debug", { paymentId: id })
-        setTimeout(() => pollPaymentStatus(id), 3000)
+        log("payment:status", "Payment pending; continue polling", "debug", { reference: ref })
+        setTimeout(() => pollPaymentStatus(ref), 3000)
       }
     } catch (error) {
       log("payment:status", "Status check error", "error", error)
@@ -469,9 +515,9 @@ export default function PaymentPage() {
   }
 
   const handleRetry = () => {
-    log("payment:retry", "User initiated payment retry", "info", { previousPaymentId: paymentId })
+    log("payment:retry", "User initiated payment retry", "info", { previousReference: paymentReference })
     setPaymentState(PaymentState.INITIAL)
-    setPaymentId(null)
+    setPaymentReference(null)
   }
 
   const handleCaptchaVerify = () => {
@@ -525,7 +571,7 @@ export default function PaymentPage() {
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="phone">M-Pesa Phone Number</Label>
+                            <Label htmlFor="phone">Phone Number <span className="text-xs text-muted-foreground">(optional)</span></Label>
                             <div className="relative">
                               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                 <Phone className="h-4 w-4 text-white" />
@@ -536,7 +582,7 @@ export default function PaymentPage() {
                                 value={formData.phone}
                                 onChange={handleInputChange}
                                 className={`pl-10 ${errors.phone ? "border-destructive" : ""}`}
-                                placeholder="07XXXXXXXX"
+                                placeholder="07XXXXXXXX (optional)"
                               />
                             </div>
                             {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
@@ -610,7 +656,7 @@ export default function PaymentPage() {
                       {!isAdminMode && (
                         <div className="flex items-center gap-2 text-xs text-white mt-4">
                           <Shield className="h-3 w-3" />
-                          <p>Your payment information is secure. Protected by M-Pesa.</p>
+                          <p>Your payment information is secure. Protected by Paystack.</p>
                         </div>
                       )}
 
@@ -619,7 +665,7 @@ export default function PaymentPage() {
                           ? "Loading..."
                           : isAdminMode
                             ? "Continue as Admin"
-                            : `Pay KES ${paymentAmount} with M-Pesa`}
+                            : `Pay KES ${paymentAmount} with Paystack`}
                       </Button>
                     </form>
                   </>

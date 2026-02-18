@@ -1,35 +1,76 @@
-# Execution Summary: M-Pesa Integration Fixes
+# Paystack Migration — Execution Finish Report
 
-## Completed Steps
-1.  **Resolved Authentication Error (`SyntaxError`)**:
-    *   Refactored `getAccessToken` in `lib/mpesa.ts` to check `Content-Type`.
-    *   Added logic to log raw text response if the API returns non-JSON (e.g., HTML error page or 401 Unauthorized text).
-    *   Added `.trim()` to `MPESA_CONSUMER_KEY` and `MPESA_CONSUMER_SECRET` to prevent whitespace issues.
-    *   Added detailed logging of credential length to help debug environment variable issues.
+## Status: ✅ COMPLETE
 
-2.  **Verified & Fixed STK Push Payload**:
-    *   Updated `lib/mpesa.ts` to strictly match the documentation provided in `Into out.md`.
-    *   Ensured `BusinessShortCode`, `Password`, and `Timestamp` are constructed correctly.
-    *   Added `.trim()` to `MPESA_SHORTCODE`, `MPESA_PASSKEY`, and `MPESA_CALLBACK_URL` to prevent invalid payload errors.
-    *   Ensured `PhoneNumber` normalization logic strictly adheres to `254...` format.
+## Summary
+Successfully migrated payment gateway from M-Pesa/PesaFlux to Paystack across the entire codebase.
 
-3.  **Validated Webhook Logic**:
-    *   Confirmed `app/api/payments/webhook/route.ts` correctly processes the callback payload structure (`Body.stkCallback`).
-    *   Verified mapping of `CheckoutRequestID` to `transaction_id` for payment reconciliation.
-    *   Ensured `ResultCode` handling covers both success (0) and failure cases.
+## Steps Completed
 
-## Verification Status
--   [x] `lib/mpesa.ts` updated with robust error handling and trimming.
--   [x] `app/api/payments/webhook/route.ts` logic verified against docs.
--   [x] Credentials are now trimmed before usage.
+| # | Step | Status |
+|---|------|--------|
+| 1 | Update `.env.local` with Paystack keys | ✅ |
+| 2 | Create `lib/paystack.ts` (server helpers) | ✅ |
+| 3 | Create `/api/paystack/initialize` route | ✅ |
+| 4 | Create `/api/paystack/verify` route | ✅ |
+| 5 | Create `/api/paystack/webhook` route | ✅ |
+| 6 | Create `/payment/callback` page | ✅ |
+| 7 | Create database migration SQL | ✅ |
+| 8 | Rewrite `app/payment/actions.ts` | ✅ |
+| 9 | Rewrite `app/payment/page.tsx` (Paystack popup) | ✅ |
+| 10 | Update `components/payment-status.tsx` | ✅ |
+| 11 | Update `components/payment-warning-modal.tsx` | ✅ |
+| 12 | Rewrite `/api/payments/webhook/route.ts` | ✅ |
+| 13 | Update `app/agent-portal/page.tsx` | ✅ |
+| 14 | Update `/api/agent-portal/verify-payment/route.ts` | ✅ |
+| 15 | Update `/api/agent-portal/download-pdf/route.ts` | ✅ |
+| 16 | Update `lib/n8n-webhook.ts` | ✅ |
+| 17 | Update `lib/paymentValidation.ts` (phone optional) | ✅ |
+| 18 | Delete `lib/mpesa.ts` | ✅ |
+| 19 | Update `app/api/debug/test-n8n/route.ts` | ✅ |
+| 20 | Full M-Pesa audit (0 references remain in TS/TSX) | ✅ |
+| 21 | Build verification (next build succeeds) | ✅ |
+| 22 | CHANGELOG.md updated | ✅ |
 
-## Required User Actions (Validation)
-1.  **Check Logs**: Trigger a payment again.
-    *   If you see `[mpesa:auth] M-Pesa auth returned non-JSON response`, check the `body` field in the log. It will tell you the exact error (e.g., "Invalid Consumer Key").
-2.  **Verify Environment Variables**:
-    *   Ensure `MPESA_CONSUMER_KEY`, `MPESA_CONSUMER_SECRET`, `MPESA_PASSKEY`, `MPESA_SHORTCODE` are correct in `.env.local`.
-    *   Ensure `MPESA_CALLBACK_URL` is a valid, publicly accessible HTTPS URL.
-3.  **Test Payment**:
-    *   Initiate a payment for KES 1.
-    *   Confirm STK push arrives on phone.
-    *   Complete payment and check if dashboard updates.
+## Build Result
+```
+✓ Compiled successfully in 44s
+✓ Generating static pages (61/61) in 9.5s
+Exit code: 0
+```
+
+## Remaining M-Pesa References
+- **TS/TSX files**: 0 ✅
+- **Markdown files** (CHANGELOG, student guide, etc.): Historical references only (acceptable — these document past behavior)
+
+## Bug Fix During Execution
+- Removed `js-cookie` import from callback page (package not installed), replaced with native `document.cookie` API
+
+## Database Migration
+Migration SQL file created at `supabase/migrations/20260218_paystack_migration.sql`.
+**⚠️ Must be applied manually** before deploying the code changes:
+- Renames `mpesa_receipt_number` → `paystack_reference`
+- Adds `paystack_access_code` column
+- Updates indexes
+
+## Environment Variables Required
+```env
+PAYSTACK_SECRET_KEY=sk_live_xxx        # Server-only
+NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_live_xxx  # Client-safe
+NEXT_PUBLIC_SITE_URL=https://kuccpscoursechecker.co.ke
+```
+
+## Security Review
+- ✅ Paystack secret key server-only
+- ✅ HMAC SHA512 webhook signature verification
+- ✅ Amount verification before confirming payments
+- ✅ Idempotent webhook handling
+- ✅ Admin bypass preserved with key verification
+
+## Post-Deploy Checklist
+1. [ ] Set Paystack environment variables on Vercel
+2. [ ] Run database migration on Supabase
+3. [ ] Configure Paystack webhook URL: `https://kuccpscoursechecker.co.ke/api/paystack/webhook`
+4. [ ] Test full payment flow end-to-end
+5. [ ] Verify webhook receives charge.success events
+6. [ ] Test agent portal with Paystack reference lookup

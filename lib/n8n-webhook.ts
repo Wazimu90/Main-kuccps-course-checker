@@ -13,9 +13,11 @@ import { log } from "@/lib/logger"
 export interface N8nWebhookPayload {
   name: string
   phone: string
-  mpesaCode: string
+  paystackReference: string
   email: string
   resultId: string
+  amount?: number
+  courseCategory?: string
 }
 
 /**
@@ -59,7 +61,7 @@ function formatPhoneNumber(phone: string): string {
  * @returns True if all required fields are present and non-empty
  */
 function validatePayload(data: Partial<N8nWebhookPayload>): data is N8nWebhookPayload {
-  const requiredFields: (keyof N8nWebhookPayload)[] = ["name", "phone", "mpesaCode", "email", "resultId"]
+  const requiredFields: (keyof N8nWebhookPayload)[] = ["name", "phone", "paystackReference", "email", "resultId"]
 
   for (const field of requiredFields) {
     if (!data[field] || String(data[field]).trim() === "") {
@@ -115,9 +117,11 @@ export async function sendToN8nWebhook(data: Partial<N8nWebhookPayload>): Promis
   const payload: N8nWebhookPayload = {
     name: formattedData.name.trim(),
     phone: formattedData.phone,
-    mpesaCode: formattedData.mpesaCode.trim(),
+    paystackReference: formattedData.paystackReference.trim(),
     email: formattedData.email.trim(),
-    resultId: formattedData.resultId.trim()
+    resultId: formattedData.resultId.trim(),
+    amount: formattedData.amount,
+    courseCategory: formattedData.courseCategory,
   }
 
   log("n8n:webhook", "📤 Sending data to n8n webhook", "info", {
@@ -125,7 +129,7 @@ export async function sendToN8nWebhook(data: Partial<N8nWebhookPayload>): Promis
     resultId: payload.resultId,
     hasName: !!payload.name,
     hasPhone: !!payload.phone,
-    hasMpesaCode: !!payload.mpesaCode
+    hasPaystackRef: !!payload.paystackReference
   })
 
   try {

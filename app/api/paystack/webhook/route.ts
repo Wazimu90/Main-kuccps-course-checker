@@ -10,10 +10,10 @@ const supabase = createClient(
 )
 
 /**
- * POST /api/payments/webhook
+ * POST /api/paystack/webhook
  * 
- * Paystack webhook handler (replaces old M-Pesa webhook).
- * Verifies HMAC SHA512 signature, processes charge.success events,
+ * Handles Paystack webhook events.
+ * Verifies signature, processes charge.success events,
  * updates payment_transactions, calls RPC, sends n8n webhook.
  * 
  * MUST return 200 OK quickly — Paystack retries on non-200.
@@ -26,40 +26,40 @@ export async function POST(request: Request) {
 
         // Verify webhook signature (HMAC SHA512)
         if (!verifyWebhookSignature(rawBody, signature)) {
-            log("webhook:paystack", "Invalid webhook signature — rejecting", "error")
+            log("paystack:webhook", "Invalid webhook signature", "error")
             return NextResponse.json({ status: "error", message: "Invalid signature" }, { status: 401 })
         }
 
         const event = JSON.parse(rawBody)
         const eventType = event.event
 
-        log("webhook:paystack", `Received event: ${eventType}`, "info", {
+        log("paystack:webhook", `Received event: ${eventType}`, "info", {
             reference: event.data?.reference,
         })
 
         // We only handle charge.success for now
         if (eventType !== "charge.success") {
-            log("webhook:paystack", `Ignoring event type: ${eventType}`, "info")
+            log("paystack:webhook", `Ignoring event type: ${eventType}`, "info")
             return NextResponse.json({ status: "ok", message: "Event ignored" })
         }
 
         const txData = event.data
         const reference = txData.reference
-        const amountSubunit = txData.amount
+        const amountSubunit = txData.amount // in cents/kobo
         const amountKES = amountSubunit / 100
         const customerEmail = txData.customer?.email || ""
         const paystackReference = txData.reference
         const channel = txData.channel || "unknown"
         const paidAt = txData.paid_at
 
-        log("webhook:paystack", "Processing charge.success", "info", {
+        log("paystack:webhook", "Processing charge.success", "info", {
             reference,
             amountKES,
             email: customerEmail,
             channel,
         })
 
-        // Find the payment_transactions record
+        // Find the payment_transactions record by reference
         const { data: transaction, error: findError } = await supabase
             .from("payment_transactions")
             .select("*")
@@ -67,22 +67,23 @@ export async function POST(request: Request) {
             .single()
 
         if (findError || !transaction) {
-            log("webhook:paystack", "No payment_transactions record found", "error", {
+            log("paystack:webhook", "No payment_transactions record found for reference", "error", {
                 reference,
                 error: findError?.message,
             })
+            // Still return 200 to avoid Paystack retries for unknown references
             return NextResponse.json({ status: "ok", message: "Transaction not found" })
         }
 
         // Idempotency: skip if already completed
         if (transaction.status === "COMPLETED") {
-            log("webhook:paystack", "Transaction already COMPLETED, skipping", "info", { reference })
+            log("paystack:webhook", "Transaction already COMPLETED, skipping", "info", { reference })
             return NextResponse.json({ status: "ok", message: "Already processed" })
         }
 
         // SECURITY: Verify amount matches
         if (Math.abs(amountKES - transaction.amount) > 1) {
-            log("webhook:paystack", "⚠️ Amount mismatch!", "error", {
+            log("paystack:webhook", "⚠️ Amount mismatch in webhook!", "error", {
                 reference,
                 expectedKES: transaction.amount,
                 webhookKES: amountKES,
@@ -102,15 +103,15 @@ export async function POST(request: Request) {
             .eq("reference", reference)
 
         if (updateError) {
-            log("webhook:paystack", "Failed to update transaction status", "error", {
+            log("paystack:webhook", "Failed to update transaction status", "error", {
                 reference,
                 error: updateError.message,
             })
         } else {
-            log("webhook:paystack", "Transaction updated to COMPLETED", "success", { reference })
+            log("paystack:webhook", "Transaction updated to COMPLETED", "success", { reference })
         }
 
-        // Call RPC to record payment and update user
+        // Call RPC to record payment and update user (same as old M-Pesa webhook)
         const name = transaction.name || txData.metadata?.name || ""
         const phone = transaction.phone_number || txData.metadata?.phone || ""
         const email = transaction.email || customerEmail
@@ -130,18 +131,18 @@ export async function POST(request: Request) {
             })
 
             if (rpcError) {
-                log("webhook:paystack", "RPC fn_record_payment_and_update_user failed", "error", {
+                log("paystack:webhook", "RPC fn_record_payment_and_update_user failed", "error", {
                     reference,
                     error: rpcError.message,
                 })
             } else {
-                log("webhook:paystack", "RPC fn_record_payment_and_update_user succeeded", "success", {
+                log("paystack:webhook", "RPC fn_record_payment_and_update_user succeeded", "success", {
                     reference,
                     email,
                 })
             }
         } catch (rpcEx: any) {
-            log("webhook:paystack", "RPC exception", "error", {
+            log("paystack:webhook", "RPC exception", "error", {
                 reference,
                 message: rpcEx.message,
             })
@@ -159,7 +160,7 @@ export async function POST(request: Request) {
                 courseCategory,
             })
         } catch (n8nError: any) {
-            log("webhook:paystack", "n8n webhook send failed (non-fatal)", "warn", {
+            log("paystack:webhook", "n8n webhook send failed (non-fatal)", "warn", {
                 reference,
                 error: n8nError.message,
             })
@@ -179,17 +180,18 @@ export async function POST(request: Request) {
                 },
             })
         } catch (logError: any) {
-            log("webhook:paystack", "Activity log insert failed (non-fatal)", "warn", {
+            log("paystack:webhook", "Activity log insert failed (non-fatal)", "warn", {
                 error: logError.message,
             })
         }
 
         return NextResponse.json({ status: "ok", message: "Webhook processed" })
     } catch (error: any) {
-        log("webhook:paystack", "Unhandled webhook error", "error", {
+        log("paystack:webhook", "Unhandled webhook error", "error", {
             message: error.message,
             stack: error.stack,
         })
+        // Return 200 even on error to prevent Paystack retries for broken handlers
         return NextResponse.json({ status: "ok", message: "Error processing webhook" })
     }
 }

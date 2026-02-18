@@ -53,7 +53,7 @@ export default function AgentPortalPage() {
     // Payment verification state
     const [resultId, setResultId] = useState("")
     const [phoneNumber, setPhoneNumber] = useState("")
-    const [mpesaReceipt, setMpesaReceipt] = useState("")
+    const [paystackRef, setPaystackRef] = useState("")
     const [verifiedResult, setVerifiedResult] = useState<VerifiedResult | null>(null)
     const [downloadQuota, setDownloadQuota] = useState<DownloadQuota | null>(null)
 
@@ -97,12 +97,12 @@ export default function AgentPortalPage() {
     }
 
     const handleVerifyPayment = async () => {
-        // Validate: need either Result ID OR (M-Pesa Receipt + Phone Number)
+        // Validate: need either Result ID OR (Paystack Reference + Phone Number)
         const hasResultId = resultId.trim()
-        const hasMpesaLookup = mpesaReceipt.trim() && phoneNumber.trim()
+        const hasPaystackLookup = paystackRef.trim() && phoneNumber.trim()
 
-        if (!hasResultId && !hasMpesaLookup) {
-            setError("Please enter Result ID, or M-Pesa Receipt Code + Phone Number")
+        if (!hasResultId && !hasPaystackLookup) {
+            setError("Please enter Result ID, or Paystack Reference + Phone Number")
             return
         }
 
@@ -116,7 +116,7 @@ export default function AgentPortalPage() {
                 body: JSON.stringify({
                     result_id: resultId.trim() || undefined,
                     phone_number: phoneNumber.trim() || undefined,
-                    mpesa_receipt: mpesaReceipt.trim() || undefined,
+                    paystack_reference: paystackRef.trim() || undefined,
                     agent_code: agent?.code,
                 }),
             })
@@ -135,7 +135,7 @@ export default function AgentPortalPage() {
             setVerifiedResult(data.result)
             setDownloadQuota(data.download_quota)
 
-            // Store the resolved result_id (important for M-Pesa lookups)
+            // Store the resolved result_id (important for Paystack lookups)
             if (data.result?.result_id && !resultId.trim()) {
                 setResultId(data.result.result_id)
             }
@@ -169,7 +169,7 @@ export default function AgentPortalPage() {
                     token: token.trim(),
                     result_id: downloadResultId,
                     phone_number: phoneNumber.trim() || undefined,
-                    mpesa_receipt: mpesaReceipt.trim() || undefined,
+                    paystack_reference: paystackRef.trim() || undefined,
                 }),
             })
 
@@ -216,7 +216,7 @@ export default function AgentPortalPage() {
             setVerifiedResult(null)
             setResultId("")
             setPhoneNumber("")
-            setMpesaReceipt("")
+            setPaystackRef("")
             setStep("verify")
         } catch (e: any) {
             setError(e.message || "Download failed")
@@ -235,7 +235,7 @@ export default function AgentPortalPage() {
         setVerifiedResult(null)
         setResultId("")
         setPhoneNumber("")
-        setMpesaReceipt("")
+        setPaystackRef("")
         setError(null)
     }
 
@@ -354,7 +354,7 @@ export default function AgentPortalPage() {
                                         Verify Student Payment
                                     </CardTitle>
                                     <CardDescription className="text-slate-300">
-                                        Enter <strong>Result ID</strong> OR <strong>M-Pesa Receipt + Phone Number</strong>
+                                        Enter <strong>Result ID</strong> OR <strong>Paystack Reference + Phone Number</strong>
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -363,12 +363,12 @@ export default function AgentPortalPage() {
                                         <p className="font-medium text-indigo-300 mb-1">💡 Two ways to find results:</p>
                                         <ul className="list-disc list-inside space-y-1 text-xs">
                                             <li><strong>Option A:</strong> Enter the Result ID directly</li>
-                                            <li><strong>Option B:</strong> Enter M-Pesa Receipt Code + Phone Number</li>
+                                            <li><strong>Option B:</strong> Enter Paystack Reference + Phone Number</li>
                                         </ul>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="resultId" className="text-slate-200">Result ID (optional if using M-Pesa)</Label>
+                                        <Label htmlFor="resultId" className="text-slate-200">Result ID (optional if using Paystack Reference)</Label>
                                         <Input
                                             id="resultId"
                                             value={resultId}
@@ -380,23 +380,23 @@ export default function AgentPortalPage() {
 
                                     <div className="relative flex items-center py-2">
                                         <div className="flex-grow border-t border-slate-600"></div>
-                                        <span className="flex-shrink mx-3 text-slate-400 text-xs">OR use M-Pesa details</span>
+                                        <span className="flex-shrink mx-3 text-slate-400 text-xs">OR use Paystack Reference</span>
                                         <div className="flex-grow border-t border-slate-600"></div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="mpesaReceipt" className="text-slate-200">M-Pesa Receipt Code</Label>
+                                        <Label htmlFor="paystackRef" className="text-slate-200">Paystack Reference</Label>
                                         <Input
-                                            id="mpesaReceipt"
-                                            value={mpesaReceipt}
-                                            onChange={(e) => setMpesaReceipt(e.target.value.toUpperCase())}
-                                            placeholder="e.g., SAB123XYZ"
+                                            id="paystackRef"
+                                            value={paystackRef}
+                                            onChange={(e) => setPaystackRef(e.target.value.toUpperCase())}
+                                            placeholder="e.g., PAY-1708567890-ABC123"
                                             className="bg-slate-700 border-slate-600 text-white"
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="phoneNumber" className="text-slate-200">Phone Number {!resultId.trim() && "(required for M-Pesa lookup)"}</Label>
+                                        <Label htmlFor="phoneNumber" className="text-slate-200">Phone Number {!resultId.trim() && "(required for Paystack lookup)"}</Label>
                                         <Input
                                             id="phoneNumber"
                                             value={phoneNumber}
@@ -416,7 +416,7 @@ export default function AgentPortalPage() {
                                     {!verifiedResult && (
                                         <Button
                                             onClick={handleVerifyPayment}
-                                            disabled={loading || (!resultId.trim() && (!mpesaReceipt.trim() || !phoneNumber.trim()))}
+                                            disabled={loading || (!resultId.trim() && (!paystackRef.trim() || !phoneNumber.trim()))}
                                             className="w-full bg-indigo-600 hover:bg-indigo-700"
                                         >
                                             {loading ? (
