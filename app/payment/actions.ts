@@ -37,7 +37,11 @@ export async function initiatePayment(data: {
     })
 
     // Build the site URL for the API call
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+    let siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+    // Guard: ensure the URL has a protocol prefix
+    if (siteUrl && !siteUrl.startsWith("http://") && !siteUrl.startsWith("https://")) {
+      siteUrl = `https://${siteUrl}`
+    }
 
     // Call our backend initialize endpoint
     const response = await fetch(`${siteUrl}/api/paystack/initialize`, {
